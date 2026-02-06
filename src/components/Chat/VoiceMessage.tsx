@@ -1,0 +1,224 @@
+// ===========================================
+// VOICE MESSAGE COMPONENT
+// Recording and playback of voice messages
+// ===========================================
+
+import { useState, useRef, useEffect } from 'react';
+import { Button, message as antMessage, Progress } from 'antd';
+import { AudioOutlined, StopOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
+import { motion } from 'framer-motion';
+import { colors, spacing, typography } from '../../styles/tokens';
+
+interface VoiceMessageProps {
+  audioUrl?: string;
+  onRecordComplete?: (audioBlob: Blob) => void;
+  onSend?: (audioBlob: Blob) => void;
+  disabled?: boolean;
+}
+
+export const VoiceMessage: React.FC<VoiceMessageProps> = ({
+  audioUrl,
+  onRecordComplete,
+  onSend,
+  disabled = false,
+}) => {
+  const [isRecording, setIsRecording] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const [audioDuration, setAudioDuration] = useState(0);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const playTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Check if browser supports MediaRecorder
+  const isSupported = typeof MediaRecorder !== 'undefined';
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+      if (playTimerRef.current) clearInterval(playTimerRef.current);
+    };
+  }, []);
+
+  const startRecording = async () => {
+    if (!isSupported) {
+      antMessage.error('Voice recording is not supported in your browser');
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (onRecordComplete) {
+          onRecordComplete(audioBlob);
+        }
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+      setRecordingTime(0);
+
+      // Start timer
+      timerRef.current = setInterval(() => {
+        setRecordingTime((prev) => {
+          if (prev >= 60) {
+            stopRecording();
+            return 60;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    } catch (error) {
+      console.error('Error starting recording:', error);
+      antMessage.error('Failed to start recording. Please check microphone permissions.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    }
+  };
+
+  const handlePlay = () => {
+    if (!audioRef.current) return;
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      if (playTimerRef.current) {
+        clearInterval(playTimerRef.current);
+        playTimerRef.current = null;
+      }
+    } else {
+      audioRef.current.play();
+      setIsPlaying(true);
+      playTimerRef.current = setInterval(() => {
+        if (audioRef.current) {
+          setCurrentTime(audioRef.current.currentTime);
+        }
+      }, 100);
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  if (audioUrl) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+        <audio
+          ref={audioRef}
+          src={audioUrl}
+          onLoadedMetadata={() => {
+            if (audioRef.current) {
+              setAudioDuration(audioRef.current.duration);
+            }
+          }}
+          onEnded={() => {
+            setIsPlaying(false);
+            setCurrentTime(0);
+            if (playTimerRef.current) {
+              clearInterval(playTimerRef.current);
+              playTimerRef.current = null;
+            }
+          }}
+          style={{ display: 'none' }}
+        />
+        <Button
+          type="text"
+          icon={isPlaying ? <PauseCircleOutlined /> : <PlayCircleOutlined />}
+          onClick={handlePlay}
+          disabled={disabled}
+        />
+        <div style={{ flex: 1, minWidth: '100px' }}>
+          <Progress
+            percent={audioDuration > 0 ? (currentTime / audioDuration) * 100 : 0}
+            showInfo={false}
+            size="small"
+          />
+          <div style={{ fontSize: typography.fontSize.xs, color: colors.gray[500], marginTop: spacing[1] }}>
+            {formatTime(currentTime)} / {formatTime(audioDuration)}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+      {!isRecording ? (
+        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+          <Button
+            type="primary"
+            icon={<AudioOutlined />}
+            onClick={startRecording}
+            disabled={disabled || !isSupported}
+            danger={false}
+          >
+            Record
+          </Button>
+        </motion.div>
+      ) : (
+        <>
+          <Button
+            type="primary"
+            danger
+            icon={<StopOutlined />}
+            onClick={stopRecording}
+          >
+            Stop
+          </Button>
+          <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], minWidth: '120px' }}>
+            <div
+              style={{
+                width: '12px',
+                height: '12px',
+                borderRadius: '50%',
+                background: colors.error.solid,
+                animation: 'pulse 1s infinite',
+              }}
+            />
+            <span style={{ fontSize: typography.fontSize.sm, color: colors.gray[600] }}>
+              {formatTime(recordingTime)}
+            </span>
+          </div>
+        </>
+      )}
+      {!isSupported && (
+        <span style={{ fontSize: typography.fontSize.xs, color: colors.gray[500] }}>
+          Voice recording not supported
+        </span>
+      )}
+    </div>
+  );
+};
+
+export default VoiceMessage;
+
+
+

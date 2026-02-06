@@ -1,0 +1,324 @@
+﻿src/__tests__/e2e/chat-flow.e2e.test.tsx(5,52): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(8,23): error TS2307: Cannot find module '../../../store' or its corresponding type declarations.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(9,18): error TS2307: Cannot find module '../../../pages/Chat' or its corresponding type declarations.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(12,1): error TS2304: Cannot find name 'jest'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(14,14): error TS2304: Cannot find name 'jest'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(25,24): error TS2304: Cannot find name 'jest'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(32,18): error TS2304: Cannot find name 'jest'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(50,22): error TS2304: Cannot find name 'jest'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(70,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(71,3): error TS2304: Cannot find name 'beforeEach'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(72,5): error TS2304: Cannot find name 'jest'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(75,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(79,7): error TS2304: Cannot find name 'expect'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(82,5): error TS2304: Cannot find name 'expect'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(85,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(89,7): error TS2304: Cannot find name 'expect'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(99,7): error TS2304: Cannot find name 'expect'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(104,7): error TS2304: Cannot find name 'expect'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(108,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(112,7): error TS2304: Cannot find name 'expect'.
+src/__tests__/e2e/chat-flow.e2e.test.tsx(119,7): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(5,52): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(9,24): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(10,10): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(11,9): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(17,18): error TS2540: Cannot assign to 'mediaDevices' because it is a read-only property.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(18,17): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(19,31): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(23,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(24,32): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(25,22): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(27,3): error TS2304: Cannot find name 'beforeEach'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(28,5): error TS2304: Cannot find name 'jest'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(31,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(39,5): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(42,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(54,7): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(58,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(75,7): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(79,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(88,5): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(91,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Chat/VoiceMessage.test.tsx(102,5): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(5,32): error TS2307: Cannot find module '@testing-library/react' or its corresponding type declarations.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(8,1): error TS2582: Cannot find name 'describe'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(9,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(21,5): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(24,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(36,5): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(39,3): error TS2582: Cannot find name 'it'. Do you need to install type definitions for a test runner? Try `npm i --save-dev @types/jest` or `npm i --save-dev @types/mocha`.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(50,5): error TS2304: Cannot find name 'expect'.
+src/components/__tests__/Gamification/AchievementBadge.test.tsx(62,5): error TS2304: Cannot find name 'expect'.
+src/components/Accessibility/ScreenReader.tsx(6,10): error TS6133: 'useEffect' is declared but its value is never read.
+src/components/analytics/ActivityHeatmap.tsx(21,82): error TS6133: 'loading' is declared but its value is never read.
+src/components/analytics/ComparisonChart.tsx(12,3): error TS6133: 'DollarOutlined' is declared but its value is never read.
+src/components/analytics/ComparisonChart.tsx(53,3): error TS6133: 'loading' is declared but its value is never read.
+src/components/Analytics/CompetitiveAnalysis.tsx(7,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/Analytics/CompetitiveAnalysis.tsx(9,1): error TS6133: 'analyticsApi' is declared but its value is never read.
+src/components/Analytics/CompetitiveAnalysis.tsx(93,8): error TS2304: Cannot find name 'Row'.
+src/components/Analytics/CompetitiveAnalysis.tsx(94,10): error TS2304: Cannot find name 'Col'.
+src/components/Analytics/CompetitiveAnalysis.tsx(110,11): error TS2304: Cannot find name 'Col'.
+src/components/Analytics/CompetitiveAnalysis.tsx(111,10): error TS2304: Cannot find name 'Col'.
+src/components/Analytics/CompetitiveAnalysis.tsx(126,11): error TS2304: Cannot find name 'Col'.
+src/components/Analytics/CompetitiveAnalysis.tsx(127,9): error TS2304: Cannot find name 'Row'.
+src/components/analytics/RevenueChart.tsx(9,3): error TS6133: 'LineChart' is declared but its value is never read.
+src/components/analytics/RevenueChart.tsx(11,3): error TS6133: 'BarChart' is declared but its value is never read.
+src/components/analytics/RevenueChart.tsx(41,67): error TS6133: 'loading' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(7,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(8,62): error TS2724: '"@ant-design/icons"' has no exported member named 'TrendingUpOutlined'. Did you mean 'WarningOutlined'?
+src/components/Analytics/UserAnalytics.tsx(9,1): error TS6133: 'motion' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(10,27): error TS6133: 'BarChart' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(10,37): error TS6133: 'Bar' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(11,1): error TS6133: 'analyticsApi' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(15,7): error TS6133: 'RangePicker' is declared but its value is never read.
+src/components/Analytics/UserAnalytics.tsx(163,33): error TS2339: Property 'topic' does not exist on type 'PieLabelRenderProps'.
+src/components/Analytics/UserAnalytics.tsx(163,40): error TS2339: Property 'progress' does not exist on type 'PieLabelRenderProps'.
+src/components/Analytics/UserAnalytics.tsx(168,46): error TS6133: 'entry' is declared but its value is never read.
+src/components/Chat/ChatSidebar.tsx(7,55): error TS6133: 'antMessage' is declared but its value is never read.
+src/components/Chat/ChatSidebar.tsx(13,3): error TS6133: 'CloseOutlined' is declared but its value is never read.
+src/components/Chat/ChatSidebar.tsx(18,10): error TS6133: 'chatApi' is declared but its value is never read.
+src/components/Chat/ChatSidebar.tsx(40,11): error TS6133: 'user' is declared but its value is never read.
+src/components/Chat/GifButton.tsx(11,1): error TS6133: 'colors' is declared but its value is never read.
+src/components/Chat/GifButton.tsx(43,12): error TS2741: Property 'children' is missing in type '{ variant: "ghost"; icon: Element; disabled: boolean; style: { padding: string; }; }' but required in type 'CustomButtonProps'.
+src/components/Chat/LinkPreviewCard.tsx(20,10): error TS6133: 'error' is declared but its value is never read.
+src/components/Chat/MediaMessage.tsx(6,10): error TS6133: 'Modal' is declared but its value is never read.
+src/components/Chat/MediaUploadButton.tsx(6,10): error TS6133: 'Upload' is declared but its value is never read.
+src/components/Chat/MediaUploadButton.tsx(7,78): error TS6133: 'LoadingOutlined' is declared but its value is never read.
+src/components/Chat/MediaUploadButton.tsx(8,1): error TS6133: 'UploadFile' is declared but its value is never read.
+src/components/Chat/MediaUploadButton.tsx(135,12): error TS2741: Property 'children' is missing in type '{ variant: "ghost"; icon: Element; onClick: () => void | undefined; disabled: boolean; style: { padding: string; }; }' but required in type 'CustomButtonProps'.
+src/components/Chat/MessageActions.tsx(42,11): error TS6133: 'user' is declared but its value is never read.
+src/components/Chat/MessageReactions.tsx(7,25): error TS6133: 'PlusOutlined' is declared but its value is never read.
+src/components/Chat/MessageReactions.tsx(30,10): error TS6133: 'loading' is declared but its value is never read.
+src/components/Chat/MessageReactions.tsx(79,9): error TS6133: 'hasReactions' is declared but its value is never read.
+src/components/Chat/VoiceMessage.tsx(22,3): error TS6133: 'onSend' is declared but its value is never read.
+src/components/Comment/CommentSection.tsx(110,47): error TS6133: 'reply' is declared but its value is never read.
+src/components/common/Avatar/Avatar.tsx(7,44): error TS6133: 'Badge' is declared but its value is never read.
+src/components/common/Button/CustomButton.tsx(12,18): error TS2430: Interface 'CustomButtonProps' incorrectly extends interface 'ButtonProps'.
+  Types of property 'variant' are incompatible.
+    Type '"success" | "primary" | "secondary" | "ghost" | "danger" | undefined' is not assignable to type '"link" | "text" | "dashed" | "solid" | "outlined" | "filled" | undefined'.
+      Type '"success"' is not assignable to type '"link" | "text" | "dashed" | "solid" | "outlined" | "filled" | undefined'.
+src/components/common/Button/CustomButton.tsx(103,6): error TS2769: No overload matches this call.
+  Overload 1 of 2, '(props: Omit<MotionComponentProps<ButtonProps & RefAttributes<HTMLButtonElement | HTMLAnchorElement>>, "children"> & { ...; }, context?: any): string | ... 8 more ... | undefined', gave the following error.
+    Type '{ children: ReactNode; disabled: boolean | undefined; loading: boolean | { delay?: number | undefined; icon?: ReactNode; } | undefined; style: CSSProperties; ... 306 more ...; referrerPolicy?: HTMLAttributeReferrerPolicy | undefined; }' is not assignable to type 'Omit<MotionComponentProps<ButtonProps & RefAttributes<HTMLButtonElement | HTMLAnchorElement>>, "children">'.
+      Types of property 'onAnimationStart' are incompatible.
+        Type 'AnimationEventHandler<HTMLElement> | undefined' is not assignable to type '((definition: AnimationDefinition) => void) | undefined'.
+          Type 'AnimationEventHandler<HTMLElement>' is not assignable to type '(definition: AnimationDefinition) => void'.
+            Types of parameters 'event' and 'definition' are incompatible.
+              Type 'AnimationDefinition' is not assignable to type 'AnimationEvent<HTMLElement>'.
+                Type 'string' is not assignable to type 'AnimationEvent<HTMLElement>'.
+  Overload 2 of 2, '(props: Omit<MotionComponentProps<ButtonProps & RefAttributes<HTMLButtonElement | HTMLAnchorElement>>, "children"> & { ...; }): string | ... 8 more ... | undefined', gave the following error.
+    Type '{ children: ReactNode; disabled: boolean | undefined; loading: boolean | { delay?: number | undefined; icon?: ReactNode; } | undefined; style: CSSProperties; ... 306 more ...; referrerPolicy?: HTMLAttributeReferrerPolicy | undefined; }' is not assignable to type 'Omit<MotionComponentProps<ButtonProps & RefAttributes<HTMLButtonElement | HTMLAnchorElement>>, "children">'.
+      Types of property 'onAnimationStart' are incompatible.
+        Type 'AnimationEventHandler<HTMLElement> | undefined' is not assignable to type '((definition: AnimationDefinition) => void) | undefined'.
+          Type 'AnimationEventHandler<HTMLElement>' is not assignable to type '(definition: AnimationDefinition) => void'.
+            Types of parameters 'event' and 'definition' are incompatible.
+              Type 'AnimationDefinition' is not assignable to type 'AnimationEvent<HTMLElement>'.
+                Type 'string' is not assignable to type 'AnimationEvent<HTMLElement>'.
+src/components/common/EmptyState/EmptyState.tsx(7,18): error TS6133: 'Space' is declared but its value is never read.
+src/components/common/ErrorBoundary.tsx(48,16): error TS2339: Property 'Sentry' does not exist on type 'Window & typeof globalThis'.
+src/components/common/ErrorBoundary.tsx(49,14): error TS2339: Property 'Sentry' does not exist on type 'Window & typeof globalThis'.
+src/components/common/Loading/Skeleton.tsx(21,3): error TS6133: 'animate' is declared but its value is never read.
+src/components/Community/ForumCard.tsx(6,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/Community/ForumCard.tsx(6,29): error TS6133: 'Button' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(6,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(6,36): error TS6133: 'Tag' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(6,41): error TS6133: 'Tooltip' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(10,3): error TS6133: 'CheckCircleOutlined' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(12,3): error TS6133: 'FireOutlined' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(14,1): error TS6133: 'motion' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(31,3): error TS6133: 'totalMessages' is declared but its value is never read.
+src/components/Creator/CreatorStats.tsx(124,27): error TS2339: Property 'topic' does not exist on type 'PieLabelRenderProps'.
+src/components/Creator/CreatorStats.tsx(124,34): error TS2339: Property 'percentage' does not exist on type 'PieLabelRenderProps'.
+src/components/Creator/CreatorStats.tsx(129,38): error TS6133: 'entry' is declared but its value is never read.
+src/components/Creator/FAQAccordion.tsx(11,7): error TS6133: 'Panel' is declared but its value is never read.
+src/components/Creator/FAQAccordion.tsx(23,67): error TS6133: 'creatorName' is declared but its value is never read.
+src/components/Discovery/FeaturedCreators.tsx(8,31): error TS6133: 'Carousel' is declared but its value is never read.
+src/components/Discovery/FeaturedCreators.tsx(15,18): error TS6133: 'scaleIn' is declared but its value is never read.
+src/components/Discovery/SimilarCreators.tsx(146,39): error TS2322: Type '{ children: any; color: "blue"; size: string; style: { marginBottom: string; }; }' is not assignable to type 'IntrinsicAttributes & TagProps & RefAttributes<HTMLSpanElement>'.
+  Property 'size' does not exist on type 'IntrinsicAttributes & TagProps & RefAttributes<HTMLSpanElement>'.
+src/components/Follow/FollowButton.tsx(139,33): error TS2339: Property 'hover' does not exist on type '{ scale: number; y: number; }'.
+src/components/Gamification/AchievementBadge.tsx(9,18): error TS6133: 'spacing' is declared but its value is never read.
+src/components/Gamification/AchievementBadge.tsx(9,27): error TS6133: 'typography' is declared but its value is never read.
+src/components/Gamification/Leaderboard.tsx(7,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/layouts/DashboardLayout.tsx(16,36): error TS1149: File name 'C:/Work Profile/ai-creator/web/src/components/notifications/NotificationCenter.tsx' differs from already included file name 'C:/Work Profile/ai-creator/web/src/components/Notifications/NotificationCenter.tsx' only in casing.
+  The file is in the program because:
+    Imported via './NotificationCenter' from file 'C:/Work Profile/ai-creator/web/src/components/Notifications/index.ts'
+    Imported via '../notifications/NotificationCenter' from file 'C:/Work Profile/ai-creator/web/src/components/layouts/DashboardLayout.tsx'
+    Matched by include pattern 'src' in 'C:/Work Profile/ai-creator/web/tsconfig.json'
+src/components/layouts/MainLayout.tsx(13,36): error TS1261: Already included file name 'C:/Work Profile/ai-creator/web/src/components/Notifications/index.ts' differs from file name 'C:/Work Profile/ai-creator/web/src/components/notifications/index.ts' only in casing.
+  The file is in the program because:
+    Imported via '../Notifications' from file 'C:/Work Profile/ai-creator/web/src/components/layouts/MainLayout.tsx'
+    Matched by include pattern 'src' in 'C:/Work Profile/ai-creator/web/tsconfig.json'
+src/components/Monitoring/PerformanceDashboard.tsx(7,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/Monitoring/PerformanceDashboard.tsx(9,1): error TS6192: All imports in import declaration are unused.
+src/components/Notifications/index.ts(1,47): error TS1261: Already included file name 'C:/Work Profile/ai-creator/web/src/components/Notifications/NotificationCenter.tsx' differs from file name 'C:/Work Profile/ai-creator/web/src/components/notifications/NotificationCenter.tsx' only in casing.
+  The file is in the program because:
+    Imported via './NotificationCenter' from file 'C:/Work Profile/ai-creator/web/src/components/Notifications/index.ts'
+    Imported via '../notifications/NotificationCenter' from file 'C:/Work Profile/ai-creator/web/src/components/layouts/DashboardLayout.tsx'
+    Matched by include pattern 'src' in 'C:/Work Profile/ai-creator/web/tsconfig.json'
+src/components/Notifications/NotificationCenter.tsx(18,1): error TS6133: 'CustomButton' is declared but its value is never read.
+src/components/Onboarding/CreatorOnboardingWizard.tsx(7,52): error TS6133: 'Upload' is declared but its value is never read.
+src/components/Onboarding/CreatorOnboardingWizard.tsx(66,13): error TS6133: 'values' is declared but its value is never read.
+src/components/Onboarding/InterestSelector.tsx(6,34): error TS6133: 'Tag' is declared but its value is never read.
+src/components/Onboarding/OnboardingTour.tsx(7,16): error TS6133: 'Button' is declared but its value is never read.
+src/components/Onboarding/OnboardingTour.tsx(8,1): error TS6133: 'useNavigate' is declared but its value is never read.
+src/components/Onboarding/OnboardingTour.tsx(9,1): error TS6192: All imports in import declaration are unused.
+src/components/Onboarding/OnboardingTour.tsx(11,7): error TS6133: 'Step' is declared but its value is never read.
+src/components/Onboarding/OnboardingTour.tsx(77,7): error TS2322: Type '{ title: string; description: string; target: () => HTMLElement | null; nextButtonProps: { children: string; }; prevButtonProps: { children: string; }; }[]' is not assignable to type 'TourStepProps[]'.
+  Type '{ title: string; description: string; target: () => HTMLElement | null; nextButtonProps: { children: string; }; prevButtonProps: { children: string; }; }' is not assignable to type 'TourStepProps'.
+    Types of property 'target' are incompatible.
+      Type '() => HTMLElement | null' is not assignable to type 'HTMLElement | (() => HTMLElement) | (() => null) | null | undefined'.
+        Type '() => HTMLElement | null' is not assignable to type '() => HTMLElement'.
+          Type 'HTMLElement | null' is not assignable to type 'HTMLElement'.
+            Type 'null' is not assignable to type 'HTMLElement'.
+src/components/Onboarding/WelcomeModal.tsx(233,35): error TS6133: 'step' is declared but its value is never read.
+src/components/Post/PostCard.tsx(67,25): error TS6133: 'setCommentsCount' is declared but its value is never read.
+src/components/Post/PostCard.tsx(209,17): error TS2322: Type '{ rest: { scale: number; y: number; }; hover: { scale: number; y: number; transition: { duration: number; ease: string; }; }; }' is not assignable to type 'Variants'.
+  Property 'hover' is incompatible with index signature.
+    Type '{ scale: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'Variant'.
+      Type '{ scale: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type 'TargetAndTransition'.
+        Type '{ scale: number; y: number; transition: { duration: number; ease: string; }; }' is not assignable to type '{ transition?: Transition<any> | undefined; transitionEnd?: ResolvedValues | undefined; }'.
+          Types of property 'transition' are incompatible.
+            Type '{ duration: number; ease: string; }' is not assignable to type 'Transition<any> | undefined'.
+              Type '{ duration: number; ease: string; }' is not assignable to type 'TransitionWithValueOverrides<any>'.
+                Type '{ duration: number; ease: string; }' is not assignable to type 'ValueAnimationTransition<any>'.
+                  Types of property 'ease' are incompatible.
+                    Type 'string' is not assignable to type 'Easing | Easing[] | undefined'.
+src/components/Post/PostCreator.tsx(13,3): error TS6133: 'SmileOutlined' is declared but its value is never read.
+src/components/Post/PostCreator.tsx(46,10): error TS6133: 'mediaFiles' is declared but its value is never read.
+src/components/Search/CreatorFilters.tsx(8,26): error TS6133: 'CloseOutlined' is declared but its value is never read.
+src/components/Search/SearchBar.tsx(8,18): error TS6133: 'AnimatePresence' is declared but its value is never read.
+src/components/Social/ReferralProgram.tsx(6,20): error TS6133: 'useEffect' is declared but its value is never read.
+src/components/Social/ReferralProgram.tsx(7,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/Social/ReferralProgram.tsx(7,48): error TS6133: 'Tag' is declared but its value is never read.
+src/components/Social/ReferralProgram.tsx(9,1): error TS6133: 'motion' is declared but its value is never read.
+src/components/Social/ReferralProgram.tsx(25,17): error TS6133: 'setStats' is declared but its value is never read.
+src/components/Social/ShareDialog.tsx(15,3): error TS6133: 'LinkOutlined' is declared but its value is never read.
+src/components/Social/ShareDialog.tsx(17,27): error TS6133: 'typography' is declared but its value is never read.
+src/components/Social/ShareDialog.tsx(50,11): error TS6133: 'encodedDescription' is declared but its value is never read.
+src/components/Social/ShareDialog.tsx(118,12): error TS2774: This condition will always return true since this function is always defined. Did you mean to call it instead?
+src/components/upload/AvatarUpload.tsx(100,14): error TS2322: Type '{ children: Element; aspectRatio: number; maxSize: number; minWidth: number; minHeight: number; onUpload: (croppedImage: Blob, fileName: string) => Promise<{ url: string; }>; disabled: boolean; buttonText: string; cropShape: "round"; }' is not assignable to type 'IntrinsicAttributes & ImageUploadProps'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & ImageUploadProps'.
+src/components/upload/CoverImageUpload.tsx(6,10): error TS6133: 'Card' is declared but its value is never read.
+src/components/upload/CoverImageUpload.tsx(97,16): error TS2322: Type '{ children: Element; aspectRatio: number; maxSize: number; minWidth: number; minHeight: number; onUpload: (croppedImage: Blob, fileName: string) => Promise<{ url: string; }>; disabled: boolean; buttonText: string; cropShape: "rect"; }' is not assignable to type 'IntrinsicAttributes & ImageUploadProps'.
+  Property 'children' does not exist on type 'IntrinsicAttributes & ImageUploadProps'.
+src/components/upload/DocumentUpload.tsx(6,41): error TS6133: 'Progress' is declared but its value is never read.
+src/components/upload/DocumentUpload.tsx(14,3): error TS6133: 'CheckCircleOutlined' is declared but its value is never read.
+src/components/upload/DocumentUpload.tsx(15,3): error TS6133: 'CloseCircleOutlined' is declared but its value is never read.
+src/components/upload/FileUpload.tsx(6,27): error TS6133: 'useRef' is declared but its value is never read.
+src/components/upload/FileUpload.tsx(6,35): error TS6133: 'DragEvent' is declared but its value is never read.
+src/components/upload/FileUpload.tsx(6,46): error TS6133: 'ChangeEvent' is declared but its value is never read.
+src/components/upload/FileUpload.tsx(43,3): error TS6133: 'listType' is declared but its value is never read.
+src/components/upload/ImageUpload.tsx(8,29): error TS2307: Cannot find module 'react-easy-crop/types' or its corresponding type declarations.
+src/components/upload/ImageUpload.tsx(86,39): error TS6133: 'croppedArea' is declared but its value is never read.
+src/hooks/queries/useCreators.ts(91,15): error TS6133: 'err' is declared but its value is never read.
+src/hooks/queries/useCreators.ts(95,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/queries/useCreators.ts(95,23): error TS6133: 'error' is declared but its value is never read.
+src/hooks/queries/useCreators.ts(128,15): error TS6133: 'err' is declared but its value is never read.
+src/hooks/queries/useCreators.ts(132,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/queries/useCreators.ts(132,23): error TS6133: 'error' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(76,15): error TS6133: 'err' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(81,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(81,23): error TS6133: 'error' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(114,15): error TS6133: 'err' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(118,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(118,23): error TS6133: 'error' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(145,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(166,37): error TS6133: 'postId' is declared but its value is never read.
+src/hooks/queries/usePosts.ts(170,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/queries/useUser.ts(69,26): error TS6133: 'userId' is declared but its value is never read.
+src/hooks/queries/useUser.ts(73,17): error TS6133: 'data' is declared but its value is never read.
+src/hooks/useSocket.ts(14,10): error TS6133: 'isConnected' is declared but its value is never read.
+src/main.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/main.tsx(106,49): error TS2322: Type '"bottom-right"' is not assignable to type 'DevtoolsPosition | undefined'.
+src/pages/admin/AdminEmailPreview.tsx(11,7): error TS6133: 'TextArea' is declared but its value is never read.
+src/pages/admin/AdminEmailPreview.tsx(46,19): error TS6133: 'email' is declared but its value is never read.
+src/pages/admin/AdminModeration.tsx(22,3): error TS6133: 'Tabs' is declared but its value is never read.
+src/pages/admin/AdminModeration.tsx(26,3): error TS6133: 'Empty' is declared but its value is never read.
+src/pages/admin/AdminModeration.tsx(30,3): error TS6133: 'EyeInvisibleOutlined' is declared but its value is never read.
+src/pages/admin/AdminModeration.tsx(35,3): error TS6133: 'ExclamationCircleOutlined' is declared but its value is never read.
+src/pages/Chat.tsx(41,10): error TS6133: 'recordedAudio' is declared but its value is never read.
+src/pages/Community.tsx(7,27): error TS6133: 'Button' is declared but its value is never read.
+src/pages/Community.tsx(8,54): error TS6133: 'MessageOutlined' is declared but its value is never read.
+src/pages/Community.tsx(12,1): error TS6133: 'CustomCard' is declared but its value is never read.
+src/pages/creator/CreatorAnalytics.tsx(7,61): error TS6133: 'Space' is declared but its value is never read.
+src/pages/creator/CreatorAnalytics.tsx(27,37): error TS1261: Already included file name 'C:/Work Profile/ai-creator/web/src/components/Analytics/CompetitiveAnalysis.tsx' differs from file name 'C:/Work Profile/ai-creator/web/src/components/analytics/CompetitiveAnalysis.tsx' only in casing.
+  The file is in the program because:
+    Imported via '../../components/Analytics/CompetitiveAnalysis' from file 'C:/Work Profile/ai-creator/web/src/pages/creator/CreatorAnalytics.tsx'
+    Matched by include pattern 'src' in 'C:/Work Profile/ai-creator/web/tsconfig.json'
+src/pages/creator/CreatorAnalytics.tsx(32,7): error TS6133: 'RangePicker' is declared but its value is never read.
+src/pages/creator/CreatorAnalytics.tsx(50,10): error TS6133: 'funnelLoading' is declared but its value is never read.
+src/pages/creator/CreatorAnalytics.tsx(145,9): error TS6133: 'handleComparisonDaysChange' is declared but its value is never read.
+src/pages/creator/CreatorDashboardHome.tsx(6,20): error TS6133: 'Card' is declared but its value is never read.
+src/pages/creator/CreatorDashboardHome.tsx(11,3): error TS6133: 'RiseOutlined' is declared but its value is never read.
+src/pages/creator/CreatorDashboardHome.tsx(19,10): error TS6133: 'LineChart' is declared but its value is never read.
+src/pages/creator/CreatorDashboardHome.tsx(19,21): error TS6133: 'Line' is declared but its value is never read.
+src/pages/creator/CreatorDashboardHome.tsx(22,1): error TS6133: 'formatRelativeTime' is declared but its value is never read.
+src/pages/creator/CreatorDashboardHome.tsx(64,11): error TS2322: Type 'string' is not assignable to type 'number'.
+src/pages/creator/CreatorPayouts.tsx(23,3): error TS6133: 'Tooltip' is declared but its value is never read.
+src/pages/creator/CreatorPayouts.tsx(97,10): error TS6133: 'payoutForm' is declared but its value is never read.
+src/pages/creator/CreatorSettings.tsx(6,60): error TS6133: 'Row' is declared but its value is never read.
+src/pages/creator/CreatorSettings.tsx(6,65): error TS6133: 'Col' is declared but its value is never read.
+src/pages/creator/CreatorSettings.tsx(40,37): error TS6133: 'url' is declared but its value is never read.
+src/pages/creator/CreatorSettings.tsx(45,36): error TS6133: 'url' is declared but its value is never read.
+src/pages/creator/CreatorSettings.tsx(81,34): error TS2339: Property 'profileImage' does not exist on type 'User'.
+src/pages/CreatorGallery.tsx(7,63): error TS6133: 'Badge' is declared but its value is never read.
+src/pages/CreatorGallery.tsx(7,70): error TS6133: 'Drawer' is declared but its value is never read.
+src/pages/CreatorGallery.tsx(18,18): error TS6133: 'AnimatePresence' is declared but its value is never read.
+src/pages/CreatorGallery.tsx(28,32): error TS6133: 'slideUp' is declared but its value is never read.
+src/pages/CreatorGallery.tsx(28,68): error TS6133: 'cardHover' is declared but its value is never read.
+src/pages/CreatorGallery.tsx(128,49): error TS2339: Property 'createdAt' does not exist on type 'Creator'.
+src/pages/CreatorGallery.tsx(128,83): error TS2339: Property 'createdAt' does not exist on type 'Creator'.
+src/pages/CreatorGallery.tsx(465,17): error TS2322: Type '{ type: "no-results"; title: string; description: string; actionText: string; onAction: () => void; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/pages/CreatorProfile.tsx(7,39): error TS6133: 'Divider' is declared but its value is never read.
+src/pages/CreatorProfile.tsx(7,48): error TS6133: 'Tooltip' is declared but its value is never read.
+src/pages/CreatorProfile.tsx(18,3): error TS6133: 'LinkOutlined' is declared but its value is never read.
+src/pages/CreatorProfile.tsx(25,1): error TS6133: 'CustomAvatar' is declared but its value is never read.
+src/pages/CreatorProfile.tsx(36,41): error TS6133: 'scaleIn' is declared but its value is never read.
+src/pages/CreatorProfile.tsx(166,9): error TS2322: Type '{ type: "error"; title: string; description: string; actionText: string; onAction: () => void | Promise<void>; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/pages/CreatorProfile.tsx(302,14): error TS2304: Cannot find name 'Button'.
+src/pages/CreatorProfile.tsx(319,15): error TS2304: Cannot find name 'Button'.
+src/pages/Feed.tsx(12,33): error TS6133: 'PostData' is declared but its value is never read.
+src/pages/Feed.tsx(28,5): error TS6133: 'isFetchingNextPage' is declared but its value is never read.
+src/pages/Feed.tsx(44,30): error TS6133: 'newPost' is declared but its value is never read.
+src/pages/Feed.tsx(50,30): error TS6133: 'postId' is declared but its value is never read.
+src/pages/Feed.tsx(56,29): error TS6133: 'postId' is declared but its value is never read.
+src/pages/Feed.tsx(92,13): error TS2322: Type '{ type: "no-posts"; title: string; description: string; actionText: string; onAction: () => void; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/pages/Feed.tsx(115,11): error TS2322: Type '{ type: "error"; title: string; description: string; actionText: string; onAction: () => Promise<QueryObserverResult<InfiniteData<any, unknown>, Error>>; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/pages/Feed.tsx(183,13): error TS2322: Type '{ type: "no-posts"; title: string; description: string; actionText: string; onAction: () => void; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/pages/Landing.tsx(6,28): error TS6133: 'Statistic' is declared but its value is never read.
+src/pages/Landing.tsx(12,3): error TS6133: 'CheckCircleFilled' is declared but its value is never read.
+src/pages/Landing.tsx(15,3): error TS6133: 'PlayCircleOutlined' is declared but its value is never read.
+src/pages/Landing.tsx(18,29): error TS6133: 'useAnimation' is declared but its value is never read.
+src/pages/MVP1Presentation.tsx(22,3): error TS6133: 'CloseOutlined' is declared but its value is never read.
+src/pages/MVP1Presentation.tsx(41,9): error TS6133: 'features' is declared but its value is never read.
+src/pages/Search.tsx(8,72): error TS6133: 'TagOutlined' is declared but its value is never read.
+src/pages/Search.tsx(14,7): error TS6133: 'TabPane' is declared but its value is never read.
+src/pages/Search.tsx(21,9): error TS6133: 'navigate' is declared but its value is never read.
+src/pages/Trending.tsx(7,24): error TS6133: 'RiseOutlined' is declared but its value is never read.
+src/pages/Trending.tsx(13,7): error TS6133: 'TabPane' is declared but its value is never read.
+src/pages/user/UserDashboard.tsx(7,20): error TS6133: 'Card' is declared but its value is never read.
+src/pages/user/UserDashboard.tsx(19,55): error TS6133: 'gamificationApi' is declared but its value is never read.
+src/pages/user/UserDashboard.tsx(21,31): error TS1261: Already included file name 'C:/Work Profile/ai-creator/web/src/components/Analytics/UserAnalytics.tsx' differs from file name 'C:/Work Profile/ai-creator/web/src/components/analytics/UserAnalytics.tsx' only in casing.
+  The file is in the program because:
+    Imported via '../../components/Analytics/UserAnalytics' from file 'C:/Work Profile/ai-creator/web/src/pages/user/UserDashboard.tsx'
+    Matched by include pattern 'src' in 'C:/Work Profile/ai-creator/web/tsconfig.json'
+src/pages/user/UserDashboard.tsx(198,47): error TS2322: Type '{ children: string; color: "blue"; size: string; }' is not assignable to type 'IntrinsicAttributes & TagProps & RefAttributes<HTMLSpanElement>'.
+  Property 'size' does not exist on type 'IntrinsicAttributes & TagProps & RefAttributes<HTMLSpanElement>'.
+src/pages/UserProfile.tsx(157,15): error TS2322: Type '{ type: "no-posts"; title: string; description: string; actionText: string | undefined; onAction: (() => void | Promise<void>) | undefined; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/pages/UserProfile.tsx(250,9): error TS2322: Type '{ type: "error"; title: string; description: string; actionText: string; onAction: () => void | Promise<void>; }' is not assignable to type 'IntrinsicAttributes & EmptyStateProps'.
+  Property 'actionText' does not exist on type 'IntrinsicAttributes & EmptyStateProps'.
+src/styles/animations.ts(384,25): error TS6133: 'from' is declared but its value is never read.
+src/styles/animations.ts(384,39): error TS6133: 'to' is declared but its value is never read.
+src/styles/theme.ts(7,30): error TS6133: 'borderRadius' is declared but its value is never read.
+src/utils/textFormatter.tsx(123,7): error TS2322: Type 'ReactNode[]' is not assignable to type 'string[]'.
+  Type 'ReactNode' is not assignable to type 'string'.
+    Type 'undefined' is not assignable to type 'string'.
+src/utils/textFormatter.tsx(126,38): error TS6133: 'idx' is declared but its value is never read.

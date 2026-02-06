@@ -1,0 +1,414 @@
+# Default values for react
+# This is a YAML-formatted file.
+# This chart deploys React/Vite SPA applications
+
+# -- Number of replicas
+replicaCount: 1
+
+image:
+  # -- Container image repository
+  repository: ""
+  # -- Image pull policy
+  pullPolicy: IfNotPresent
+  # -- Overrides the image tag (default is chart appVersion)
+  tag: ""
+
+# -- Image pull secrets for private registries
+imagePullSecrets: []
+
+# -- Override the name of the chart
+nameOverride: ""
+
+# -- Override the full name of the release
+fullnameOverride: "creator-platform-web"
+
+# =============================================================================
+# SERVICE ACCOUNT
+# =============================================================================
+serviceAccount:
+  # -- Specifies whether a service account should be created
+  create: true
+  # -- Annotations to add to the service account
+  annotations: {}
+  # -- The name of the service account to use
+  name: ""
+  # -- Automount service account token
+  automountServiceAccountToken: false
+
+# =============================================================================
+# POD SECURITY
+# =============================================================================
+podSecurityContext:
+  # -- Run as non-root user
+  runAsNonRoot: true
+  # -- User ID to run as (nginx user)
+  runAsUser: 101
+  # -- Group ID to run as (nginx group)
+  runAsGroup: 101
+  # -- Filesystem group
+  fsGroup: 101
+  # -- Seccomp profile type
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container security context
+securityContext:
+  # -- Prevent privilege escalation
+  allowPrivilegeEscalation: false
+  # -- Run as non-root
+  runAsNonRoot: true
+  # -- User ID (nginx user)
+  runAsUser: 101
+  # -- Group ID (nginx group)
+  runAsGroup: 101
+  # -- Read-only root filesystem
+  readOnlyRootFilesystem: true
+  # -- Drop all capabilities
+  capabilities:
+    drop:
+      - ALL
+
+# =============================================================================
+# CONTAINER CONFIGURATION
+# =============================================================================
+# -- Container port
+containerPort: 8080
+
+# -- Command to run (overrides default container command)
+command: []
+# -- Arguments to pass to the command
+args: []
+
+# =============================================================================
+# ENVIRONMENT VARIABLES
+# =============================================================================
+# -- Plain environment variables (stored in ConfigMap)
+env: 
+  API_BACKEND_URL: "creator-platform-api.creator-platform-dev.svc.cluster.local:80"
+  # API_URL: "https://api.example.com"
+  VITE_API_URL: "/api"
+  WS_BACKEND_URL: "creator-platform-api.creator-platform-dev.svc.cluster.local:80"
+  VITE_WS_URL: "wss://crp.dev.gcp.codespiresolutions.com"
+
+# -- Sensitive environment variables (stored in Secret)
+envSecret: {}
+  # API_KEY: "your-api-key"
+
+# -- Environment variables from existing ConfigMaps/Secrets
+envFrom: []
+  # - type: configMap
+  #   name: existing-configmap
+  # - type: secret
+  #   name: existing-secret
+  #   key: api-key
+  #   envName: API_KEY
+
+# =============================================================================
+# RESOURCE LIMITS
+# =============================================================================
+resources:
+  limits:
+    # -- CPU limit
+    cpu: 200m
+    # -- Memory limit
+    memory: 256Mi
+  requests:
+    # -- CPU request
+    cpu: 50m
+    # -- Memory request
+    memory: 64Mi
+
+# =============================================================================
+# HEALTH PROBES
+# =============================================================================
+livenessProbe:
+  # -- Enable liveness probe
+  enabled: false
+  # -- Type of probe: httpGet, tcpSocket, exec
+  type: httpGet
+  # -- HTTP probe settings
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  # -- TCP socket probe settings (used when type is tcpSocket)
+  tcpSocket:
+    port: http
+  # -- Exec probe settings (used when type is exec)
+  exec:
+    command:
+      - cat
+      - /tmp/healthy
+  # -- Initial delay before starting probes
+  initialDelaySeconds: 5
+  # -- Period between probes
+  periodSeconds: 10
+  # -- Timeout for each probe
+  timeoutSeconds: 5
+  # -- Number of successes required
+  successThreshold: 1
+  # -- Number of failures before marking unhealthy
+  failureThreshold: 3
+
+readinessProbe:
+  # -- Enable readiness probe
+  enabled: false
+  # -- Type of probe: httpGet, tcpSocket, exec
+  type: httpGet
+  # -- HTTP probe settings
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  # -- TCP socket probe settings
+  tcpSocket:
+    port: http
+  # -- Exec probe settings
+  exec:
+    command:
+      - cat
+      - /tmp/nginx/nginx.pid
+  # -- Initial delay before starting probes
+  initialDelaySeconds: 3
+  # -- Period between probes
+  periodSeconds: 5
+  # -- Timeout for each probe
+  timeoutSeconds: 3
+  # -- Number of successes required
+  successThreshold: 1
+  # -- Number of failures before marking not ready
+  failureThreshold: 3
+
+startupProbe:
+  # -- Enable startup probe
+  enabled: false
+  # -- Type of probe: httpGet, tcpSocket, exec
+  type: httpGet
+  # -- HTTP probe settings
+  httpGet:
+    path: /health
+    port: http
+    scheme: HTTP
+  # -- TCP socket probe settings
+  tcpSocket:
+    port: http
+  # -- Exec probe settings
+  exec:
+    command:
+      - cat
+      - /tmp/nginx/nginx.pid
+  # -- Initial delay before starting probes
+  initialDelaySeconds: 0
+  # -- Period between probes
+  periodSeconds: 5
+  # -- Timeout for each probe
+  timeoutSeconds: 3
+  # -- Number of successes required
+  successThreshold: 1
+  # -- Number of failures allowed during startup
+  failureThreshold: 30
+
+# =============================================================================
+# SERVICE
+# =============================================================================
+service:
+  # -- Service type
+  type: ClusterIP
+  # -- Service port
+  port: 80
+  # -- Target port (defaults to containerPort)
+  targetPort: ""
+  # -- Node port (only for NodePort type)
+  nodePort: ""
+  # -- Additional annotations
+  annotations: {}
+
+# =============================================================================
+# GCP HEALTH CHECK POLICY (Gateway API)
+# =============================================================================
+healthCheckPolicy:
+  # -- Enable HealthCheckPolicy for public-facing services behind GCP Gateway
+  enabled: false
+  # -- Health check path
+  path: "/health"
+  # -- Check interval in seconds
+  checkIntervalSec: 15
+  # -- Timeout in seconds
+  timeoutSec: 5
+  # -- Healthy threshold
+  healthyThreshold: 1
+  # -- Unhealthy threshold
+  unhealthyThreshold: 2
+  # -- Enable health check logging
+  logEnabled: false
+
+# =============================================================================
+# HTTPROUTE (Gateway API)
+# =============================================================================
+httpRoute:
+  # -- Enable HTTPRoute
+  enabled: true
+  # -- Annotations for HTTPRoute
+  annotations: {}
+  # -- Labels for HTTPRoute
+  labels: {}
+  # -- Parent gateway references
+  parentRefs:
+    - name: https-gateway
+      namespace: gateway-system
+      sectionName: https-dev
+  # -- Hostnames to match
+  hostnames:
+    - crp.dev.gcp.codespiresolutions.com
+  # -- Routing rules
+  rules:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /
+      # -- Backend references (auto-generated if empty)
+      backendRefs: 
+        - name: creator-platform-web
+          port: 80
+      # -- Request filters
+      filters: []
+  # -- Additional TLS configuration (if using TLS termination at gateway)
+  tls: {}
+
+# =============================================================================
+# DEPLOYMENT STRATEGY
+# =============================================================================
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 1
+    maxUnavailable: 0
+
+# -- Number of old ReplicaSets to retain
+revisionHistoryLimit: 3
+
+# -- Minimum seconds a pod must be ready before considered available
+minReadySeconds: 0
+
+# -- Maximum time for deployment to make progress before considered failed
+progressDeadlineSeconds: 600
+
+# =============================================================================
+# AUTOSCALING
+# =============================================================================
+autoscaling:
+  # -- Enable HPA
+  enabled: false
+  # -- Minimum replicas
+  minReplicas: 1
+  # -- Maximum replicas
+  maxReplicas: 10
+  # -- Target CPU utilization percentage
+  targetCPUUtilizationPercentage: 80
+  # -- Target memory utilization percentage
+  targetMemoryUtilizationPercentage: ""
+  # -- Custom metrics for scaling
+  customMetrics: []
+
+# =============================================================================
+# POD DISRUPTION BUDGET
+# =============================================================================
+podDisruptionBudget:
+  # -- Enable PDB
+  enabled: false
+  # -- Minimum available pods (can be number or percentage)
+  minAvailable: 1
+  # -- Maximum unavailable pods (can be number or percentage)
+  maxUnavailable: ""
+
+# =============================================================================
+# SCHEDULING
+# =============================================================================
+# -- Node selector
+nodeSelector: {}
+
+# -- Tolerations
+tolerations: []
+
+# -- Affinity rules
+affinity: {}
+
+# -- Topology spread constraints
+topologySpreadConstraints: []
+
+# -- Priority class name
+priorityClassName: ""
+
+# =============================================================================
+# POD ANNOTATIONS & LABELS
+# =============================================================================
+# -- Additional pod annotations
+podAnnotations: {}
+
+# -- Additional pod labels
+podLabels: {}
+
+# =============================================================================
+# LIFECYCLE HOOKS
+# =============================================================================
+lifecycle: {}
+  # preStop:
+  #   exec:
+  #     command:
+  #       - /bin/sh
+  #       - -c
+  #       - sleep 5
+
+# -- Termination grace period in seconds
+terminationGracePeriodSeconds: 30
+
+# =============================================================================
+# INIT CONTAINERS
+# =============================================================================
+initContainers: []
+
+# =============================================================================
+# SIDECAR CONTAINERS
+# =============================================================================
+sidecars: []
+
+# =============================================================================
+# EXTRA VOLUME MOUNTS
+# =============================================================================
+# -- Additional volume mounts
+extraVolumeMounts: []
+
+# -- Additional volumes
+extraVolumes: []
+
+# =============================================================================
+# NETWORK POLICY
+# =============================================================================
+networkPolicy:
+  # -- Enable network policy
+  enabled: false
+  # -- Ingress rules
+  ingress: []
+  # -- Egress rules
+  egress: []
+
+# =============================================================================
+# SERVICE MONITOR (Prometheus)
+# =============================================================================
+serviceMonitor:
+  # -- Enable ServiceMonitor for Prometheus
+  enabled: false
+  # -- Namespace for ServiceMonitor (defaults to release namespace)
+  namespace: ""
+  # -- Scrape interval
+  interval: 30s
+  # -- Scrape timeout
+  scrapeTimeout: 10s
+  # -- Metrics path
+  path: /metrics
+  # -- Additional labels
+  labels: {}
+  # -- Metric relabeling configs
+  metricRelabelings: []
+  # -- Relabeling configs
+  relabelings: []

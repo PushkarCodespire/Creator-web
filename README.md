@@ -1,93 +1,154 @@
-# web
+# Creator Platform - Frontend
 
+React + TypeScript + Ant Design frontend for the AI Creator Platform.
 
+## 🚀 Quick Start
 
-## Getting started
+### Prerequisites
+- Node.js 18+
+- Backend server running on port 5000
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+### Setup
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
-
-```
-cd existing_repo
-git remote add origin https://gitlab.gcp.codespiresolutions.com/products/creator-platform/web.git
-git branch -M main
-git push -uf origin main
+1. **Install dependencies:**
+```bash
+npm install
 ```
 
-## Integrate with your tools
+2. **Configure environment (optional):**
+```bash
+cp .env.example .env
+```
 
-* [Set up project integrations](https://gitlab.gcp.codespiresolutions.com/products/creator-platform/web/-/settings/integrations)
+3. **Start development server:**
+```bash
+npm run dev
+```
 
-## Collaborate with your team
+Frontend will start at `http://localhost:3000`
 
-* [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## 📁 Project Structure
 
-## Test and Deploy
+```
+Frontend/
+├── src/
+│   ├── components/
+│   │   ├── layouts/      # MainLayout, DashboardLayout
+│   │   └── common/       # Reusable components
+│   ├── pages/
+│   │   ├── user/         # User dashboard pages
+│   │   ├── creator/      # Creator dashboard pages
+│   │   ├── company/      # Company dashboard pages
+│   │   └── admin/        # Admin dashboard pages
+│   ├── store/
+│   │   └── slices/       # Redux slices
+│   ├── services/         # API services
+│   ├── hooks/            # Custom hooks
+│   ├── types/            # TypeScript types
+│   └── utils/            # Utilities
+├── public/
+└── index.html
+```
 
-Use the built-in continuous integration in GitLab.
+## 🎯 Features
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+### Public Pages
+- **Landing** (`/`) - Hero, features, how it works
+- **Creator Gallery** (`/creators`) - Browse & search creators
+- **Creator Profile** (`/creator/:id`) - Detailed creator page
+- **Chat** (`/chat/:creatorId`) - AI chat interface
+- **Pricing** (`/pricing`) - Subscription plans
+- **Login/Register** (`/login`, `/register`) - Authentication
 
-***
+### User Dashboard (`/dashboard`)
+- Overview with stats
+- Chat history
+- Subscription management
 
-# Editing this README
+### Creator Dashboard (`/creator-dashboard`)
+- Analytics overview
+- Content management (YouTube, manual text, FAQs)
+- Brand opportunities
+- Profile settings
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
+### Company Dashboard (`/company-dashboard`)
+- Deal management
+- Post opportunities
+- Discover creators
 
-## Suggestions for a good README
+### Admin Panel (`/admin`)
+- Platform statistics
+- User management
+- Creator verifications
 
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+## 🔧 Tech Stack
 
-## Name
-Choose a self-explaining name for your project.
+- **React 18** - UI framework
+- **TypeScript** - Type safety
+- **Vite** - Build tool
+- **Ant Design** - UI components
+- **Redux Toolkit** - State management
+- **React Router** - Routing
+- **Axios** - API client
+- **Socket.io Client** - Real-time features
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+## 🛠 Scripts
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+```bash
+npm run dev      # Start development server
+npm run build    # Build for production
+npm run preview  # Preview production build
+```
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+## 📱 Pages Overview
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+| Route | Page | Auth |
+|-------|------|------|
+| `/` | Landing | No |
+| `/creators` | Creator Gallery | No |
+| `/creator/:id` | Creator Profile | No |
+| `/chat/:creatorId` | AI Chat | No* |
+| `/pricing` | Pricing Plans | No |
+| `/login` | Login | No |
+| `/register` | Register | No |
+| `/dashboard` | User Dashboard | User |
+| `/dashboard/chats` | Chat History | User |
+| `/dashboard/subscription` | Subscription | User |
+| `/creator-dashboard` | Creator Home | Creator |
+| `/creator-dashboard/content` | Content Mgmt | Creator |
+| `/creator-dashboard/analytics` | Analytics | Creator |
+| `/creator-dashboard/opportunities` | Opportunities | Creator |
+| `/creator-dashboard/settings` | Settings | Creator |
+| `/company-dashboard` | Company Home | Company |
+| `/company-dashboard/opportunities` | My Opportunities | Company |
+| `/company-dashboard/discover` | Discover Creators | Company |
+| `/admin` | Admin Dashboard | Admin |
+| `/admin/users` | User Management | Admin |
+| `/admin/creators` | Creator Verifications | Admin |
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
+*Chat works for guests with limited messages
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
+## 🎨 Customization
 
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
+### Theme
+Modify the Ant Design theme in `src/main.tsx`:
+```typescript
+const theme = {
+  token: {
+    colorPrimary: '#1890ff',
+    borderRadius: 8,
+  }
+};
+```
 
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
+### API URL
+For production, set in `.env`:
+```
+VITE_API_URL=https://api.yourplatform.com
+```
 
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
+## 📝 Notes
 
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+- Uses Vite proxy in development to forward `/api` requests to backend
+- Redux persists auth state to localStorage
+- Guest users get a UUID stored in localStorage for chat tracking

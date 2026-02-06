@@ -1,0 +1,759 @@
+// ===========================================
+// API SERVICE
+// ===========================================
+
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL || '/api';
+
+const api = axios.create({
+  baseURL: API_URL
+});
+
+export const getImageUrl = (path?: string) => {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+
+  // Ensure we don't have double slashes
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+
+  // Ensure the base URL doesn't end with /api for static uploads
+  const baseUrl = API_URL.replace(/\/api\/?$/, '');
+
+  // Remove trailing slash from baseUrl if present to avoid //
+  const finalBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+
+  return `${finalBaseUrl}${cleanPath}`;
+};
+
+// Add auth token to requests
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  // Add guest ID for anonymous users
+  const guestId = localStorage.getItem('guestId');
+  if (guestId) {
+    config.headers['x-guest-id'] = guestId;
+  }
+  return config;
+});
+
+// Handle errors
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // Only redirect to login for 401 if user was previously authenticated
+    // Don't redirect for public pages that optionally use auth (like feed)
+    if (error.response?.status === 401) {
+      const token = localStorage.getItem('token');
+      // Only clear and redirect if user had a token (was logged in)
+      if (token) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        window.location.href = '/login';
+      }
+      // For unauthenticated users hitting protected endpoints, just reject the promise
+      // Let the component handle showing appropriate UI
+    }
+    return Promise.reject(error);
+  }
+);
+
+// ===========================================
+// AUTH API
+// ===========================================
+
+export const authApi = {
+  login: (email: string, password: string) =>
+    api.post('/auth/login', { email, password }),
+
+  register: (data: { email: string; password: string; name: string; role?: string }) =>
+    api.post('/auth/register', data),
+
+  getCurrentUser: () => api.get('/auth/me'),
+
+  updateProfile: (data: { name?: string; avatar?: string }) =>
+    api.put('/auth/profile', data),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    api.put('/auth/password', { currentPassword, newPassword })
+};
+
+// ===========================================
+// USER API (Sprint 5 - Personalization)
+// ===========================================
+
+export const userApi = {
+  // Get user profile
+  getProfile: () => api.get('/users/profile'),
+
+  // Update user profile
+  updateProfile: (data: { name?: string; avatar?: string }) =>
+    api.put('/users/profile', data),
+
+  // Get user interests
+  getInterests: () => api.get('/users/interests'),
+
+  // Update user interests
+  updateInterests: (interests: string[]) =>
+    api.put('/users/interests', { interests }),
+
+  // Get chat summary
+  getChatSummary: () => api.get('/users/chat-summary'),
+
+  // Get available categories
+  getCategories: () => api.get('/users/categories')
+};
+
+// ===========================================
+// CREATOR API
+// ===========================================
+
+export const creatorApi = {
+  getAll: (params?: {
+    category?: string;
+    search?: string;
+    page?: number;
+    limit?: number;
+    priceFilter?: 'free' | 'premium';
+    minRating?: number;
+    verified?: 'true' | 'false';
+    sortBy?: 'popular' | 'rating' | 'newest' | 'alphabetical';
+  }) =>
+    api.get('/creators', { params }),
+
+  getById: (id: string) => api.get(`/creators/${id}`),
+
+  getContent: (creatorId: string) => api.get(`/creators/${creatorId}/content`),
+
+  getCategories: () => api.get('/creators/categories'),
+
+  getDashboard: () => api.get('/creators/dashboard/me'),
+
+  updateProfile: (data: any) => {
+    // Handle FormData (e.g. avatar upload) separately
+    if (data instanceof FormData) {
+      return api.put('/creators/profile', data);
+    }
+
+    // Ensure websiteUrl is an empty string if it's null or undefined
+    const submissionData = { ...data };
+    if ('websiteUrl' in submissionData && (submissionData.websiteUrl === null || submissionData.websiteUrl === undefined)) {
+      submissionData.websiteUrl = '';
+    }
+
+    return api.put('/creators/profile', submissionData);
+  },
+
+  getAnalytics: () => api.get('/creators/analytics/me'),
+
+  // Advanced analytics
+  getRetentionAnalytics: () => api.get('/creators/analytics/retention'),
+
+  getRevenueForecast: () => api.get('/creators/analytics/forecast'),
+
+  getActivityHeatmap: () => api.get('/creators/analytics/activity-heatmap'),
+
+  getConversionFunnel: () => api.get('/creators/analytics/conversion-funnel'),
+
+  getComparativeAnalytics: (days?: number) =>
+    api.get('/creators/analytics/comparison', { params: { days } }),
+
+  // Added based on user request
+  getApplications: (params?: { page?: number; limit?: number; status?: string; creatorId?: string }) =>
+    api.get('/creators/applications', { params })
+};
+
+// ===========================================
+// CHAT API
+// ===========================================
+
+export const chatApi = {
+  startConversation: (creatorId: string) =>
+    api.post('/chat/start', { creatorId }),
+
+  sendMessage: (conversationId: string, content: string, media?: any[]) =>
+    api.post('/chat/message', { conversationId, content, media }),
+
+  uploadChatMedia: (files: File[]) => {
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('media', file);
+    });
+    return api.post('/upload/chat-media', formData);
+  },
+
+  getConversation: (conversationId: string) =>
+    api.get(`/chat/conversation/${conversationId}`),
+
+  // Enhanced with filters from API_REFERENCE.md
+  getUserConversations: (params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    category?: string;
+    timeFilter?: 'today' | 'week' | 'month' | 'all';
+    sort?: 'recent' | 'alphabetical' | 'oldest';
+  }) =>
+    api.get('/users/chats', { params }),
+
+  // New endpoints from AI_CHAT_API_REFERENCE.md (Fixed to match actual backend)
+  getConversationMessages: (conversationId: string, params?: {
+    page?: number;
+    limit?: number;
+  }) =>
+    api.get(`/chat/conversation/${conversationId}`, { params }),
+
+  createConversation: (creatorId: string) =>
+    api.post('/chat/conversations', { creatorId }),
+
+  getRateLimitStatus: () =>
+    api.get('/chat/rate-limit/status'),
+
+  editMessage: (messageId: string, content: string) =>
+    api.put(`/chat/message/${messageId}`, { content }),
+
+  deleteMessage: (messageId: string) =>
+    api.delete(`/chat/message/${messageId}`)
+};
+
+// ===========================================
+// CONTENT API
+// ===========================================
+
+export const contentApi = {
+  addYouTube: (url: string, title?: string) =>
+    api.post('/content/youtube', { url, title }),
+
+  addManual: (title: string, text: string) =>
+    api.post('/content/manual', { title, text }),
+
+  // Add FAQ bundle with title + questions/answers
+  addFAQ: (title: string, faqs: { question: string; answer: string }[]) =>
+    api.post('/content/faq', { title, faqs }),
+
+  getAll: (params?: { page?: number; limit?: number }) => api.get('/content', { params }),
+
+  getById: (contentId: string) => api.get(`/content/${contentId}`),
+
+  delete: (contentId: string) => api.delete(`/content/${contentId}`),
+
+  retrain: (contentId: string) => api.post(`/content/${contentId}/retrain`)
+};
+
+// ===========================================
+// USER DASHBOARD API (New - from API_REFERENCE.md)
+// ===========================================
+
+export const userDashboardApi = {
+  // Get comprehensive dashboard stats
+  getStats: () => api.get('/user/dashboard/stats'),
+
+  // Get recent conversations with creator details
+  getRecentConversations: (params?: { limit?: number }) =>
+    api.get('/user/dashboard/conversations/recent', { params }),
+
+  // Get AI-powered creator recommendations
+  getRecommendedCreators: (params?: { limit?: number }) =>
+    api.get('/user/dashboard/recommendations/creators', { params }),
+
+  // Get activity feed
+  getActivityFeed: (params?: { limit?: number; days?: number }) =>
+    api.get('/user/dashboard/activity-feed', { params })
+};
+
+// ===========================================
+// SUBSCRIPTION API
+// ===========================================
+
+export const subscriptionApi = {
+  getCurrent: () => api.get('/subscriptions/current'),
+  getPlans: () => api.get('/subscriptions/plans'),
+  upgrade: () => api.post('/subscriptions/upgrade'),
+  cancel: () => api.post('/subscriptions/cancel'),
+  getTransactions: (params?: { page?: number; limit?: number; status?: string }) =>
+    api.get('/subscriptions/transactions', { params }),
+
+  // New endpoints from API_REFERENCE.md
+  getDetails: () => api.get('/user/subscription/details'),
+  getFeatures: () => api.get('/user/subscription/features'),
+  getUsageAnalytics: (params?: { period?: number }) =>
+    api.get('/user/subscription/usage-analytics', { params })
+};
+
+// ===========================================
+// PAYMENT API
+// ===========================================
+
+export const paymentApi = {
+  createOrder: (data: { plan: string }) => api.post('/payment/create-order', data),
+  verifyPayment: (data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) =>
+    api.post('/payment/verify', data),
+  getStatus: (orderId: string) => api.get(`/payment/status/${orderId}`)
+};
+
+// ===========================================
+// PAYOUT API
+// ===========================================
+
+export const payoutApi = {
+  addBankAccount: (data: {
+    accountHolderName: string;
+    accountNumber: string;
+    ifscCode: string;
+    bankName: string;
+    accountType: string;
+    panNumber?: string;
+  }) => api.post('/payouts/bank-account', data),
+
+  getBankAccount: () => api.get('/payouts/bank-account'),
+
+  getEarningsBreakdown: () => api.get('/payouts/earnings/breakdown'),
+
+  requestPayout: (amount: number) => api.post('/payouts/request', { amount }),
+
+  getPayouts: () => api.get('/payouts'),
+
+  getLedger: () => api.get('/payouts/earnings/ledger')
+};
+
+// ===========================================
+// OPPORTUNITY API
+// ===========================================
+
+export const opportunityApi = {
+  getAll: (params?: {
+    category?: string;
+    type?: string;
+    status?: string;
+    search?: string;
+    minBudget?: number;
+    maxBudget?: number;
+    page?: number;
+    limit?: number;
+  }) =>
+    api.get('/opportunities', { params }),
+
+  getById: (id: string) => api.get(`/opportunities/${id}`),
+
+  create: (data: any) => api.post('/opportunities', data),
+
+  apply: (id: string, pitch: string, proposedBudget?: number) =>
+    api.post(`/opportunities/${id}/apply`, { pitch, proposedBudget }),
+
+  acceptApplication: (applicationId: string, amount: number) =>
+    api.post(`/opportunities/applications/${applicationId}/accept`, { amount }),
+
+  rejectApplication: (applicationId: string) =>
+    api.post(`/opportunities/applications/${applicationId}/reject`)
+};
+
+// ===========================================
+// COMPANY API
+// ===========================================
+
+export const companyApi = {
+  getDashboard: () => api.get('/companies/dashboard'),
+  updateProfile: (data: any) => api.put('/companies/profile', data),
+  discoverCreators: (params?: any) => api.get('/companies/discover-creators', { params }),
+  getDeals: (params?: { page?: number; limit?: number; status?: string }) => api.get('/companies/deals', { params }),
+  completeDeal: (dealId: string) => api.post(`/opportunities/deals/${dealId}/complete`)
+};
+
+// ===========================================
+// ADMIN API
+// ===========================================
+
+export const adminApi = {
+  getStats: () => api.get('/admin/stats'),
+  getRevenue: () => api.get('/admin/revenue'),
+  getConfig: () => api.get('/admin/config'),
+
+  // Users
+  getUsers: (params?: { page?: number; limit?: number; role?: string; search?: string }) => api.get('/admin/users', { params }),
+  getUser: (userId: string) => api.get(`/admin/users/${userId}`),
+  updateUser: (userId: string, data: { email?: string; name?: string; avatar?: string; isVerified?: boolean }) =>
+    api.put(`/admin/users/${userId}`, data),
+  updateUserRole: (userId: string, role: string) => api.put(`/admin/users/${userId}/role`, { role }),
+  suspendUser: (userId: string, data?: { days?: number; reason?: string }) =>
+    api.post(`/admin/users/${userId}/suspend`, data),
+  unsuspendUser: (userId: string) => api.post(`/admin/users/${userId}/unsuspend`),
+  banUser: (userId: string, data?: { reason?: string }) => api.post(`/admin/users/${userId}/ban`, data),
+  unbanUser: (userId: string) => api.post(`/admin/users/${userId}/unban`),
+
+  // Creators
+  getCreators: (params?: { page?: number; limit?: number; search?: string; verified?: boolean; active?: boolean; category?: string }) =>
+    api.get('/admin/creators', { params }),
+  getPendingCreators: (params?: { page?: number; limit?: number }) => api.get('/admin/creators/pending', { params }),
+  getCreator: (creatorId: string) => api.get(`/admin/creators/${creatorId}`),
+  updateCreator: (creatorId: string, data: any) => api.put(`/admin/creators/${creatorId}`, data),
+  setCreatorActive: (creatorId: string, isActive: boolean) =>
+    api.put(`/admin/creators/${creatorId}/active`, { isActive }),
+  verifyCreator: (creatorId: string) => api.post(`/admin/creators/${creatorId}/verify`),
+  rejectCreator: (creatorId: string, data?: { reason?: string }) =>
+    api.post(`/admin/creators/${creatorId}/reject`, data),
+
+  // Companies
+  getCompanies: (params?: { page?: number; limit?: number; search?: string; verified?: boolean; industry?: string }) =>
+    api.get('/admin/companies', { params }),
+  getCompany: (companyId: string) => api.get(`/admin/companies/${companyId}`),
+  updateCompany: (companyId: string, data: any) => api.put(`/admin/companies/${companyId}`, data),
+  verifyCompany: (companyId: string) => api.post(`/admin/companies/${companyId}/verify`),
+
+  // Deals
+  getDeals: (params?: { page?: number; limit?: number; status?: string }) => api.get('/admin/deals', { params }),
+  getDeal: (dealId: string) => api.get(`/admin/deals/${dealId}`),
+  updateDealStatus: (dealId: string, status: string) => api.patch(`/admin/deals/${dealId}/status`, { status }),
+
+  // Creator content moderation
+  getCreatorContents: (creatorId: string, params?: { page?: number; limit?: number; status?: string }) =>
+    api.get(`/admin/creators/${creatorId}/contents`, { params }),
+  updateContentStatus: (contentId: string, data: { status: string; errorMessage?: string }) =>
+    api.patch(`/admin/contents/${contentId}`, data),
+  deleteContent: (contentId: string) => api.delete(`/admin/contents/${contentId}`),
+
+  // Moderation queue
+  getReports: (params?: { status?: string; priority?: string; targetType?: string; page?: number; limit?: number }) =>
+    api.get('/admin/moderation/reports', { params }),
+  getReportDetails: (reportId: string) => api.get(`/admin/moderation/reports/${reportId}`),
+  resolveReport: (reportId: string, data: { action: string; reviewNotes: string; suspensionDays?: number }) =>
+    api.post(`/admin/moderation/reports/${reportId}/resolve`, data),
+  dismissReport: (reportId: string, data: { reason: string }) =>
+    api.post(`/admin/moderation/reports/${reportId}/dismiss`, data),
+  getModerationStats: () => api.get('/admin/moderation/stats'),
+  getModerationLogs: (params?: { action?: string; moderatorId?: string; page?: number; limit?: number }) =>
+    api.get('/admin/moderation/logs', { params }),
+  // User moderation history
+  getUserModerationHistory: (userId: string) => api.get(`/admin/moderation/users/${userId}/history`),
+
+  // AI Moderation
+  getAIModerationStats: (timeframe?: '7d' | '30d') => api.get('/admin/ai-moderation/stats', { params: { timeframe } }),
+  getAIModerationLogs: (params?: { page?: number; limit?: number }) => api.get('/admin/ai-moderation/logs', { params }),
+  testAIModeration: (content: string) => api.post('/admin/ai-moderation/test', { content }),
+  updateAIThresholds: (data: { category: string; blockThreshold: number; flagThreshold: number }) =>
+    api.put('/admin/ai-moderation/thresholds', data),
+
+  // Email templates
+  getEmailPreview: (params: {
+    type: 'welcome' | 'verification' | 'password-reset' | 'password-changed' | 'payment-receipt' | 'creator-verification';
+    name?: string;
+    role?: string;
+    verifyUrl?: string;
+    resetUrl?: string;
+    amount?: number;
+    transactionId?: string;
+    plan?: string;
+    verified?: boolean;
+  }) => api.get('/admin/email-preview', { params })
+};
+
+// ===========================================
+// POST API (Social Features - Sprint 2)
+// ===========================================
+
+export const postApi = {
+  // Get feed
+  getFeed: (params?: { page?: number; limit?: number; creatorId?: string }) =>
+    api.get('/posts', { params }),
+
+  // Get single post
+  getPost: (id: string) => api.get(`/posts/${id}`),
+
+  // Create post
+  createPost: (data: { content: string; media?: any[]; type?: string; publishedAt?: string }) =>
+    api.post('/posts', data),
+
+  // Update post
+  updatePost: (id: string, data: { content?: string; media?: any[]; type?: string; isPublished?: boolean }) =>
+    api.put(`/posts/${id}`, data),
+
+  // Delete post
+  deletePost: (id: string) => api.delete(`/posts/${id}`),
+
+  // Like post
+  likePost: (id: string) => api.post(`/posts/${id}/like`),
+
+  // Unlike post
+  unlikePost: (id: string) => api.delete(`/posts/${id}/like`),
+
+  // Get post likes
+  getPostLikes: (id: string, params?: { page?: number; limit?: number }) =>
+    api.get(`/posts/${id}/likes`, { params })
+};
+
+// ===========================================
+// FOLLOW API (Social Features - Sprint 2)
+// ===========================================
+
+export const followApi = {
+  // Follow creator
+  followCreator: (creatorId: string) => api.post(`/follow/${creatorId}`),
+
+  // Unfollow creator
+  unfollowCreator: (creatorId: string) => api.delete(`/follow/${creatorId}`),
+
+  // Check if following
+  checkFollowing: (creatorId: string) => api.get(`/follow/check/${creatorId}`),
+
+  // Get followers list
+  getFollowers: (userId: string, params?: { page?: number; limit?: number }) =>
+    api.get(`/follow/users/${userId}/followers`, { params }),
+
+  // Enhanced with filters from API_REFERENCE.md
+  getFollowing: (userId: string, params?: {
+    page?: number;
+    limit?: number;
+    category?: string;
+    sort?: 'recent' | 'alphabetical' | 'popular';
+  }) =>
+    api.get(`/follow/users/${userId}/following`, { params }),
+
+  // Get follow stats
+  getFollowStats: (userId: string) => api.get(`/follow/users/${userId}/stats`),
+
+  // New from API_REFERENCE.md
+  getSuggestions: (params?: { limit?: number }) =>
+    api.get('/follow/suggestions', { params })
+};
+
+// ===========================================
+// COMMENT API (Sprint 4)
+// ===========================================
+
+export const commentApi = {
+  // Create comment
+  createComment: (postId: string, data: { content: string; parentId?: string }) =>
+    api.post(`/posts/${postId}/comments`, data),
+
+  // Get comments for post
+  getComments: (postId: string, params?: { page?: number; limit?: number; sort?: 'newest' | 'oldest' | 'popular' }) =>
+    api.get(`/posts/${postId}/comments`, { params }),
+
+  // Get replies for comment
+  getReplies: (commentId: string, params?: { page?: number; limit?: number }) =>
+    api.get(`/comments/${commentId}/replies`, { params }),
+
+  // Update comment
+  updateComment: (commentId: string, data: { content: string }) =>
+    api.put(`/comments/${commentId}`, data),
+
+  // Delete comment
+  deleteComment: (commentId: string) => api.delete(`/comments/${commentId}`),
+
+  // Like comment
+  likeComment: (commentId: string) => api.post(`/comments/${commentId}/like`),
+
+  // Unlike comment
+  unlikeComment: (commentId: string) => api.delete(`/comments/${commentId}/like`)
+};
+
+// ===========================================
+// REACTION API (Sprint 4)
+// ===========================================
+
+export const reactionApi = {
+  // Add reaction to message
+  addReaction: (messageId: string, emoji: string) =>
+    api.post(`/messages/${messageId}/reactions`, { emoji }),
+
+  // Remove reaction from message
+  removeReaction: (messageId: string, emoji: string) =>
+    api.delete(`/messages/${messageId}/reactions`, { data: { emoji } }),
+
+  // Get all reactions for a message
+  getReactions: (messageId: string) =>
+    api.get(`/messages/${messageId}/reactions`)
+};
+
+// ===========================================
+// LINK PREVIEW API (Sprint 4)
+// ===========================================
+
+export const linkPreviewApi = {
+  // Get link preview by URL
+  getPreview: (url: string) =>
+    api.get('/link-preview', { params: { url } })
+};
+
+// ===========================================
+// BOOKMARK API (Sprint 4)
+// ===========================================
+
+export const bookmarkApi = {
+  // Add or update bookmark
+  addBookmark: (messageId: string, note?: string) =>
+    api.post(`/messages/${messageId}/bookmark`, { note }),
+
+  // Remove bookmark
+  removeBookmark: (messageId: string) =>
+    api.delete(`/messages/${messageId}/bookmark`),
+
+  // Enhanced with filters from API_REFERENCE.md
+  getBookmarks: (params?: {
+    page?: number;
+    limit?: number;
+    conversationId?: string;
+    creatorId?: string;
+    from?: string;
+    to?: string;
+    search?: string;
+  }) =>
+    api.get('/bookmarks', { params }),
+
+  // Get user's bookmarks (alias for consistency)
+  getUserBookmarks: (params?: {
+    page?: number;
+    limit?: number;
+    conversationId?: string;
+    creatorId?: string;
+    from?: string;
+    to?: string;
+    search?: string;
+  }) =>
+    api.get('/bookmarks', { params }),
+
+  // New from API_REFERENCE.md
+  getRecommendations: (params?: { limit?: number }) =>
+    api.get('/bookmarks/recommendations', { params })
+};
+
+// ===========================================
+// TRENDING API (Sprint 5)
+// ===========================================
+
+export const trendingApi = {
+  // Get trending posts
+  getTrendingPosts: (params?: { timeWindow?: number; limit?: number; category?: string }) =>
+    api.get('/trending/posts', { params }),
+
+  // Get trending creators
+  getTrendingCreators: (params?: { timeWindow?: number; limit?: number; category?: string }) =>
+    api.get('/trending/creators', { params }),
+
+  // Get trending hashtags
+  getTrendingHashtags: (params?: { timeWindow?: number; limit?: number }) =>
+    api.get('/trending/hashtags', { params }),
+
+  // Get category-specific trending
+  getCategoryTrending: (category: string, params?: { timeWindow?: number; limit?: number }) =>
+    api.get(`/trending/category/${category}`, { params }),
+
+  // Get trending stats
+  getTrendingStats: () => api.get('/trending/stats')
+};
+
+// ===========================================
+// SEARCH API (Sprint 5)
+// ===========================================
+
+export const searchApi = {
+  // Global search
+  globalSearch: (params: {
+    q: string;
+    type?: 'all' | 'creator' | 'post' | 'user' | 'hashtag';
+    category?: string;
+    limit?: number;
+    page?: number;
+    verified?: boolean;
+    dateFrom?: string;
+    dateTo?: string;
+  }) => api.get('/search', { params }),
+
+  // Autocomplete search
+  autocomplete: (q: string, limit?: number) =>
+    api.get('/search/autocomplete', { params: { q, limit } }),
+
+  // Get popular searches
+  getPopularSearches: (limit?: number) =>
+    api.get('/search/popular', { params: { limit } }),
+
+  // Get personalized search suggestions
+  getSuggestions: () => api.get('/search/suggestions')
+};
+
+// ===========================================
+// RECOMMENDATION API (Sprint 5)
+// ===========================================
+
+export const recommendationApi = {
+  // Get personalized creator recommendations
+  getCreatorRecommendations: (params?: { limit?: number; method?: 'hybrid' | 'content' | 'collaborative' }) =>
+    api.get('/recommendations/creators', { params }),
+
+  // Get similar creators
+  getSimilarCreators: (creatorId: string, limit?: number) =>
+    api.get(`/recommendations/creators/${creatorId}/similar`, { params: { limit } }),
+
+  // Get recommended posts
+  getRecommendedPosts: (params?: { limit?: number; page?: number }) =>
+    api.get('/recommendations/posts', { params }),
+
+  // Get "For You" recommendations
+  getForYou: (limit?: number) =>
+    api.get('/recommendations/for-you', { params: { limit } }),
+
+  // Get category recommendations
+  getCategoryRecommendations: (category: string, limit?: number) =>
+    api.get(`/recommendations/category/${category}`, { params: { limit } })
+};
+
+// ===========================================
+// GAMIFICATION API
+// ===========================================
+
+export const gamificationApi = {
+  getUserAchievements: () => api.get('/gamification/achievements'),
+  getLeaderboard: (type: 'users' | 'creators' = 'users', period: 'all' | 'week' | 'month' = 'all') =>
+    api.get('/gamification/leaderboard', { params: { type, period } }),
+  checkAchievements: (eventType: string, eventData?: any) =>
+    api.post('/gamification/check', { eventType, eventData }),
+};
+
+// ===========================================
+// ANALYTICS API
+// ===========================================
+
+export const analyticsApi = {
+  getUserAnalytics: (timeRange?: string) => api.get('/analytics/user', { params: { timeRange } }),
+  getCreatorAnalytics: (timeRange?: string) => api.get('/analytics/creator', { params: { timeRange } }),
+  getCompetitiveAnalysis: () => api.get('/analytics/competitive'),
+  getContentPerformance: (contentId?: string) => api.get('/analytics/content', { params: { contentId } }),
+};
+
+// ===========================================
+// MONITORING API
+// ===========================================
+
+export const monitoringApi = {
+  getPerformanceStats: (params?: { endpoint?: string; hours?: number }) =>
+    api.get('/monitoring/performance', { params }),
+  getBusinessMetrics: (params?: { eventType?: string; days?: number }) =>
+    api.get('/monitoring/business', { params }),
+};
+
+// ===========================================
+// NOTIFICATION API
+// ===========================================
+
+export const notificationApi = {
+  getNotifications: (params?: { page?: number; limit?: number; isRead?: boolean; type?: string }) =>
+    api.get('/notifications', { params }),
+
+  getUnreadCount: () => api.get('/notifications/unread-count'),
+
+  getSettings: () => api.get('/notifications/settings'),
+
+  updateSettings: (data: {
+    emailEnabled?: boolean;
+    emailChat?: boolean;
+    emailDeals?: boolean;
+    emailPayments?: boolean;
+    emailModeration?: boolean;
+    pushEnabled?: boolean;
+    soundEnabled?: boolean;
+  }) => api.put('/notifications/settings', data)
+};
+
+export default api;

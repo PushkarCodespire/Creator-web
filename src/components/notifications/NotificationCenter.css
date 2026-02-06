@@ -1,0 +1,54 @@
+/* Notification Center Styles */
+
+.notification-dropdown {
+  width: 360px;
+  max-height: 500px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.notification-dropdown .ant-list-item {
+  transition: background-color 0.2s ease;
+}
+
+.notification-dropdown .ant-list-item:hover {
+  background-color: #fafafa !important;
+}
+
+.notification-dropdown .ant-empty {
+  margin: 0;
+}
+
+/* Smooth animations */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-dropdown {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Badge pulse animation for new notifications */
+@keyframes badgePulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 6px rgba(24, 144, 255, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(24, 144, 255, 0);
+  }
+}
+
+.ant-badge-count {
+  animation: badgePulse 2s infinite;
+}
