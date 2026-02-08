@@ -161,6 +161,33 @@ export interface Comment {
   replies?: Comment[];
 }
 
+export interface Review {
+  id: string;
+  creatorId: string;
+  userId: string;
+  rating: number;
+  review?: string | null;
+  createdAt: string;
+  updatedAt?: string;
+  user?: {
+    id: string;
+    name: string;
+    avatar?: string;
+  };
+}
+
+export interface ReviewStats {
+  averageRating: number;
+  totalReviews: number;
+  breakdown?: Record<string, number> | Record<number, number>;
+}
+
+export interface ReviewListResponse {
+  reviews: Review[];
+  stats?: ReviewStats;
+  pagination?: { page: number; limit: number; total: number; totalPages: number };
+}
+
 export interface CreatorContent {
   id: string;
   title: string;

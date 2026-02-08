@@ -30,6 +30,7 @@ import { ChatPreview } from '../components/Creator/ChatPreview';
 import { CreatorContentGallery } from '../components/Creator/CreatorContentGallery';
 import { CreatorStats } from '../components/Creator/CreatorStats';
 import { FAQAccordion } from '../components/Creator/FAQAccordion';
+import CreatorReviews from '../components/Creator/CreatorReviews';
 import { ShareDialog } from '../components/Social/ShareDialog';
 import { colors, typography, spacing, shadows } from '../styles/tokens';
 import { pageVariants, fadeIn, slideUp } from '../styles/animations';
@@ -249,25 +250,7 @@ const CreatorProfile = () => {
       label: 'Reviews & Ratings',
       children: (
         <motion.div variants={fadeIn}>
-          <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
-            <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
-              User Reviews
-            </h3>
-            {creator.rating ? (
-              <div style={{ textAlign: 'center', padding: spacing[6] }}>
-                <div style={{ fontSize: typography.fontSize['4xl'], fontWeight: typography.fontWeight.bold, color: colors.warning.solid, marginBottom: spacing[2] }}>
-                  <StarFilled style={{ marginRight: spacing[2] }} />
-                  {creator.rating.toFixed(1)} / 5.0
-                </div>
-                <div style={{ color: colors.gray[600], marginBottom: spacing[4] }}>
-                  Based on {creator.totalChats || 0} conversations
-                </div>
-                <EmptyState type="no-data" title="No detailed reviews yet" description="Be the first to chat and leave a review!" />
-              </div>
-            ) : (
-              <EmptyState type="no-data" title="No reviews yet" description="Be the first to chat and leave a review!" />
-            )}
-          </CustomCard>
+          <CreatorReviews creatorId={creator.id} creatorName={creator.displayName} />
         </motion.div>
       ),
     },

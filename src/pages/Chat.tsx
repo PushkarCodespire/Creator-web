@@ -5,7 +5,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Input, Button, Avatar, message as antMessage, Spin } from 'antd';
+import { Input, Button, Avatar, message as antMessage, Spin, Modal, Rate } from 'antd';
 import {
   SendOutlined,
   MenuOutlined,
@@ -28,12 +28,14 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { startConversation, fetchConversation, sendMessage, addMessage } from '../store/slices/chatSlice';
-import { creatorApi, chatApi, getImageUrl } from '../services/api';
-import { Creator, Message } from '../types';
+import { creatorApi, chatApi, getImageUrl, reviewApi } from '../services/api';
+import { Creator, Message, Review } from '../types';
 import { RateLimitStatus } from '../types/chat';
 import socketService from '../services/socket';
 import UpgradeModal from '../components/Chat/UpgradeModal';
 import GuestLimitModal from '../components/Chat/GuestLimitModal';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import StreamingMessage from '../components/Chat/StreamingMessage';
 // uuid import removed
 import './ChatInterface.css';
@@ -53,15 +55,23 @@ const Chat = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [loadingCreator, setLoadingCreator] = useState(true);
-  const [sidebarOpen, setSidebarOpen] = useState(true); // Control mobile drawer / wide sidebar
+  const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768); // Open by default on desktop, closed on mobile
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ChatGPT-style collapse
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewText, setReviewText] = useState('');
+  const [reviewSubmitting, setReviewSubmitting] = useState(false);
+  const [myReview, setMyReview] = useState<Review | null>(null);
+  const [skipReviewForSession, setSkipReviewForSession] = useState(false);
+  const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
 
   // New state for streaming and rate limiting
   const [conversationId, setConversationId] = useState<string | null>(null);
-  const [streamingMessage, setStreamingMessage] = useState('');
+  const conversationIdRef = useRef<string | null>(null);
+  const [streamingMessage, setStreamingMessage] = useState(''); // Keep streaming message separate
   const [isAIStreaming, setIsAIStreaming] = useState(false);
   const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -73,6 +83,8 @@ const Chat = () => {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Initialize chat
   useEffect(() => {
@@ -94,6 +106,20 @@ const Chat = () => {
     };
   }, [creatorId, isAuthenticated]);
 
+  useEffect(() => {
+    if (!creatorId) return;
+    setSkipReviewForSession(false);
+    setPendingNavigation(null);
+
+    if (isAuthenticated) {
+      loadMyReview();
+    } else {
+      setMyReview(null);
+      setReviewRating(5);
+      setReviewText('');
+    }
+  }, [creatorId, isAuthenticated]);
+
   const initializeChat = async () => {
     try {
       setLoadingCreator(true);
@@ -106,6 +132,7 @@ const Chat = () => {
       const convResponse = await chatApi.createConversation(creatorId!);
       const convId = convResponse.data.data.conversation.id;
       setConversationId(convId);
+      conversationIdRef.current = convId;
 
       // Load messages
       await loadMessages(convId);
@@ -115,18 +142,11 @@ const Chat = () => {
 
       // Initialize Socket.io
       const token = localStorage.getItem('token');
-      // For guests, we might need a different auth mechanism for sockets or just public room
-      // Current socket service likely requires token. 
-      // If token exists, connect. If not, maybe skip socket or use guest ID handshake if supported.
-      if (token) {
-        socketService.connect(token);
-        socketService.joinConversation(convId);
-        setupSocketListeners();
-      } else {
-        // Simple polling fallback or partial functionality for guests if sockets require auth
-        // For now, let's assume socket requires auth and guests rely on request/response
-        // OR if backend supports guest socket, implement here.
-      }
+      const guestId = localStorage.getItem('guestId') || undefined;
+
+      socketService.connect(token);
+      socketService.joinConversation(convId, user?.id, guestId);
+      setupSocketListeners();
 
     } catch (error: any) {
       console.error('Failed to initialize chat:', error);
@@ -137,10 +157,29 @@ const Chat = () => {
   };
 
   const cleanup = () => {
-    if (conversationId) {
-      socketService.leaveConversation(conversationId);
+    if (conversationIdRef.current) {
+      socketService.leaveConversation(conversationIdRef.current);
     }
     socketService.removeAllListeners();
+  };
+
+  const loadMyReview = async () => {
+    if (!creatorId || !isAuthenticated) return;
+    try {
+      const response = await reviewApi.getMyReview(creatorId);
+      const payload = response?.data?.data || response?.data || {};
+      const review = payload.review || payload.data || payload;
+      setMyReview(review || null);
+      setReviewRating(review?.rating ?? 5);
+      setReviewText(review?.review ?? '');
+    } catch (error: any) {
+      if (error?.response?.status !== 404) {
+        console.error('Failed to load review:', error);
+      }
+      setMyReview(null);
+      setReviewRating(5);
+      setReviewText('');
+    }
   };
 
   // Auto-scroll to bottom
@@ -189,28 +228,29 @@ const Chat = () => {
   };
 
   const setupSocketListeners = () => {
+    console.log('🔌 Setting up socket listeners...');
+
     socketService.onMessageStream((data) => {
-      if (data.conversationId === conversationId) {
+      console.log('🌊 Received message stream:', data);
+      if (data.conversationId === conversationIdRef.current) {
         setStreamingMessage(data.accumulated);
         setIsAIStreaming(true);
       }
     });
 
     socketService.onMessageComplete((data) => {
-      if (data.conversationId === conversationId) {
-        dispatch(addMessage(data.message as any));
-        setStreamingMessage('');
-        setIsAIStreaming(false);
-        fetchRateLimitStatus();
-      }
+      setIsTyping(false);
+      dispatch(addMessage(data.message as any));
+      setStreamingMessage('');
+      setIsAIStreaming(false);
+      fetchRateLimitStatus();
     });
 
     socketService.onMessageError((data) => {
-      if (data.conversationId === conversationId) {
-        setIsAIStreaming(false);
-        setStreamingMessage('');
-        antMessage.error(data.error.userMessage || 'Failed to send message');
-      }
+      setIsAIStreaming(false);
+      setIsTyping(false);
+      setStreamingMessage('');
+      antMessage.error(data.error?.userMessage || data.error?.message || 'Failed to send message');
     });
   };
 
@@ -244,6 +284,7 @@ const Chat = () => {
         conversationId: conversationId
       };
       dispatch(addMessage(tempMessage));
+      setIsTyping(true);
 
       // Send to server
       const response = await chatApi.sendMessage(conversationId, messageContent);
@@ -293,6 +334,71 @@ const Chat = () => {
     }
   };
 
+  const shouldPromptReview = () => {
+    if (!isAuthenticated) return false;
+    if (!creatorId) return false;
+    if (skipReviewForSession) return false;
+    if (myReview) return false;
+    return messages.some((msg) => msg.role === 'USER');
+  };
+
+  const requestLeave = (path: string) => {
+    if (shouldPromptReview()) {
+      setPendingNavigation(path);
+      setReviewModalOpen(true);
+      return;
+    }
+    navigate(path);
+  };
+
+  const handleSubmitReview = async () => {
+    if (!creatorId) return;
+    if (!reviewRating) {
+      antMessage.error('Please select a rating');
+      return;
+    }
+
+    try {
+      setReviewSubmitting(true);
+      const payload = { rating: reviewRating, review: reviewText };
+
+      if (myReview) {
+        await reviewApi.updateMyReview(creatorId, payload);
+      } else {
+        await reviewApi.create(creatorId, payload);
+      }
+
+      antMessage.success('Thanks for your feedback!');
+      await loadMyReview();
+      setSkipReviewForSession(true);
+      setReviewModalOpen(false);
+
+      if (pendingNavigation) {
+        navigate(pendingNavigation);
+        setPendingNavigation(null);
+      }
+    } catch (error: any) {
+      console.error('Failed to submit review:', error);
+      antMessage.error(error?.response?.data?.error || 'Failed to submit review');
+    } finally {
+      setReviewSubmitting(false);
+    }
+  };
+
+  const handleSkipReview = () => {
+    setReviewModalOpen(false);
+    setSkipReviewForSession(true);
+    if (pendingNavigation) {
+      navigate(pendingNavigation);
+      setPendingNavigation(null);
+    }
+  };
+
+  const handleCloseReviewModal = () => {
+    setReviewModalOpen(false);
+    setPendingNavigation(null);
+  };
+
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -305,10 +411,44 @@ const Chat = () => {
     setSelectedFiles(prev => [...prev, ...files]);
   };
 
-  const handleVoiceRecord = () => {
-    setIsRecording(!isRecording);
-    // TODO: Implement actual voice recording logic
-    antMessage.info(isRecording ? 'Recording stopped' : 'Recording started');
+  const handleVoiceRecord = async () => {
+    if (isRecording) {
+      // Stop recording
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+        mediaRecorderRef.current.stop();
+        setIsRecording(false);
+      }
+    } else {
+      // Start recording
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        mediaRecorderRef.current = mediaRecorder;
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) {
+            audioChunksRef.current.push(event.data);
+          }
+        };
+
+        mediaRecorder.onstop = () => {
+          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
+          const audioFile = new File([audioBlob], `voice_message_${Date.now()}.wav`, { type: 'audio/wav' });
+          setSelectedFiles(prev => [...prev, audioFile]);
+
+          // Stop all tracks to release the microphone
+          stream.getTracks().forEach(track => track.stop());
+        };
+
+        mediaRecorder.start();
+        setIsRecording(true);
+        antMessage.info('Recording started');
+      } catch (err) {
+        console.error('Error accessing microphone:', err);
+        antMessage.error('Could not access microphone');
+      }
+    }
   };
 
   const removeFile = (index: number) => {
@@ -324,11 +464,19 @@ const Chat = () => {
           justifyContent: 'center',
           height: '100vh',
           flexDirection: 'column',
-          gap: '20px'
+          gap: '20px',
+          background: 'var(--chat-bg-gradient)',
+          position: 'relative',
+          zIndex: 1
         }}>
-          <Spin size="large" />
-          <div style={{ color: 'var(--chat-text-muted)', fontSize: '16px' }}>
-            Loading chat...
+          <Spin size="large" tip="Loading AI Assistant..." style={{ color: '#fff' }} />
+          <div style={{
+            color: 'rgba(255, 255, 255, 0.8)',
+            fontSize: '18px',
+            fontWeight: 500,
+            letterSpacing: '0.5px'
+          }}>
+            Preparing your experience...
           </div>
         </div>
       </div>
@@ -363,15 +511,15 @@ const Chat = () => {
         </div>
 
         <div className="chat-sidebar-actions">
-          <Button
-            type="default"
-            icon={<PlusOutlined />}
-            className="new-chat-btn"
-            block={!sidebarCollapsed}
-            onClick={() => navigate('/creators')}
-          >
-            {!sidebarCollapsed && 'New chat'}
-          </Button>
+            <Button
+              type="default"
+              icon={<PlusOutlined />}
+              className="new-chat-btn"
+              block={!sidebarCollapsed}
+              onClick={() => requestLeave('/creators')}
+            >
+              {!sidebarCollapsed && 'New chat'}
+            </Button>
 
           <div className="sidebar-search-container">
             {sidebarCollapsed ? (
@@ -464,7 +612,7 @@ const Chat = () => {
             <Button
               type="text"
               className="view-profile-link"
-              onClick={() => navigate(`/creator/${creator?.id}`)}
+              onClick={() => requestLeave(creator?.id ? `/creator/${creator.id}` : '/creators')}
               style={{ color: 'var(--chat-accent)', fontWeight: 600, marginRight: '16px' }}
             >
               View Creator Profile
@@ -535,7 +683,9 @@ const Chat = () => {
                     </Avatar>
                     <div className="message-content-wrapper">
                       <div className="message-bubble">
-                        {msg.content}
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                          {msg.content}
+                        </ReactMarkdown>
                       </div>
                       <div className="message-time">
                         {new Date(msg.createdAt).toLocaleTimeString([], {
@@ -599,17 +749,39 @@ const Chat = () => {
           {/* File Preview */}
           {selectedFiles.length > 0 && (
             <div className="chat-file-preview">
-              {selectedFiles.map((file, index) => (
-                <div key={index} className="file-preview-item">
-                  <span>{file.name}</span>
-                  <Button
-                    icon={<CloseOutlined />}
-                    type="text"
-                    size="small"
-                    onClick={() => removeFile(index)}
-                  />
-                </div>
-              ))}
+              {selectedFiles.map((file, index) => {
+                const isImage = file.type.startsWith('image/');
+                const isAudio = file.type.startsWith('audio/');
+                const previewUrl = isImage ? URL.createObjectURL(file) : null;
+
+                return (
+                  <div key={index} className={`file-preview-item ${isImage ? 'image-preview' : 'doc-preview'}`}>
+                    {isImage ? (
+                      <div className="image-thumb-container">
+                        <img src={previewUrl!} alt="upload-preview" />
+                      </div>
+                    ) : isAudio ? (
+                      <div className="doc-icon-container">
+                        <AudioOutlined />
+                        <span className="file-name-short">Voice Message</span>
+                      </div>
+                    ) : (
+                      <div className="doc-icon-container">
+                        <FileImageOutlined />
+                        <span className="file-name-short">
+                          {file.name.length > 15
+                            ? `${file.name.substring(0, 10)}...${file.name.split('.').pop()}`
+                            : file.name
+                          }
+                        </span>
+                      </div>
+                    )}
+                    <button className="remove-file-btn" onClick={() => removeFile(index)}>
+                      <CloseOutlined />
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           )}
 
@@ -713,6 +885,40 @@ const Chat = () => {
       </div>
 
       {/* Modals */}
+      <Modal
+        title={`Rate your conversation${creator?.displayName ? ` with ${creator.displayName}` : ''}`}
+        open={reviewModalOpen}
+        onCancel={handleCloseReviewModal}
+        footer={[
+          <Button key="skip" onClick={handleSkipReview}>
+            Skip for now
+          </Button>,
+          <Button
+            key="submit"
+            type="primary"
+            loading={reviewSubmitting}
+            onClick={handleSubmitReview}
+          >
+            Submit Review
+          </Button>
+        ]}
+      >
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Your rating</div>
+            <Rate allowClear={false} value={reviewRating} onChange={setReviewRating} />
+          </div>
+          <div>
+            <div style={{ fontWeight: 600, marginBottom: 8 }}>Feedback (optional)</div>
+            <Input.TextArea
+              rows={4}
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              placeholder="Share what you liked or what could be improved..."
+            />
+          </div>
+        </div>
+      </Modal>
       <UpgradeModal
         visible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}

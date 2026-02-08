@@ -167,6 +167,32 @@ export const creatorApi = {
 };
 
 // ===========================================
+// REVIEW API
+// ===========================================
+
+export const reviewApi = {
+  // Get reviews for a creator (public)
+  getReviews: (
+    creatorId: string,
+    params?: { page?: number; limit?: number; sort?: 'newest' | 'oldest' | 'highest' | 'lowest' }
+  ) => api.get(`/creators/${creatorId}/reviews`, { params }),
+
+  // Get current user's review for a creator (auth)
+  getMyReview: (creatorId: string) => api.get(`/creators/${creatorId}/reviews/me`),
+
+  // Create a review (auth)
+  create: (creatorId: string, data: { rating: number; review?: string }) =>
+    api.post(`/creators/${creatorId}/reviews`, data),
+
+  // Update current user's review (auth)
+  updateMyReview: (creatorId: string, data: { rating: number; review?: string }) =>
+    api.put(`/creators/${creatorId}/reviews/me`, data),
+
+  // Delete current user's review (auth)
+  deleteMyReview: (creatorId: string) => api.delete(`/creators/${creatorId}/reviews/me`)
+};
+
+// ===========================================
 // CHAT API
 // ===========================================
 

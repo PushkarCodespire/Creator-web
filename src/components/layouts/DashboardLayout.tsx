@@ -18,6 +18,7 @@ import { RootState, AppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { getImageUrl, subscriptionApi } from '../../services/api';
 import DemoModeBanner from '../DemoModeBanner';
+import { NotificationCenter } from '../notifications';
 import '../../styles/AdminPanel.css';
 
 const { Header, Sider, Content } = Layout;
@@ -435,6 +436,14 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             </h2>
           </div>
           <Space size={isMobile ? "middle" : "large"}>
+            {type === 'creator' && (
+              <NotificationCenter
+                theme="dark"
+                title="Opportunities"
+                emptyText="No new opportunities"
+                filterTypes={['opportunity']}
+              />
+            )}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
               <Space style={{ cursor: 'pointer' }}>
                 <Avatar
