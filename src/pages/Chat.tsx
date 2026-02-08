@@ -37,6 +37,7 @@ import GuestLimitModal from '../components/Chat/GuestLimitModal';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import StreamingMessage from '../components/Chat/StreamingMessage';
+import MediaMessage from '../components/Chat/MediaMessage';
 // uuid import removed
 import './ChatInterface.css';
 
@@ -259,7 +260,7 @@ const Chat = () => {
   };
 
   const handleSend = async () => {
-    if (!inputMessage.trim() || !conversationId) return;
+    if ((!inputMessage.trim() && selectedFiles.length === 0) || !conversationId) return;
 
     // Check rate limit locally if data available
     if (rateLimitStatus?.limits?.daily?.remaining !== undefined && rateLimitStatus.limits.daily.remaining <= 0) {
@@ -275,19 +276,60 @@ const Chat = () => {
       const messageContent = inputMessage;
       setInputMessage('');
 
-      // Optimistic UI update
-      const tempMessage: Message = {
-        id: `temp-${Date.now()}`,
-        content: messageContent,
-        role: 'USER',
-        createdAt: new Date().toISOString(),
-        conversationId: conversationId
-      };
-      dispatch(addMessage(tempMessage));
-      setIsTyping(true);
+      // Handle file uploads
+      let mediaAttachments: any[] = [];
+      if (selectedFiles.length > 0) {
+        // Create optimistic media objects for immediate display
+        const optimisticMedia = selectedFiles.map(file => ({
+          type: file.type.startsWith('image/') ? 'image' :
+            file.type.startsWith('video/') ? 'video' :
+              file.type.startsWith('audio/') ? 'audio' : 'file',
+          url: URL.createObjectURL(file), // Create temporary URL for preview
+          name: file.name,
+          size: file.size,
+          mimetype: file.type
+        }));
 
-      // Send to server
-      const response = await chatApi.sendMessage(conversationId, messageContent);
+        // Optimistic UI update with media
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          content: messageContent,
+          role: 'USER',
+          createdAt: new Date().toISOString(),
+          conversationId: conversationId,
+          media: optimisticMedia as any
+        };
+        dispatch(addMessage(tempMessage));
+        setIsTyping(true);
+        setSelectedFiles([]); // Clear selection immediately for UI
+
+        // Upload actual files
+        try {
+          const uploadResponse = await chatApi.uploadChatMedia(selectedFiles);
+          if (uploadResponse.data?.data?.media) {
+            mediaAttachments = uploadResponse.data.data.media;
+          }
+        } catch (uploadError) {
+          console.error('Failed to upload media:', uploadError);
+          antMessage.error('Failed to upload attachments');
+          // Start over - in a real app would probably show error state on message
+          return;
+        }
+      } else {
+        // Optimistic UI update with text only
+        const tempMessage: Message = {
+          id: `temp-${Date.now()}`,
+          content: messageContent,
+          role: 'USER',
+          createdAt: new Date().toISOString(),
+          conversationId: conversationId
+        };
+        dispatch(addMessage(tempMessage));
+        setIsTyping(true);
+      }
+
+      // Send to server with media if present
+      const response = await chatApi.sendMessage(conversationId, messageContent, mediaAttachments);
 
       // If backend returns AI response immediately (no socket/guest mode), add it
       if (response.data?.data?.aiMessage) {
@@ -511,15 +553,15 @@ const Chat = () => {
         </div>
 
         <div className="chat-sidebar-actions">
-            <Button
-              type="default"
-              icon={<PlusOutlined />}
-              className="new-chat-btn"
-              block={!sidebarCollapsed}
-              onClick={() => requestLeave('/creators')}
-            >
-              {!sidebarCollapsed && 'New chat'}
-            </Button>
+          <Button
+            type="default"
+            icon={<PlusOutlined />}
+            className="new-chat-btn"
+            block={!sidebarCollapsed}
+            onClick={() => requestLeave('/creators')}
+          >
+            {!sidebarCollapsed && 'New chat'}
+          </Button>
 
           <div className="sidebar-search-container">
             {sidebarCollapsed ? (
@@ -687,6 +729,9 @@ const Chat = () => {
                           {msg.content}
                         </ReactMarkdown>
                       </div>
+                      {msg.media && msg.media.length > 0 && (
+                        <MediaMessage media={msg.media} />
+                      )}
                       <div className="message-time">
                         {new Date(msg.createdAt).toLocaleTimeString([], {
                           hour: '2-digit',
