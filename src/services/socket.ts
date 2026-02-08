@@ -15,27 +15,19 @@ export interface StreamMessageData {
 }
 
 export interface CompleteMessageData {
-    conversationId: string;
     message: {
         id: string;
         role: 'ASSISTANT' | 'USER';
         content: string;
         createdAt: string;
-        tokensUsed?: number;
-        model?: string;
-        processingTime?: number;
+        [key: string]: any;
     };
 }
 
 export interface MessageErrorData {
-    conversationId: string;
     messageId: string;
-    error: {
-        code: string;
-        message: string;
-        userMessage: string;
-        canRetry: boolean;
-    };
+    error: any;
+    code: string;
 }
 
 class SocketService {
@@ -45,7 +37,7 @@ class SocketService {
     /**
      * Initialize Socket.io connection with JWT authentication
      */
-    connect(token: string): Socket {
+    connect(token?: string | null): Socket {
         if (this.socket?.connected) {
             return this.socket;
         }
@@ -58,8 +50,9 @@ class SocketService {
         }
 
         this.socket = io(serverUrl, {
-            auth: { token },
+            auth: token ? { token } : {},
             transports: ['websocket'],
+            withCredentials: true,
             reconnection: true,
             reconnectionAttempts: 5,
             reconnectionDelay: 1000,
@@ -67,10 +60,19 @@ class SocketService {
 
         // Connection event handlers
         this.socket.on('connect', () => {
+            const resolvedUserId = this.getStoredUserId();
+            if (resolvedUserId) {
+                this.socket?.emit('authenticate', { userId: resolvedUserId });
+            }
             console.log('✅ Socket.io connected');
             // Re-join conversation room if we were in one
             if (this.currentConversationId) {
-                this.joinConversation(this.currentConversationId);
+                // Directly emit join_chat on the socket to avoid the "connected" check in joinConversation
+                this.socket?.emit('join_chat', {
+                    conversationId: this.currentConversationId,
+                    userId: localStorage.getItem('userId'), // Optional, extracted from token usually but safety first
+                    guestId: localStorage.getItem('guestId')
+                });
             }
         });
 
@@ -88,15 +90,15 @@ class SocketService {
     /**
      * Join a conversation room to receive real-time updates
      */
-    joinConversation(conversationId: string): void {
+    joinConversation(conversationId: string, userId?: string, guestId?: string): void {
+        this.currentConversationId = conversationId;
+
         if (!this.socket?.connected) {
-            console.warn('Cannot join conversation: Socket not connected');
+            console.log(`⏳ Socket not connected yet. Will join room ${conversationId} once connected.`);
             return;
         }
 
-        this.currentConversationId = conversationId;
-        this.socket.emit('conversation:join', { conversationId });
-
+        this.socket.emit('join_chat', { conversationId, userId, guestId });
         console.log(`📥 Joined conversation room: ${conversationId}`);
     }
 
@@ -116,21 +118,21 @@ class SocketService {
      * Listen for streaming message chunks
      */
     onMessageStream(callback: (data: StreamMessageData) => void): void {
-        this.socket?.on('message:stream', callback);
+        this.socket?.on('message_stream', callback);
     }
 
     /**
      * Listen for message completion
      */
     onMessageComplete(callback: (data: CompleteMessageData) => void): void {
-        this.socket?.on('message:complete', callback);
+        this.socket?.on('message_completed', callback);
     }
 
     /**
      * Listen for message errors
      */
     onMessageError(callback: (data: MessageErrorData) => void): void {
-        this.socket?.on('message:error', callback);
+        this.socket?.on('message_error', callback);
     }
 
     /**
@@ -151,9 +153,9 @@ class SocketService {
      * Remove all event listeners
      */
     removeAllListeners(): void {
-        this.socket?.off('message:stream');
-        this.socket?.off('message:complete');
-        this.socket?.off('message:error');
+        this.socket?.off('message_stream');
+        this.socket?.off('message_completed');
+        this.socket?.off('message_error');
         this.socket?.off('message:new');
         this.socket?.off('conversation:joined');
     }
@@ -182,6 +184,20 @@ class SocketService {
      */
     isConnected(): boolean {
         return this.socket?.connected || false;
+    }
+
+    /**
+     * Try to read the user id from localStorage (used for socket auth)
+     */
+    private getStoredUserId(): string | null {
+        try {
+            const raw = localStorage.getItem('user');
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            return parsed?.id || null;
+        } catch (error) {
+            return null;
+        }
     }
 }
 

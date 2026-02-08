@@ -10,16 +10,20 @@ const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 class SocketManager {
   private socket: Socket | null = null;
   private token: string | null = null;
+  private userId: string | null = null;
 
   /**
    * Initialize socket connection with authentication
    */
-  connect(token?: string): Socket {
+  connect(token?: string, userId?: string): Socket {
     if (this.socket?.connected) {
       return this.socket;
     }
 
     this.token = token || null;
+    if (userId) {
+      this.userId = userId;
+    }
 
     this.socket = io(SOCKET_URL, {
       auth: {
@@ -61,6 +65,10 @@ class SocketManager {
     if (!this.socket) return;
 
     this.socket.on('connect', () => {
+      const resolvedUserId = this.userId || this.getStoredUserId();
+      if (resolvedUserId) {
+        this.socket?.emit('authenticate', { userId: resolvedUserId });
+      }
       console.log('🔌 Socket connected:', this.socket?.id);
     });
 
@@ -94,6 +102,20 @@ class SocketManager {
       this.connect(token);
     }
   }
+
+  /**
+   * Try to read the user id from localStorage (used for socket auth)
+   */
+  private getStoredUserId(): string | null {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed?.id || null;
+    } catch (error) {
+      return null;
+    }
+  }
 }
 
 // Singleton instance
@@ -102,7 +124,7 @@ const socketManager = new SocketManager();
 export default socketManager;
 
 // Export helper functions
-export const connectSocket = (token?: string) => socketManager.connect(token);
+export const connectSocket = (token?: string, userId?: string) => socketManager.connect(token, userId);
 export const getSocket = () => socketManager.getSocket();
 export const disconnectSocket = () => socketManager.disconnect();
 export const isSocketConnected = () => socketManager.isConnected();

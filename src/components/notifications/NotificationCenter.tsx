@@ -3,7 +3,7 @@
 // Dropdown notification panel with real-time updates
 // ===========================================
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -12,10 +12,14 @@ import {
   MessageFilled,
   HeartFilled,
   LoadingOutlined,
+  BulbOutlined,
+  StarFilled,
 } from '@ant-design/icons';
 import { Badge, Dropdown, Empty, Spin } from 'antd';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
 import api from '../../services/api';
-import CustomButton from '../common/Button/CustomButton';
+import { connectSocket, getSocket } from '../../utils/socket';
 import { colors, spacing, typography, shadows } from '../../styles/tokens';
 
 interface Notification {
@@ -25,18 +29,126 @@ interface Notification {
   message: string;
   isRead: boolean;
   actionUrl?: string;
+  data?: any;
+  priority?: string;
   createdAt: string;
 }
 
-const NotificationCenter: React.FC = () => {
+interface NotificationCenterProps {
+  filterTypes?: string[];
+  title?: string;
+  emptyText?: string;
+  theme?: 'light' | 'dark';
+  limit?: number;
+}
+
+const NotificationCenter: React.FC<NotificationCenterProps> = ({
+  filterTypes,
+  title = 'Notifications',
+  emptyText = 'No notifications',
+  theme = 'light',
+  limit = 50
+}) => {
   const navigate = useNavigate();
+  const { user, isAuthenticated, token } = useSelector((state: RootState) => state.auth);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
+  const normalizedFilterTypes = useMemo(
+    () => (filterTypes || []).map((type) => type.toLowerCase().trim()).filter(Boolean),
+    [filterTypes]
+  );
+
+  const matchesType = (type?: string) => {
+    if (normalizedFilterTypes.length === 0) return true;
+    const normalized = (type || '').toLowerCase();
+    return normalizedFilterTypes.some((filter) =>
+      normalized === filter || normalized.includes(filter)
+    );
+  };
+
+  const normalizeNotification = (payload: any): Notification => ({
+    id: payload?.id || payload?._id || `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+    type: payload?.type || payload?.notificationType || 'GENERAL',
+    title: payload?.title || payload?.subject || 'Notification',
+    message: payload?.message || payload?.body || payload?.content || '',
+    isRead: payload?.isRead ?? false,
+    actionUrl: payload?.actionUrl || payload?.url,
+    data: payload?.data,
+    priority: payload?.priority,
+    createdAt: payload?.createdAt || new Date().toISOString()
+  });
+
+  const buildOpportunityNotification = (payload: any): Notification => {
+    const opportunity = payload?.opportunity || payload;
+    const companyName = opportunity?.company?.companyName || payload?.company?.companyName;
+    const title = opportunity?.title ? `New opportunity: ${opportunity.title}` : 'New opportunity';
+    const message = companyName ? `From ${companyName}` : 'A new brand opportunity is available';
+    return {
+      id: payload?.notificationId || payload?.id || (opportunity?.id ? `opportunity_${opportunity.id}` : `opportunity_${Date.now()}`),
+      type: 'OPPORTUNITY',
+      title,
+      message,
+      isRead: false,
+      actionUrl: payload?.actionUrl || '/creator-dashboard/opportunities',
+      data: payload,
+      createdAt: payload?.createdAt || new Date().toISOString()
+    };
+  };
+
+  const pushNotification = (notification: Notification) => {
+    setNotifications((prev) => {
+      const exists = prev.some((item) => item.id === notification.id);
+      if (exists) return prev;
+      const next = [notification, ...prev];
+      return next.slice(0, limit);
+    });
+  };
+
+  const filteredNotifications = useMemo(() => {
+    if (normalizedFilterTypes.length === 0) return notifications;
+    return notifications.filter((notification) => matchesType(notification.type));
+  }, [notifications, normalizedFilterTypes]);
+
   useEffect(() => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
     loadNotifications();
-  }, []);
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    if (isOpen && isAuthenticated) {
+      loadNotifications();
+    }
+  }, [isOpen, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !user?.id) return;
+    const authToken = token || localStorage.getItem('token') || undefined;
+    const socket = connectSocket(authToken, user.id);
+
+    const handleNotification = (payload: any) => {
+      const normalized = normalizeNotification(payload);
+      pushNotification(normalized);
+    };
+
+    const handleOpportunity = (payload: any) => {
+      const normalized = buildOpportunityNotification(payload);
+      pushNotification(normalized);
+    };
+
+    socket.on('notification', handleNotification);
+    socket.on('opportunity:new', handleOpportunity);
+
+    return () => {
+      const current = getSocket();
+      current?.off('notification', handleNotification);
+      current?.off('opportunity:new', handleOpportunity);
+    };
+  }, [isAuthenticated, user?.id, token]);
 
   const loadNotifications = async () => {
     try {
@@ -63,8 +175,11 @@ const NotificationCenter: React.FC = () => {
         }
       }
 
-      // Ensure we set an array, even if empty
-      setNotifications(Array.isArray(notificationsData) ? notificationsData : []);
+      const normalized = (Array.isArray(notificationsData) ? notificationsData : [])
+        .map((item) => normalizeNotification(item))
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+      setNotifications(normalized.slice(0, limit));
     } catch (error) {
       console.error('Error loading notifications:', error);
       setNotifications([]); // Always fallback to empty array
@@ -98,16 +213,24 @@ const NotificationCenter: React.FC = () => {
   // Use an extra-safe approach for unreadCount
   let unreadCount = 0;
   try {
-    if (notifications && typeof notifications.filter === 'function') {
-      unreadCount = notifications.filter(n => n && !n.isRead).length;
+    if (filteredNotifications && typeof filteredNotifications.filter === 'function') {
+      unreadCount = filteredNotifications.filter(n => n && !n.isRead).length;
     }
   } catch (e) {
     console.error('Error calculating unreadCount:', e);
   }
 
   const getIcon = (type: string) => {
-    if (type === 'CHAT_MESSAGE') return <MessageFilled style={{ color: colors.primary.solid }} />;
-    return <HeartFilled style={{ color: colors.success.solid }} />;
+    const normalized = (type || '').toLowerCase();
+    if (normalized.includes('opportunity')) return <BulbOutlined style={{ color: colors.warning.solid }} />;
+    if (normalized.includes('review')) return <StarFilled style={{ color: colors.warning.solid }} />;
+    if (normalized.includes('chat') || normalized.includes('message')) {
+      return <MessageFilled style={{ color: colors.primary.solid }} />;
+    }
+    if (normalized.includes('like') || normalized.includes('follow')) {
+      return <HeartFilled style={{ color: colors.success.solid }} />;
+    }
+    return <BellFilled style={{ color: colors.primary.solid }} />;
   };
 
   const formatTime = (timestamp: string) => {
@@ -118,18 +241,20 @@ const NotificationCenter: React.FC = () => {
     return new Date(timestamp).toLocaleDateString();
   };
 
+  const inactiveColor = theme === 'dark' ? colors.gray[200] : colors.gray[600];
+
   const content = (
     <div style={{ width: '380px', maxHeight: '600px', background: 'white', borderRadius: '12px', boxShadow: shadows['2xl'], overflow: 'hidden' }}>
       <div style={{ padding: spacing[4], borderBottom: `1px solid ${colors.gray[200]}` }}>
-        <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, margin: 0 }}>Notifications</h3>
+        <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, margin: 0 }}>{title}</h3>
       </div>
       <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
         {isLoading ? (
           <div style={{ padding: spacing[8], textAlign: 'center' }}><Spin indicator={<LoadingOutlined spin />} /></div>
-        ) : !Array.isArray(notifications) || notifications.length === 0 ? (
-          <div style={{ padding: spacing[8] }}><Empty description="No notifications" /></div>
+        ) : !Array.isArray(filteredNotifications) || filteredNotifications.length === 0 ? (
+          <div style={{ padding: spacing[8] }}><Empty description={emptyText} /></div>
         ) : (
-          notifications.map(n => (
+          filteredNotifications.map(n => (
             <div
               key={n.id}
               onClick={() => handleClick(n)}
@@ -173,7 +298,7 @@ const NotificationCenter: React.FC = () => {
             {unreadCount > 0 ? (
               <BellFilled style={{ fontSize: '22px', color: colors.primary.solid }} />
             ) : (
-              <BellOutlined style={{ fontSize: '22px', color: colors.gray[600] }} />
+              <BellOutlined style={{ fontSize: '22px', color: inactiveColor }} />
             )}
           </motion.div>
         </Badge>
