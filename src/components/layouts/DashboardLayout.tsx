@@ -9,7 +9,7 @@ import {
   SettingOutlined, ShopOutlined, TeamOutlined, UserOutlined, LogoutOutlined,
   SearchOutlined, BulbOutlined, HomeOutlined, DollarOutlined, ContainerOutlined,
   WalletOutlined, MailOutlined, MenuOutlined, StarOutlined, TrophyOutlined,
-  ReadOutlined, GlobalOutlined, WarningOutlined, RobotOutlined
+  ReadOutlined, GlobalOutlined, WarningOutlined, RobotOutlined, FormOutlined
 } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
@@ -100,6 +100,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
       case 'creator':
         return [
           { key: basePath, icon: <DashboardOutlined />, label: <Link to={basePath}>Dashboard</Link> },
+          { key: `${basePath}/posts`, icon: <FormOutlined />, label: <Link to={`${basePath}/posts`}>Posts</Link> },
           { key: `${basePath}/content`, icon: <FileTextOutlined />, label: <Link to={`${basePath}/content`}>Content</Link> },
           { key: `${basePath}/analytics`, icon: <BarChartOutlined />, label: <Link to={`${basePath}/analytics`}>Analytics</Link> },
           { key: `${basePath}/opportunities`, icon: <BulbOutlined />, label: <Link to={`${basePath}/opportunities`}>Opportunities</Link> },

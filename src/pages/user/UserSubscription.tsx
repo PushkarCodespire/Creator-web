@@ -15,6 +15,7 @@ const UserSubscription = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const [subscription, setSubscription] = useState<any>(null);
+  const [usage, setUsage] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
@@ -27,8 +28,10 @@ const UserSubscription = () => {
 
   const fetchSubscription = async () => {
     try {
-      const response = await subscriptionApi.getCurrent();
-      setSubscription(response.data.data);
+      const response = await subscriptionApi.getDetails();
+      const data = response.data.data || {};
+      setSubscription(data.subscription || data);
+      setUsage(data.usage || null);
     } catch (err) {
       console.error('Failed to fetch subscription:', err);
     } finally {
@@ -152,6 +155,12 @@ const UserSubscription = () => {
   }
 
   const isPremium = subscription?.plan === 'PREMIUM';
+  const tokenUsage = usage?.tokens;
+  const tokenBalance = tokenUsage?.balance ?? subscription?.tokenBalance;
+  const tokenGrant = tokenUsage?.grant ?? subscription?.tokenGrant;
+  const tokensPerMessage = tokenUsage?.perMessage;
+  const tokenGrantedAt = tokenUsage?.grantedAt ?? subscription?.tokenGrantedAt;
+  const isOutOfTokens = isPremium && tokenBalance !== undefined && tokenBalance !== null && Number(tokenBalance) <= 0;
   const normalizePlanCode = (plan: any) => {
     return (plan?.plan || plan?.code || plan?.name || '').toString().toUpperCase();
   };
@@ -192,8 +201,10 @@ const UserSubscription = () => {
   const premiumFeatures: string[] = premiumFeaturesRaw.map((feature: unknown) => String(feature));
   const messageLimit = currentPlanDetails?.messageLimit
     ?? currentPlanDetails?.dailyMessageLimit
-    ?? currentPlanDetails?.limits?.messagesPerDay;
+    ?? currentPlanDetails?.limits?.messagesPerDay
+    ?? usage?.dailyQuota;
   const upgradeLabel = premiumPlan ? `Upgrade to Premium - ${premiumPriceLabel}` : 'Upgrade to Premium';
+  const messagesToday = usage?.messagesToday ?? subscription?.messagesUsedToday ?? 0;
 
   return (
     <div>
@@ -218,10 +229,39 @@ const UserSubscription = () => {
             <div style={{ marginTop: '24px' }}>
               <h4>Usage Today</h4>
               <p>
-                Messages: {subscription?.messagesUsedToday || 0}
+                Messages: {messagesToday}
                 {messageLimit ? ` / ${messageLimit}` : ''}
               </p>
+              {isPremium && tokenBalance !== undefined && tokenGrant !== undefined && (
+                <div style={{ marginTop: '12px' }}>
+                  <div style={{ fontWeight: 600, marginBottom: '4px' }}>Token Balance</div>
+                  <div style={{ color: '#111827' }}>
+                    {Number(tokenBalance).toLocaleString()} / {Number(tokenGrant).toLocaleString()} tokens
+                  </div>
+                  {tokensPerMessage !== undefined && (
+                    <div style={{ color: '#6B7280', fontSize: '12px', marginTop: '4px' }}>
+                      Burn per message: {Number(tokensPerMessage).toLocaleString()} tokens
+                    </div>
+                  )}
+                  {tokenGrantedAt && (
+                    <div style={{ color: '#6B7280', fontSize: '12px', marginTop: '4px' }}>
+                      Grant date: {new Date(tokenGrantedAt).toLocaleDateString()}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+            {isOutOfTokens && (
+              <div style={{ marginTop: '16px' }}>
+                <Tag color="red">Out of tokens</Tag>
+                <p style={{ color: '#b91c1c', marginTop: '8px' }}>
+                  Your token balance is empty. Renew to continue premium chats.
+                </p>
+                <Button type="primary" onClick={handleUpgrade} loading={upgrading} disabled={upgrading}>
+                  Renew Premium
+                </Button>
+              </div>
+            )}
             {isPremium ? (
               <Button danger block onClick={handleCancel}>Cancel Subscription</Button>
             ) : (

@@ -35,7 +35,7 @@ import { ShareDialog } from '../components/Social/ShareDialog';
 import { colors, typography, spacing, shadows } from '../styles/tokens';
 import { pageVariants, fadeIn, slideUp } from '../styles/animations';
 
-type TabKey = 'about' | 'posts' | 'reviews';
+type TabKey = 'about' | 'posts' | 'content' | 'reviews';
 
 // Animated Counter Component
 const AnimatedCounter = ({ end, suffix = '', duration = 2000 }: { end: number; suffix?: string; duration?: number }) => {
@@ -83,22 +83,31 @@ const CreatorProfile = () => {
 
   useEffect(() => {
     if (id) {
-      fetchCreator();
-      fetchCreatorPosts();
-      fetchCreatorContent();
-      fetchFAQs();
+      fetchData();
     }
   }, [id]);
 
-  const fetchCreator = async () => {
+  const fetchData = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const response = await creatorApi.getById(id!);
-      setCreator(response.data.data);
-    } catch (error) {
-      console.error('Failed to fetch creator:', error);
+      await Promise.all([
+        fetchCreator(),
+        fetchCreatorPosts(),
+        fetchCreatorContent()
+      ]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCreator = async () => {
+    try {
+      const response = await creatorApi.getById(id!);
+      const data = response.data.data;
+      setCreator(data);
+      if (data.faqs) setFaqs(data.faqs);
+    } catch (error) {
+      console.error('Failed to fetch creator:', error);
     }
   };
 
@@ -122,26 +131,11 @@ const CreatorProfile = () => {
   };
 
   const fetchFAQs = async () => {
-    try {
-      // Fetch FAQs - this would be a new endpoint
-      // For now, we'll use mock data or get from creator's content
-      const mockFAQs = [
-        {
-          question: 'What topics can I ask about?',
-          answer: `You can ask ${creator?.displayName} about ${creator?.tags?.join(', ') || 'various topics'}. The AI is trained on their expertise and content.`,
-        },
-        {
-          question: 'How accurate are the responses?',
-          answer: 'Responses are generated based on the creator\'s actual content and expertise. The AI is trained specifically on their knowledge base.',
-        },
-        {
-          question: 'Can I have multiple conversations?',
-          answer: 'Yes! You can start as many conversations as you like. Each conversation is saved in your chat history.',
-        },
-      ];
-      setFaqs(mockFAQs);
-    } catch (error) {
-      console.error('Failed to fetch FAQs:', error);
+    // FAQs are now fetched as part of the creator profile response
+    if (creator?.faqs) {
+      setFaqs(creator.faqs);
+    } else {
+      setFaqs([]);
     }
   };
 
@@ -175,8 +169,8 @@ const CreatorProfile = () => {
       label: 'About',
       children: (
         <motion.div variants={fadeIn}>
-          <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
-            <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
+          <CustomCard depth={1} style={{ marginBottom: spacing[6], background: 'white', color: colors.gray[900] }}>
+            <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4], color: colors.gray[900] }}>
               Bio
             </h3>
             <p style={{ fontSize: typography.fontSize.base, lineHeight: '1.8', color: colors.gray[700] }}>
@@ -194,26 +188,26 @@ const CreatorProfile = () => {
             />
           )}
 
-          {/* Content Gallery */}
-          {contentItems.length > 0 && (
-            <CreatorContentGallery contents={contentItems} creatorName={creator.displayName} />
-          )}
-
           {/* Creator Stats */}
           <CreatorStats
-            totalChats={creator.totalChats || 0}
-            totalMessages={0} // Would come from API
-            rating={creator.rating}
-            responseRate={95}
-            avgResponseTime={2.5}
+            totalChats={creator.performance?.totalChats || 0}
+            totalMessages={0}
+            rating={creator.performance?.rating || creator.rating}
+            responseRate={creator.performance?.responseRate || 100}
+            avgResponseTime={creator.performance?.avgResponseTimeSeconds || 0}
+            topicExpertise={creator.topicExpertise}
+            userSatisfaction={creator.satisfactionTrend?.map((item: any) => ({
+              month: item.month,
+              satisfaction: item.score
+            }))}
           />
 
           {/* FAQ Accordion */}
           {faqs.length > 0 && <FAQAccordion faqs={faqs} creatorName={creator.displayName} />}
 
           {creator.tags && creator.tags.length > 0 && (
-            <CustomCard depth={1}>
-              <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
+            <CustomCard depth={1} style={{ background: 'white', color: colors.gray[900] }}>
+              <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4], color: colors.gray[900] }}>
                 Expertise
               </h3>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: spacing[2] }}>
@@ -234,13 +228,40 @@ const CreatorProfile = () => {
       children: (
         <motion.div variants={fadeIn}>
           {posts.length === 0 ? (
-            <EmptyState type="no-posts" title="No posts yet" description={`${creator.displayName} hasn't posted anything yet`} />
+            <EmptyState
+              type="no-data"
+              title="No posts yet"
+              description={`${creator.displayName} hasn't posted anything yet`}
+            />
           ) : (
-            <div>
-              {posts.map((post) => (
-                <PostCard key={post.id} post={post} showActions={true} />
+            <div className="posts-list">
+              {posts.map(post => (
+                <PostCard
+                  key={post.id}
+                  post={post}
+                />
               ))}
             </div>
+          )}
+        </motion.div>
+      ),
+    },
+    {
+      key: 'content',
+      label: `Content (${contentItems.filter(i => i.type === 'YOUTUBE_VIDEO').length})`,
+      children: (
+        <motion.div variants={fadeIn}>
+          {contentItems.filter(i => i.type === 'YOUTUBE_VIDEO').length === 0 ? (
+            <EmptyState
+              type="no-data"
+              title="No videos yet"
+              description={`${creator.displayName} hasn't shared any YouTube videos yet`}
+            />
+          ) : (
+            <CreatorContentGallery
+              contents={contentItems.filter(i => i.type === 'YOUTUBE_VIDEO')}
+              creatorName={creator.displayName}
+            />
           )}
         </motion.div>
       ),
@@ -315,7 +336,7 @@ const CreatorProfile = () => {
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: isMobile ? `0 ${spacing[4]}` : `0 ${spacing[8]}` }}>
         {/* Profile Header Card */}
         <motion.div variants={slideUp} style={{ marginTop: '-80px', marginBottom: spacing[8], position: 'relative', zIndex: 1 }}>
-          <CustomCard depth={2} style={{ padding: isMobile ? spacing[4] : spacing[6] }}>
+          <CustomCard depth={2} style={{ padding: isMobile ? spacing[4] : spacing[6], background: 'white', color: colors.gray[900] }}>
             <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: spacing[6], alignItems: isMobile ? 'center' : 'flex-start' }}>
               {/* Avatar */}
               <div style={{ position: 'relative' }}>
@@ -377,7 +398,7 @@ const CreatorProfile = () => {
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, color: colors.gray[900] }}>
                       <StarFilled style={{ color: colors.warning.solid, marginRight: spacing[2] }} />
-                      {creator.rating?.toFixed(1) || 'N/A'}
+                      {creator.rating ? Number(creator.rating).toFixed(1) : 'N/A'}
                     </div>
                     <div style={{ fontSize: typography.fontSize.sm, color: colors.gray[600] }}>Rating</div>
                   </div>
@@ -415,15 +436,21 @@ const CreatorProfile = () => {
         <Row gutter={[32, 32]}>
           {/* Left Column - Tabs */}
           <Col xs={24} lg={16}>
-            <Tabs activeKey={activeTab} items={tabItems} onChange={(key) => setActiveTab(key as TabKey)} />
+            <Tabs
+              activeKey={activeTab}
+              items={tabItems}
+              onChange={(key) => setActiveTab(key as TabKey)}
+              style={{ padding: spacing[4], background: 'white', borderRadius: '16px', boxShadow: shadows.sm }}
+              className="creator-tabs"
+            />
           </Col>
 
           {/* Right Sidebar */}
           <Col xs={24} lg={8}>
             {/* Social Links */}
             {(creator.youtubeUrl || creator.instagramUrl || creator.twitterUrl || creator.websiteUrl) && (
-              <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
-                <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
+              <CustomCard depth={1} style={{ marginBottom: spacing[6], background: 'white', color: colors.gray[900] }}>
+                <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4], color: colors.gray[900] }}>
                   Connect
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
@@ -484,6 +511,22 @@ const CreatorProfile = () => {
         title={`${creator?.displayName} on Creator Platform`}
         description={creator?.tagline || creator?.bio}
       />
+      <style>{`
+        .creator-tabs .ant-tabs-tab {
+          padding: 12px 16px !important;
+        }
+        .creator-tabs .ant-tabs-tab-btn {
+          font-weight: 600 !important;
+          color: ${colors.gray[600]} !important;
+          font-size: 16px !important;
+        }
+        .creator-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+          color: ${colors.primary.solid} !important;
+        }
+        .creator-tabs .ant-tabs-nav::before {
+          border-bottom: 1px solid ${colors.gray[200]} !important;
+        }
+      `}</style>
     </motion.div>
   );
 };

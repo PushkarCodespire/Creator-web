@@ -3,21 +3,26 @@
 // ===========================================
 
 import { useEffect, useState } from 'react';
-import { Row, Col, Statistic, List, Tag, Spin, Button, Progress, Alert, Grid } from 'antd';
 import {
   MessageOutlined,
   FileTextOutlined,
   DollarOutlined,
   UserOutlined,
   TrophyOutlined,
-  FireOutlined
+  FireOutlined,
+  StarFilled,
+  DeleteOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
+import { Row, Col, Statistic, List, Tag, Spin, Button, Progress, Alert, Grid, Avatar, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { creatorApi } from '../../services/api';
+import { creatorApi, getImageUrl } from '../../services/api';
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { colors, spacing, typography } from '../../styles/tokens';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
+import { FollowersModal } from '../../components/Creator/FollowersModal';
+import { ReviewsModal } from '../../components/Creator/ReviewsModal';
 
 const { useBreakpoint } = Grid;
 
@@ -32,6 +37,9 @@ const CreatorDashboardHome = () => {
     messagesLastHour: 0,
     earningsToday: 0,
   });
+  const [followersModalVisible, setFollowersModalVisible] = useState(false);
+  const [reviewsModalVisible, setReviewsModalVisible] = useState(false);
+  const [engagementTrend, setEngagementTrend] = useState<any[]>([]);
 
   useEffect(() => {
     fetchDashboard();
@@ -52,6 +60,7 @@ const CreatorDashboardHome = () => {
       const response = await creatorApi.getDashboard();
       setDashboard(response.data.data);
       fetchRealtimeStats();
+      fetchEngagementTrend();
     } catch (err) {
       console.error('Failed to fetch dashboard:', err);
     } finally {
@@ -76,16 +85,21 @@ const CreatorDashboardHome = () => {
     }
   };
 
+  const fetchEngagementTrend = async () => {
+    try {
+      const response = await creatorApi.getEngagementTrend(7);
+      setEngagementTrend(response.data.data.trend);
+    } catch (err) {
+      console.error('Failed to fetch engagement trend:', err);
+    }
+  };
+
   // Prepare chart data
-  const engagementData = dashboard?.engagementTrends || [
-    { day: 'Mon', chats: 10, messages: 45 },
-    { day: 'Tue', chats: 15, messages: 60 },
-    { day: 'Wed', chats: 12, messages: 55 },
-    { day: 'Thu', chats: 18, messages: 70 },
-    { day: 'Fri', chats: 20, messages: 85 },
-    { day: 'Sat', chats: 25, messages: 100 },
-    { day: 'Sun', chats: 22, messages: 90 },
-  ];
+  const engagementData = engagementTrend.map(item => ({
+    day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
+    fullDate: item.date,
+    count: item.count
+  }));
 
   if (loading) {
     return <DashboardContentLoader />;
@@ -267,21 +281,12 @@ const CreatorDashboardHome = () => {
                 />
                 <Area
                   type="monotone"
-                  dataKey="chats"
+                  dataKey="count"
                   stroke="#6366F1"
                   strokeWidth={3}
                   fillOpacity={1}
                   fill="url(#colorChats)"
-                  name="Chats"
-                />
-                <Area
-                  type="monotone"
-                  dataKey="messages"
-                  stroke="#10B981"
-                  strokeWidth={3}
-                  fillOpacity={1}
-                  fill="url(#colorMsgs)"
-                  name="Messages"
+                  name="Engagement"
                 />
               </AreaChart>
             </ResponsiveContainer>
@@ -433,6 +438,95 @@ const CreatorDashboardHome = () => {
         </Col>
       </Row>
 
+      {/* Followers & Reviews Rows */}
+      <Row gutter={[24, 24]} style={{ marginTop: spacing[8] }}>
+        <Col xs={24} lg={12}>
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: '28px',
+            padding: '32px',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            height: '100%',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <h3 style={{ margin: 0, fontWeight: 800, fontSize: '20px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>
+                Followers ({dashboard?.followers?.count || 0})
+              </h3>
+              <Button type="link" onClick={() => setFollowersModalVisible(true)} style={{ paddingRight: 0, fontWeight: 700, color: '#6366F1' }}>View All</Button>
+            </div>
+            <List
+              dataSource={dashboard?.followers?.top || []}
+              locale={{ emptyText: <span style={{ color: colors.gray[500] }}>No followers yet</span> }}
+              renderItem={(follower: any) => (
+                <List.Item style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', padding: '16px 0' }}>
+                  <List.Item.Meta
+                    avatar={<Avatar src={getImageUrl(follower.avatar)} />}
+                    title={<span style={{ color: '#FFFFFF', fontWeight: 600 }}>{follower.name}</span>}
+                    description={<span style={{ color: colors.gray[500] }}>{follower.email}</span>}
+                  />
+                  <div style={{ color: colors.gray[500], fontSize: '12px' }}>
+                    {new Date(follower.followedAt).toLocaleDateString()}
+                  </div>
+                </List.Item>
+              )}
+            />
+          </div>
+        </Col>
+        <Col xs={24} lg={12}>
+          <div style={{
+            background: 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: '28px',
+            padding: '32px',
+            border: '1px solid rgba(255, 255, 255, 0.05)',
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            height: '100%',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <h3 style={{ margin: 0, fontWeight: 800, fontSize: '20px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>Reviews</h3>
+                {dashboard?.reviews?.summary && (
+                  <Tag color="gold" style={{ borderRadius: '6px', fontWeight: 800 }}>
+                    <StarFilled style={{ marginRight: '4px' }} />
+                    {Number(dashboard.reviews.summary.averageRating).toFixed(1)}
+                  </Tag>
+                )}
+              </div>
+              <Button type="link" onClick={() => setReviewsModalVisible(true)} style={{ paddingRight: 0, fontWeight: 700, color: '#6366F1' }}>View All</Button>
+            </div>
+            <List
+              dataSource={dashboard?.reviews?.reviews?.slice(0, 3) || []}
+              locale={{ emptyText: <span style={{ color: colors.gray[500] }}>No reviews yet</span> }}
+              renderItem={(review: any) => (
+                <List.Item style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.05)', padding: '16px 0' }}>
+                  <List.Item.Meta
+                    avatar={<Avatar src={getImageUrl(review.user?.avatar)} />}
+                    title={
+                      <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                        <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{review.user?.name}</span>
+                        <div style={{ color: colors.warning.solid }}>
+                          {[...Array(5)].map((_, i) => (
+                            <StarFilled key={i} style={{ opacity: i < review.rating ? 1 : 0.2, fontSize: '12px' }} />
+                          ))}
+                        </div>
+                      </div>
+                    }
+                    description={
+                      <div>
+                        <p style={{ color: colors.gray[300], margin: '4px 0', fontSize: '13px' }}>{review.comment || 'No comment'}</p>
+                        <span style={{ color: colors.gray[500], fontSize: '11px' }}>{new Date(review.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    }
+                  />
+                </List.Item>
+              )}
+            />
+          </div>
+        </Col>
+      </Row>
+
       {/* Quick Tips */}
       {dashboard?.contents?.length === 0 && (
         <Alert
@@ -448,6 +542,17 @@ const CreatorDashboardHome = () => {
           }
         />
       )}
+      {/* Modals */}
+      <FollowersModal
+        visible={followersModalVisible}
+        onClose={() => setFollowersModalVisible(false)}
+      />
+      <ReviewsModal
+        creatorId={dashboard?.id}
+        visible={reviewsModalVisible}
+        onClose={() => setReviewsModalVisible(false)}
+        initialSummary={dashboard?.reviews?.summary}
+      />
     </div>
   );
 };

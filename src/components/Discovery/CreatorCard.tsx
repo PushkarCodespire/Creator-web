@@ -97,7 +97,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator, layout = 'gri
                         border: isList ? `1px solid ${colors.gray[100]}` : 'none'
                     }}>
                         <StarFilled style={{ color: '#F59E0B' }} />
-                        {creator.rating?.toFixed(1) || 'New'}
+                        {creator.rating ? Number(creator.rating).toFixed(1) : 'New'}
                     </div>
                 </div>
 

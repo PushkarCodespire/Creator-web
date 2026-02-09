@@ -70,6 +70,27 @@ export interface CreatorProfile extends Creator {
   totalEarnings?: number;
   totalMessages?: number;
   isProfileComplete?: boolean;
+  performance?: {
+    responseRate: number;
+    avgResponseTimeMs: number | null;
+    avgResponseTimeSeconds: number | null;
+    totalChats: number;
+    rating: number;
+  };
+  faqs?: Array<{
+    id: string;
+    question: string;
+    answer: string;
+    createdAt: string;
+  }>;
+  topicExpertise?: Array<{
+    topic: string;
+    percentage: number;
+  }>;
+  satisfactionTrend?: Array<{
+    month: string;
+    score: number;
+  }>;
 }
 
 export interface CompanyProfile {
@@ -87,7 +108,35 @@ export interface Subscription {
   plan: 'FREE' | 'PREMIUM';
   status: 'ACTIVE' | 'CANCELLED' | 'EXPIRED' | 'PAST_DUE';
   messagesUsedToday: number;
+  currentPeriodStart?: string;
   currentPeriodEnd?: string;
+  tokenBalance?: number;
+  tokenGrant?: number;
+  tokenGrantedAt?: string;
+}
+
+export interface TokenUsage {
+  balance: number;
+  grant: number;
+  grantedAt: string;
+  perMessage: number;
+}
+
+export interface SubscriptionUsage {
+  messagesToday: number;
+  messagesThisMonth?: number;
+  totalMessages?: number;
+  dailyQuota?: number;
+  monthlyQuota?: number;
+  dailyUsagePercentage?: number;
+  monthlyUsagePercentage?: number;
+  tokens?: TokenUsage;
+}
+
+export interface SubscriptionDetails {
+  subscription: Subscription;
+  usage?: SubscriptionUsage;
+  user?: { name?: string; email?: string };
 }
 
 export interface Conversation {

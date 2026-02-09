@@ -30,28 +30,16 @@ export const CreatorStats: React.FC<CreatorStatsProps> = ({
   totalChats,
   totalMessages,
   rating,
-  responseRate = 95,
-  avgResponseTime = 2.5,
-  topicExpertise = [
-    { topic: 'Fitness', percentage: 40 },
-    { topic: 'Nutrition', percentage: 30 },
-    { topic: 'Wellness', percentage: 20 },
-    { topic: 'Other', percentage: 10 },
-  ],
-  userSatisfaction = [
-    { month: 'Jan', satisfaction: 4.2 },
-    { month: 'Feb', satisfaction: 4.5 },
-    { month: 'Mar', satisfaction: 4.7 },
-    { month: 'Apr', satisfaction: 4.6 },
-    { month: 'May', satisfaction: 4.8 },
-    { month: 'Jun', satisfaction: 4.9 },
-  ],
+  responseRate = 100,
+  avgResponseTime = 0,
+  topicExpertise = [],
+  userSatisfaction = [],
 }) => {
   const COLORS = [colors.primary.solid, colors.success.solid, colors.warning.solid, colors.error.solid];
 
   return (
-    <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
-      <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
+    <CustomCard depth={1} style={{ marginBottom: spacing[6], background: 'white', color: colors.gray[900] }}>
+      <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4], color: colors.gray[900] }}>
         Performance Stats
       </h3>
 
@@ -98,7 +86,7 @@ export const CreatorStats: React.FC<CreatorStatsProps> = ({
         <Col xs={24} sm={12} lg={6}>
           <div style={{ textAlign: 'center', padding: spacing[3] }}>
             <div style={{ fontSize: typography.fontSize['2xl'], fontWeight: typography.fontWeight.bold, color: colors.error.solid, marginBottom: spacing[1] }}>
-              {rating?.toFixed(1) || 'N/A'}
+              {rating ? Number(rating).toFixed(1) : 'N/A'}
             </div>
             <div style={{ fontSize: typography.fontSize.sm, color: colors.gray[600] }}>
               <TrophyOutlined style={{ marginRight: spacing[1] }} />

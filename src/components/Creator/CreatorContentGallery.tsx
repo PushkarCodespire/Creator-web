@@ -86,8 +86,8 @@ export const CreatorContentGallery: React.FC<CreatorContentGalleryProps> = ({
 
   return (
     <>
-      <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
-        <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
+      <CustomCard depth={1} style={{ marginBottom: spacing[6], background: 'white', color: colors.gray[900] }}>
+        <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4], color: colors.gray[900] }}>
           Content Gallery
         </h3>
         <Row gutter={[16, 16]}>

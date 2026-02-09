@@ -1,11 +1,14 @@
 // ===========================================
-// RETENTION CHART COMPONENT
-// Cohort retention heatmap visualization
+// RETENTION CHART COMPONENT - Flagship Redesign
 // ===========================================
 
 import React from 'react';
-import { Card, Table, Tag, Tooltip, Empty } from 'antd';
-import { InfoCircleOutlined } from '@ant-design/icons';
+import { Table, Tag, Tooltip, Empty, Typography } from 'antd';
+import { InfoCircleOutlined, UserOutlined } from '@ant-design/icons';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { motion } from 'framer-motion';
+
+const { Title, Text } = Typography;
 
 interface RetentionCohort {
   cohortMonth: string;
@@ -24,174 +27,134 @@ interface RetentionChartProps {
 }
 
 export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = false }) => {
-  // Get color for retention percentage
-  const getRetentionColor = (percentage: number): string => {
-    if (percentage >= 70) return '#52c41a'; // Green
-    if (percentage >= 50) return '#faad14'; // Yellow
-    if (percentage >= 30) return '#ff7a45'; // Orange
-    return '#ff4d4f'; // Red
-  };
-
-  // Get background color with opacity
-  const getBackgroundColor = (percentage: number): string => {
-    if (percentage >= 70) return 'rgba(82, 196, 26, 0.1)';
-    if (percentage >= 50) return 'rgba(250, 173, 20, 0.1)';
-    if (percentage >= 30) return 'rgba(255, 122, 69, 0.1)';
-    return 'rgba(255, 77, 79, 0.1)';
+  const getRetentionStyle = (percentage: number) => {
+    if (percentage >= 70) return { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', label: 'Excellent' };
+    if (percentage >= 50) return { color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)', label: 'Good' };
+    if (percentage >= 30) return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', label: 'Average' };
+    return { color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Low' };
   };
 
   const columns = [
     {
-      title: 'Cohort Month',
+      title: 'COHORT',
       dataIndex: 'cohortMonth',
       key: 'cohortMonth',
       fixed: 'left' as const,
-      width: 120,
-      render: (month: string) => <strong>{month}</strong>
+      width: 140,
+      render: (month: string) => (
+        <span style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '14px' }}>{month}</span>
+      )
     },
     {
-      title: (
-        <Tooltip title="Number of users who started in this month">
-          Size <InfoCircleOutlined style={{ marginLeft: 4 }} />
-        </Tooltip>
-      ),
+      title: 'SIZE',
       dataIndex: 'cohortSize',
       key: 'cohortSize',
-      width: 80,
-      align: 'center' as const
-    },
-    {
-      title: (
-        <Tooltip title="% of users who returned after 1 week">
-          Week 1 <InfoCircleOutlined style={{ marginLeft: 4 }} />
-        </Tooltip>
-      ),
-      key: 'week1',
       width: 100,
       align: 'center' as const,
-      render: (record: RetentionCohort) => (
-        <div
-          style={{
-            padding: '8px',
-            borderRadius: '4px',
-            backgroundColor: getBackgroundColor(record.retention.week1)
-          }}
-        >
-          <Tag color={getRetentionColor(record.retention.week1)}>
-            {record.retention.week1}%
-          </Tag>
-        </div>
+      render: (size: number) => (
+        <span style={{ color: '#94A3B8', fontWeight: 700 }}>
+          <UserOutlined style={{ marginRight: 4, fontSize: '12px' }} />
+          {size}
+        </span>
       )
     },
-    {
-      title: (
-        <Tooltip title="% of users who returned after 2 weeks">
-          Week 2 <InfoCircleOutlined style={{ marginLeft: 4 }} />
-        </Tooltip>
-      ),
-      key: 'week2',
+    ...['week1', 'week2', 'week4', 'week8'].map((wk) => ({
+      title: wk.toUpperCase().replace('WEEK', 'W'),
+      key: wk,
       width: 100,
       align: 'center' as const,
-      render: (record: RetentionCohort) => (
-        <div
-          style={{
-            padding: '8px',
-            borderRadius: '4px',
-            backgroundColor: getBackgroundColor(record.retention.week2)
-          }}
-        >
-          <Tag color={getRetentionColor(record.retention.week2)}>
-            {record.retention.week2}%
-          </Tag>
-        </div>
-      )
-    },
-    {
-      title: (
-        <Tooltip title="% of users who returned after 4 weeks">
-          Week 4 <InfoCircleOutlined style={{ marginLeft: 4 }} />
-        </Tooltip>
-      ),
-      key: 'week4',
-      width: 100,
-      align: 'center' as const,
-      render: (record: RetentionCohort) => (
-        <div
-          style={{
-            padding: '8px',
-            borderRadius: '4px',
-            backgroundColor: getBackgroundColor(record.retention.week4)
-          }}
-        >
-          <Tag color={getRetentionColor(record.retention.week4)}>
-            {record.retention.week4}%
-          </Tag>
-        </div>
-      )
-    },
-    {
-      title: (
-        <Tooltip title="% of users who returned after 8 weeks">
-          Week 8 <InfoCircleOutlined style={{ marginLeft: 4 }} />
-        </Tooltip>
-      ),
-      key: 'week8',
-      width: 100,
-      align: 'center' as const,
-      render: (record: RetentionCohort) => (
-        <div
-          style={{
-            padding: '8px',
-            borderRadius: '4px',
-            backgroundColor: getBackgroundColor(record.retention.week8)
-          }}
-        >
-          <Tag color={getRetentionColor(record.retention.week8)}>
-            {record.retention.week8}%
-          </Tag>
-        </div>
-      )
-    }
+      render: (record: RetentionCohort) => {
+        const val = (record.retention as any)[wk];
+        const style = getRetentionStyle(val);
+        return (
+          <Tooltip title={`${style.label} Retention: ${val}%`} overlayInnerStyle={{ borderRadius: '8px', background: '#0F172A', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              style={{
+                padding: '10px 4px',
+                borderRadius: '12px',
+                backgroundColor: style.bg,
+                border: `1px solid ${style.color}20`,
+                color: style.color,
+                fontWeight: 900,
+                fontSize: '14px'
+              }}
+            >
+              {val}%
+            </motion.div>
+          </Tooltip>
+        );
+      }
+    }))
   ];
 
   if (!data || data.length === 0) {
     return (
-      <Card title="User Retention by Cohort">
-        <Empty description="No retention data available yet. Start getting users to see retention metrics!" />
-      </Card>
+      <div style={{ padding: '48px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '32px' }}>
+        <Empty description={<span style={{ color: '#94A3B8' }}>No retention cohorts found.</span>} />
+      </div>
     );
   }
 
   return (
-    <Card
-      title="User Retention by Cohort"
-      extra={
-        <div style={{ fontSize: '12px', color: '#8c8c8c' }}>
-          Shows % of users who return after initial engagement
+    <div style={{
+      background: 'rgba(15, 23, 42, 0.4)',
+      backdropFilter: 'blur(32px)',
+      padding: '40px',
+      borderRadius: '40px',
+      border: '1px solid rgba(255, 255, 255, 0.05)',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Cohort Retention Matrix</Title>
+          <Text style={{ color: '#64748B' }}>User stickiness analysis over 8-week cycles</Text>
         </div>
-      }
-    >
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <Tag color="processing" style={{ borderRadius: '8px', fontWeight: 800, padding: '4px 12px' }}>
+            <InfoCircleOutlined /> ROLLING WINDOW
+          </Tag>
+        </div>
+      </div>
+
       <Table
         columns={columns}
         dataSource={data}
         rowKey="cohortMonth"
         pagination={false}
         loading={loading}
-        scroll={{ x: 700 }}
-        size="middle"
+        scroll={{ x: 600 }}
+        size="large"
+        className="flagship-table"
+        style={{ background: 'transparent' }}
       />
 
-      <div style={{ marginTop: '16px', fontSize: '12px', color: '#8c8c8c' }}>
-        <strong>How to read:</strong> Each row represents users who started in that month.
-        Percentages show how many returned after 1, 2, 4, and 8 weeks.
-        <div style={{ marginTop: '8px' }}>
-          <Tag color="green">70%+</Tag> Excellent retention
-          <Tag color="yellow">50-69%</Tag> Good retention
-          <Tag color="orange">30-49%</Tag> Needs improvement
-          <Tag color="red">&lt;30%</Tag> Poor retention
-        </div>
-      </div>
-    </Card>
+      <style>{`
+        .flagship-table .ant-table {
+          background: transparent !important;
+          color: #94A3B8 !important;
+        }
+        .flagship-table .ant-table-thead > tr > th {
+          background: rgba(255, 255, 255, 0.02) !important;
+          color: #64748B !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+          font-weight: 800 !important;
+          font-size: 12px !important;
+          letter-spacing: 0.05em !important;
+        }
+        .flagship-table .ant-table-tbody > tr > td {
+          border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
+          padding: 16px 8px !important;
+        }
+        .flagship-table .ant-table-tbody > tr:hover > td {
+          background: rgba(255, 255, 255, 0.02) !important;
+        }
+        .flagship-table .ant-table-cell-fix-left {
+          background: rgba(15, 23, 42, 0.95) !important;
+          backdrop-filter: blur(10px);
+        }
+      `}</style>
+    </div>
   );
 };
 

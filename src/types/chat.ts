@@ -34,6 +34,11 @@ export interface SendMessageResponse {
     status: 'processing' | 'complete';
     estimatedTime?: number;
     remainingMessages: number;
+    tokens?: {
+        tokenBalance: number;
+        tokenGrant: number;
+        tokensPerMessage: number;
+    };
 }
 
 export interface ChatError {

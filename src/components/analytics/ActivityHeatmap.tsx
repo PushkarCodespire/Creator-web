@@ -1,11 +1,14 @@
 // ===========================================
-// ACTIVITY HEATMAP COMPONENT
-// 24x7 grid showing message activity by hour and day
+// ACTIVITY HEATMAP COMPONENT - Flagship Redesign
 // ===========================================
 
 import React from 'react';
-import { Card, Empty, Tooltip, Tag } from 'antd';
-import { FireOutlined } from '@ant-design/icons';
+import { Empty, Tooltip, Tag, Typography } from 'antd';
+import { FireOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { motion } from 'framer-motion';
+import { colors, spacing, shadows } from '../../styles/tokens';
+
+const { Title, Text } = Typography;
 
 interface ActivityHeatmap {
   hourly: number[][]; // [dayOfWeek][hour] = message count
@@ -24,28 +27,25 @@ export const ActivityHeatmapComponent: React.FC<ActivityHeatmapProps> = ({ data,
 
   if (!data || data.totalMessages === 0) {
     return (
-      <Card title="Activity Heatmap">
-        <Empty description="No activity data available yet. Start chatting to see when your users are most active!" />
-      </Card>
+      <div style={{ padding: '48px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '32px' }}>
+        <Empty description={<span style={{ color: '#94A3B8' }}>No activity data available yet.</span>} />
+      </div>
     );
   }
 
-  // Find max value for color scaling
   const maxCount = Math.max(...data.hourly.flat());
 
-  // Get color intensity based on message count
   const getColor = (count: number): string => {
-    if (count === 0) return '#f5f5f5';
-
+    if (count === 0) return 'rgba(255, 255, 255, 0.03)';
     const intensity = count / maxCount;
-    if (intensity > 0.8) return '#0050b3'; // Dark blue
-    if (intensity > 0.6) return '#1890ff'; // Blue
-    if (intensity > 0.4) return '#40a9ff'; // Light blue
-    if (intensity > 0.2) return '#91d5ff'; // Lighter blue
-    return '#d6e4ff'; // Lightest blue
+    // Scale from light indigo to deep indigo/purple
+    if (intensity > 0.8) return '#6366F1';
+    if (intensity > 0.6) return 'rgba(99, 102, 241, 0.8)';
+    if (intensity > 0.4) return 'rgba(99, 102, 241, 0.6)';
+    if (intensity > 0.2) return 'rgba(99, 102, 241, 0.4)';
+    return 'rgba(99, 102, 241, 0.2)';
   };
 
-  // Format hour for display
   const formatHour = (hour: number): string => {
     if (hour === 0) return '12 AM';
     if (hour === 12) return '12 PM';
@@ -54,89 +54,84 @@ export const ActivityHeatmapComponent: React.FC<ActivityHeatmapProps> = ({ data,
   };
 
   return (
-    <Card
-      title="Activity Heatmap (Last 30 Days)"
-      extra={
-        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Tag icon={<FireOutlined />} color="red">
-            Peak: {data.peakHour.day} {formatHour(data.peakHour.hour)} ({data.peakHour.count} messages)
-          </Tag>
-          <Tag>Total: {data.totalMessages} messages</Tag>
+    <div style={{
+      background: 'rgba(15, 23, 42, 0.4)',
+      backdropFilter: 'blur(32px)',
+      padding: '40px',
+      borderRadius: '40px',
+      border: '1px solid rgba(255, 255, 255, 0.05)',
+      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+    }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
+        <div>
+          <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Social Density Heatmap</Title>
+          <Text style={{ color: '#64748B' }}>When your AI community is most active</Text>
         </div>
-      }
-    >
-      <div style={{ overflowX: 'auto' }}>
-        <div style={{ minWidth: '800px' }}>
-          {/* Header row with hours */}
-          <div style={{ display: 'flex', marginBottom: '8px', marginLeft: '60px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <Tag icon={<FireOutlined />} color="volcano" style={{ borderRadius: '8px', fontWeight: 800, padding: '4px 12px' }}>
+            PEAK: {data.peakHour.day} {formatHour(data.peakHour.hour)}
+          </Tag>
+          <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '14px' }}>
+            {data.totalMessages} Messages Analyzed
+          </div>
+        </div>
+      </div>
+
+      <div style={{ overflowX: 'auto', paddingBottom: '20px', scrollbarWidth: 'none' }}>
+        <div style={{ minWidth: '850px' }}>
+          {/* Hour Labels */}
+          <div style={{ display: 'flex', marginBottom: '16px', marginLeft: '70px' }}>
             {hours.map((hour) => (
               <div
                 key={hour}
                 style={{
-                  width: '30px',
-                  fontSize: '10px',
+                  width: '32px',
+                  fontSize: '11px',
                   textAlign: 'center',
-                  color: '#8c8c8c',
-                  transform: hour % 3 === 0 ? 'none' : 'scale(0)' // Show every 3rd hour
+                  color: '#64748B',
+                  fontWeight: 700,
+                  opacity: hour % 3 === 0 ? 1 : 0
                 }}
               >
-                {hour % 3 === 0 ? hour : ''}
+                {formatHour(hour).split(' ')[0]}
               </div>
             ))}
           </div>
 
-          {/* Heatmap grid */}
+          {/* Grid */}
           {data.hourly.map((dayData, dayIndex) => (
-            <div key={dayIndex} style={{ display: 'flex', marginBottom: '4px', alignItems: 'center' }}>
-              {/* Day label */}
-              <div
-                style={{
-                  width: '50px',
-                  fontSize: '12px',
-                  fontWeight: 500,
-                  textAlign: 'right',
-                  marginRight: '10px',
-                  color: '#262626'
-                }}
-              >
+            <div key={dayIndex} style={{ display: 'flex', marginBottom: '6px', alignItems: 'center' }}>
+              <div style={{ width: '60px', fontSize: '12px', fontWeight: 800, textAlign: 'right', marginRight: '16px', color: '#94A3B8' }}>
                 {dayNames[dayIndex]}
               </div>
-
-              {/* Hour cells */}
               {dayData.map((count, hour) => {
                 const isPeak = dayIndex === data.hourly.findIndex(d => d === dayData) &&
-                              hour === data.peakHour.hour &&
-                              dayNames[dayIndex] === data.peakHour.day;
+                  hour === data.peakHour.hour &&
+                  dayNames[dayIndex] === data.peakHour.day;
 
                 return (
                   <Tooltip
                     key={hour}
                     title={
-                      <div>
-                        <div><strong>{dayNames[dayIndex]} {formatHour(hour)}</strong></div>
-                        <div>{count} message{count !== 1 ? 's' : ''}</div>
-                        {isPeak && <div style={{ color: '#ff4d4f', marginTop: '4px' }}>🔥 Peak Hour</div>}
+                      <div style={{ padding: '4px' }}>
+                        <div style={{ fontWeight: 800 }}>{dayNames[dayIndex]} {formatHour(hour)}</div>
+                        <div style={{ color: '#6366F1' }}>{count} interactions</div>
+                        {isPeak && <div style={{ color: '#F59E0B', marginTop: '4px' }}>🔥 Current Peak Moment</div>}
                       </div>
                     }
+                    overlayInnerStyle={{ borderRadius: '12px', background: '#0F172A', border: '1px solid rgba(255, 255, 255, 0.1)' }}
                   >
-                    <div
+                    <motion.div
+                      whileHover={{ scale: 1.2, zIndex: 10 }}
                       style={{
-                        width: '30px',
-                        height: '30px',
+                        width: '28px',
+                        height: '28px',
                         backgroundColor: getColor(count),
-                        border: isPeak ? '2px solid #ff4d4f' : '1px solid #f0f0f0',
-                        borderRadius: '4px',
+                        border: isPeak ? '2px solid #F59E0B' : '1px solid rgba(255, 255, 255, 0.05)',
+                        borderRadius: '6px',
                         cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        boxShadow: isPeak ? '0 0 8px rgba(255, 77, 79, 0.5)' : 'none'
-                      }}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.1)';
-                        e.currentTarget.style.zIndex = '10';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                        e.currentTarget.style.zIndex = '1';
+                        transition: 'background-color 0.3s',
+                        boxShadow: isPeak ? '0 0 15px rgba(245, 158, 11, 0.4)' : 'none'
                       }}
                     />
                   </Tooltip>
@@ -146,30 +141,27 @@ export const ActivityHeatmapComponent: React.FC<ActivityHeatmapProps> = ({ data,
           ))}
 
           {/* Legend */}
-          <div style={{ marginTop: '24px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '12px', color: '#8c8c8c', marginRight: '8px' }}>
-              <strong>Message Count:</strong>
-            </span>
-            <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>Low</div>
-              <div style={{ width: '25px', height: '25px', backgroundColor: '#f5f5f5', border: '1px solid #d9d9d9', borderRadius: '4px' }} />
-              <div style={{ width: '25px', height: '25px', backgroundColor: '#d6e4ff', border: '1px solid #d9d9d9', borderRadius: '4px' }} />
-              <div style={{ width: '25px', height: '25px', backgroundColor: '#91d5ff', border: '1px solid #d9d9d9', borderRadius: '4px' }} />
-              <div style={{ width: '25px', height: '25px', backgroundColor: '#40a9ff', border: '1px solid #d9d9d9', borderRadius: '4px' }} />
-              <div style={{ width: '25px', height: '25px', backgroundColor: '#1890ff', border: '1px solid #d9d9d9', borderRadius: '4px' }} />
-              <div style={{ width: '25px', height: '25px', backgroundColor: '#0050b3', border: '1px solid #d9d9d9', borderRadius: '4px' }} />
-              <div style={{ fontSize: '12px', color: '#8c8c8c' }}>High</div>
+          <div style={{ marginTop: '40px', display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#64748B' }}>Activity Density</span>
+            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+              <span style={{ fontSize: '11px', color: '#475569' }}>Low</span>
+              {[0.1, 0.3, 0.5, 0.7, 0.9].map((lvl) => (
+                <div key={lvl} style={{ width: '20px', height: '20px', borderRadius: '4px', background: `rgba(99, 102, 241, ${lvl})`, border: '1px solid rgba(255, 255, 255, 0.05)' }} />
+              ))}
+              <span style={{ fontSize: '11px', color: '#475569' }}>High</span>
             </div>
-          </div>
-
-          <div style={{ marginTop: '12px', fontSize: '12px', color: '#8c8c8c' }}>
-            <strong>How to read:</strong> Each cell shows message activity for a specific day and hour.
-            Darker colors indicate higher activity. Hover over cells to see exact counts.
-            The red-bordered cell indicates your peak activity hour.
           </div>
         </div>
       </div>
-    </Card>
+
+      <div style={{ marginTop: '40px', padding: '24px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.05)' }}>
+        <div style={{ color: '#94A3B8', fontSize: '13px', lineHeight: 1.6 }}>
+          <FireOutlined style={{ marginRight: '8px', color: '#F59E0B' }} />
+          <strong>Optimization tip:</strong> Your peak engagement period is around <span style={{ color: '#F8FAFC', fontWeight: 800 }}>{data.peakHour.day}s at {formatHour(data.peakHour.hour)}</span>.
+          Consider scheduling special AI drops or community events during this window to maximize conversion.
+        </div>
+      </div>
+    </div>
   );
 };
 

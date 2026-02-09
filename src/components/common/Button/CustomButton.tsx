@@ -28,72 +28,75 @@ const CustomButton: React.FC<CustomButtonProps> = ({
 }) => {
   // Get button styles based on variant
   const getButtonStyle = (): React.CSSProperties => {
-    const baseStyle: React.CSSProperties = {
+    const defaultStyle: React.CSSProperties = {
       borderRadius: '12px',
       fontWeight: 600,
       border: 'none',
       transition: 'all 0.3s ease',
-      ...style,
     };
+
+    let variantStyle: React.CSSProperties = {};
 
     if (gradient) {
       switch (variant) {
         case 'primary':
-          return {
-            ...baseStyle,
+          variantStyle = {
             background: colors.primary.gradient,
             color: '#ffffff',
             boxShadow: glow ? shadows.glow.primary : shadows.md,
           };
+          break;
         case 'success':
-          return {
-            ...baseStyle,
+          variantStyle = {
             background: colors.success.gradient,
             color: '#ffffff',
             boxShadow: glow ? shadows.glow.success : shadows.md,
           };
+          break;
         case 'danger':
-          return {
-            ...baseStyle,
+          variantStyle = {
             background: colors.error.gradient,
             color: '#ffffff',
             boxShadow: glow ? shadows.glow.error : shadows.md,
           };
-        default:
-          return baseStyle;
+          break;
+      }
+    } else {
+      // Non-gradient styles
+      switch (variant) {
+        case 'secondary':
+          variantStyle = {
+            background: colors.gray[100],
+            color: colors.text.primary,
+          };
+          break;
+        case 'ghost':
+          variantStyle = {
+            background: 'transparent',
+            border: `1px solid ${colors.gray[300]}`,
+            color: colors.text.primary,
+          };
+          break;
+        case 'danger':
+          variantStyle = {
+            background: colors.error.solid,
+            color: '#ffffff',
+          };
+          break;
+        case 'success':
+          variantStyle = {
+            background: colors.success.solid,
+            color: '#ffffff',
+          };
+          break;
       }
     }
 
-    // Non-gradient styles
-    switch (variant) {
-      case 'secondary':
-        return {
-          ...baseStyle,
-          background: colors.gray[100],
-          color: colors.text.primary,
-        };
-      case 'ghost':
-        return {
-          ...baseStyle,
-          background: 'transparent',
-          border: `1px solid ${colors.gray[300]}`,
-          color: colors.text.primary,
-        };
-      case 'danger':
-        return {
-          ...baseStyle,
-          background: colors.error.solid,
-          color: '#ffffff',
-        };
-      case 'success':
-        return {
-          ...baseStyle,
-          background: colors.success.solid,
-          color: '#ffffff',
-        };
-      default:
-        return baseStyle;
-    }
+    return {
+      ...defaultStyle,
+      ...variantStyle,
+      ...style, // Props style should always override component defaults
+    };
   };
 
   // Wrap button in motion.div to avoid deprecation warning

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Card, Form, Input, Button, Select, message, Spin, Divider, Space, Tag, List, Typography, Alert, Grid } from 'antd';
+import { Card, Form, Input, Button, Select, message, Spin, Divider, Space, Tag, List, Typography, Alert, Grid, InputNumber, Switch } from 'antd';
 import {
   PictureOutlined,
   UserOutlined,
@@ -309,6 +309,33 @@ const CreatorSettings = () => {
                 </Form.Item>
                 <Form.Item name="ifscCode" label={<span style={labelStyle}>IFSC Code</span>}>
                   <Input placeholder="IFSC0001234" style={inputStyle} size="large" />
+                </Form.Item>
+
+                <Divider style={{ borderColor: 'rgba(255,255,255,0.1)', margin: '24px 0' }} />
+                <Title level={5} style={{ color: '#fff', marginBottom: '20px' }}>Pricing Strategy</Title>
+
+                <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 0 : spacing[4] }}>
+                  <Form.Item name="pricePerMessage" label={<span style={labelStyle}>Price Per Message (INR)</span>}>
+                    <InputNumber
+                      min={0}
+                      formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      parser={value => (value ? value.replace(/₹\s?|(,*)/g, '') : '') as any}
+                      style={{ ...inputStyle, width: '100%', height: '48px', paddingTop: '8px' }}
+                    />
+                  </Form.Item>
+                  <Form.Item name="discountFirstFive" label={<span style={labelStyle}>Discount on first 5 messages (%)</span>}>
+                    <InputNumber
+                      min={0}
+                      max={100}
+                      formatter={value => `${value}%`}
+                      parser={value => (value ? value.replace('%', '') : '') as any}
+                      style={{ ...inputStyle, width: '100%', height: '48px', paddingTop: '8px' }}
+                    />
+                  </Form.Item>
+                </div>
+
+                <Form.Item name="firstMessageFree" label={<span style={labelStyle}>First Message Free</span>} valuePropName="checked">
+                  <Switch checkedChildren="ON" unCheckedChildren="OFF" />
                 </Form.Item>
 
                 <Alert

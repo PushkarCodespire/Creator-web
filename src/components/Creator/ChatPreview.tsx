@@ -25,8 +25,8 @@ export const ChatPreview: React.FC<ChatPreviewProps> = ({
   creatorAvatar,
   welcomeMessage,
   sampleMessages = [
-    { role: 'user', content: 'Hi! Can you help me with fitness advice?' },
-    { role: 'assistant', content: welcomeMessage || 'Of course! I\'d be happy to help you with fitness advice. What specific area would you like to focus on?' },
+    { role: 'user', content: `Hi! Can you help me?` },
+    { role: 'assistant', content: welcomeMessage || 'Of course! I\'d be happy to help you. What specific area would you like to focus on?' },
   ],
 }) => {
   const navigate = useNavigate();
@@ -35,7 +35,7 @@ export const ChatPreview: React.FC<ChatPreviewProps> = ({
   return (
     <Card
       title={
-        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], color: colors.gray[900] }}>
           <MessageOutlined />
           <span>Sample Conversation</span>
         </div>
@@ -45,7 +45,7 @@ export const ChatPreview: React.FC<ChatPreviewProps> = ({
           {expanded ? 'Show Less' : 'Show More'}
         </Button>
       }
-      style={{ marginBottom: spacing[4] }}
+      style={{ marginBottom: spacing[4], background: 'white', color: colors.gray[900] }}
     >
       <div style={{ maxHeight: expanded ? 'none' : '300px', overflow: 'hidden' }}>
         {sampleMessages.map((msg, index) => (

@@ -35,7 +35,7 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined
 } from '@ant-design/icons';
-import api, { payoutApi } from '../../services/api';
+import { payoutApi } from '../../services/api';
 import { format } from 'date-fns';
 
 const { Title, Text, Paragraph } = Typography;
@@ -56,11 +56,15 @@ interface BankAccount {
 
 interface Payout {
   id: string;
-  amount: number;
-  fee: number;
-  netAmount: number;
+  amount: number | string;
+  fee: number | string;
+  netAmount: number | string;
+  currency?: string;
+  subscriptionEarnings?: number | string;
+  brandDealEarnings?: number | string;
   status: string;
   requestedAt: string;
+  processedAt?: string | null;
   completedAt?: string;
   utr?: string;
   errorMessage?: string;
@@ -77,11 +81,12 @@ interface Earnings {
 interface LedgerEntry {
   id: string;
   type: string;
-  amount: number;
+  amount: number | string;
   description: string;
   sourceType: string;
-  balanceBefore: number;
-  balanceAfter: number;
+  sourceId?: string;
+  balanceBefore: number | string;
+  balanceAfter: number | string;
   createdAt: string;
 }
 
@@ -91,12 +96,13 @@ const CreatorPayouts = () => {
   const [bankAccount, setBankAccount] = useState<BankAccount | null>(null);
   const [payouts, setPayouts] = useState<Payout[]>([]);
   const [ledger, setLedger] = useState<LedgerEntry[]>([]);
+  const [payoutPagination, setPayoutPagination] = useState({ page: 1, limit: 10, total: 0 });
+  const [ledgerPagination, setLedgerPagination] = useState({ page: 1, limit: 20, total: 0 });
   const [isBankModalVisible, setIsBankModalVisible] = useState(false);
   const [isPayoutModalVisible, setIsPayoutModalVisible] = useState(false);
   const [payoutAmount, setPayoutAmount] = useState<number>(0);
 
   const [bankForm] = Form.useForm();
-  const [payoutForm] = Form.useForm();
   const screens = useBreakpoint();
   const isMobile = !screens.md;
 
@@ -104,9 +110,15 @@ const CreatorPayouts = () => {
   useEffect(() => {
     loadEarnings();
     loadBankAccount();
-    loadPayouts();
-    loadLedger();
   }, []);
+
+  useEffect(() => {
+    loadPayouts();
+  }, [payoutPagination.page, payoutPagination.limit]);
+
+  useEffect(() => {
+    loadLedger();
+  }, [ledgerPagination.page, ledgerPagination.limit]);
 
   const loadEarnings = async () => {
     try {
@@ -131,8 +143,13 @@ const CreatorPayouts = () => {
 
   const loadPayouts = async () => {
     try {
-      const response = await payoutApi.getPayouts();
-      setPayouts(response.data.data.payouts || []);
+      const response = await payoutApi.getPayouts({ page: payoutPagination.page, limit: payoutPagination.limit });
+      const data = response.data.data || {};
+      setPayouts(data.payouts || []);
+      setPayoutPagination((prev) => ({
+        ...prev,
+        total: data.pagination?.total ?? prev.total
+      }));
     } catch (error: any) {
       message.error('Failed to load payouts');
     }
@@ -140,8 +157,13 @@ const CreatorPayouts = () => {
 
   const loadLedger = async () => {
     try {
-      const response = await payoutApi.getLedger();
-      setLedger(response.data.data.entries || []);
+      const response = await payoutApi.getLedger({ page: ledgerPagination.page, limit: ledgerPagination.limit });
+      const data = response.data.data || {};
+      setLedger(data.entries || []);
+      setLedgerPagination((prev) => ({
+        ...prev,
+        total: data.pagination?.total ?? prev.total
+      }));
     } catch (error: any) {
       message.error('Failed to load ledger');
     }
@@ -184,6 +206,7 @@ const CreatorPayouts = () => {
       PROCESSING: { color: 'blue', icon: <ClockCircleOutlined /> },
       COMPLETED: { color: 'green', icon: <CheckCircleOutlined /> },
       FAILED: { color: 'red', icon: <CloseCircleOutlined /> },
+      REJECTED: { color: 'red', icon: <CloseCircleOutlined /> },
       CANCELLED: { color: 'default', icon: <CloseCircleOutlined /> }
     };
 
@@ -218,25 +241,37 @@ const CreatorPayouts = () => {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount: number) => `₹${amount.toFixed(2)}`
+      render: (amount: number | string) => `₹${Number(amount).toFixed(2)}`
     },
     {
       title: 'Fee',
       dataIndex: 'fee',
       key: 'fee',
-      render: (fee: number) => `-₹${fee.toFixed(2)}`
+      render: (fee: number | string) => `-₹${Number(fee).toFixed(2)}`
     },
     {
       title: 'Net Amount',
       dataIndex: 'netAmount',
       key: 'netAmount',
-      render: (amount: number) => <strong>₹{amount.toFixed(2)}</strong>
+      render: (amount: number | string) => <strong>₹{Number(amount).toFixed(2)}</strong>
     },
     {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
       render: (status: string) => getStatusTag(status)
+    },
+    {
+      title: 'Processed',
+      dataIndex: 'processedAt',
+      key: 'processedAt',
+      render: (date: string | null | undefined) => date ? format(new Date(date), 'MMM dd, yyyy') : '-'
+    },
+    {
+      title: 'Completed',
+      dataIndex: 'completedAt',
+      key: 'completedAt',
+      render: (date: string | null | undefined) => date ? format(new Date(date), 'MMM dd, yyyy') : '-'
     },
     {
       title: 'UTR',
@@ -252,6 +287,23 @@ const CreatorPayouts = () => {
       dataIndex: 'createdAt',
       key: 'createdAt',
       render: (date: string) => format(new Date(date), 'MMM dd, yyyy HH:mm')
+    },
+    {
+      title: 'Source',
+      dataIndex: 'sourceType',
+      key: 'sourceType',
+      filters: [
+        { text: 'Chat (Subscription)', value: 'subscription' },
+        { text: 'Brand Deal', value: 'brand_deal' },
+        { text: 'Payout', value: 'payout' },
+        { text: 'Adjustment', value: 'adjustment' }
+      ],
+      onFilter: (value: any, record: LedgerEntry) => record.sourceType === value,
+      render: (sourceType: string) => (
+        <Tag color={sourceType === 'subscription' ? 'purple' : sourceType === 'brand_deal' ? 'blue' : sourceType === 'payout' ? 'gold' : 'default'}>
+          {sourceType?.toUpperCase() || 'N/A'}
+        </Tag>
+      )
     },
     {
       title: 'Description',
@@ -272,9 +324,9 @@ const CreatorPayouts = () => {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount: number, record: LedgerEntry) => (
+      render: (amount: number | string, record: LedgerEntry) => (
         <span style={{ color: record.type === 'CREDIT' ? '#52c41a' : '#ff4d4f' }}>
-          {record.type === 'CREDIT' ? '+' : '-'}₹{amount.toFixed(2)}
+          {record.type === 'CREDIT' ? '+' : '-'}₹{Number(amount).toFixed(2)}
         </span>
       )
     },
@@ -282,7 +334,7 @@ const CreatorPayouts = () => {
       title: 'Balance After',
       dataIndex: 'balanceAfter',
       key: 'balanceAfter',
-      render: (balance: number) => `₹${balance.toFixed(2)}`
+      render: (balance: number | string) => `₹${Number(balance).toFixed(2)}`
     }
   ];
 
@@ -509,7 +561,13 @@ const CreatorPayouts = () => {
               columns={payoutColumns}
               dataSource={payouts}
               rowKey="id"
-              pagination={{ pageSize: 10 }}
+              pagination={{
+                current: payoutPagination.page,
+                pageSize: payoutPagination.limit,
+                total: payoutPagination.total,
+                showSizeChanger: true,
+                onChange: (page, pageSize) => setPayoutPagination({ page, limit: pageSize || payoutPagination.limit, total: payoutPagination.total })
+              }}
               locale={{ emptyText: <Empty description="No payouts recorded" /> }}
               className="flagship-table"
               style={{ marginTop: '24px' }}
@@ -529,7 +587,13 @@ const CreatorPayouts = () => {
               columns={ledgerColumns}
               dataSource={ledger}
               rowKey="id"
-              pagination={{ pageSize: 20 }}
+              pagination={{
+                current: ledgerPagination.page,
+                pageSize: ledgerPagination.limit,
+                total: ledgerPagination.total,
+                showSizeChanger: true,
+                onChange: (page, pageSize) => setLedgerPagination({ page, limit: pageSize || ledgerPagination.limit, total: ledgerPagination.total })
+              }}
               locale={{ emptyText: <Empty description="No transactions recorded" /> }}
               className="flagship-table"
               style={{ marginTop: '24px' }}
@@ -690,7 +754,7 @@ const CreatorPayouts = () => {
         okText="Request Payout"
       >
         <Paragraph>
-          Available Balance: <Text strong>₹{earnings?.availableBalance?.toFixed(2) || 0}</Text>
+          Available Balance: <Text strong>₹{earnings?.availableBalance ? Number(earnings.availableBalance).toFixed(2) : '0.00'}</Text>
         </Paragraph>
         <Paragraph type="secondary" style={{ fontSize: '12px' }}>
           Minimum payout amount: ₹1,000

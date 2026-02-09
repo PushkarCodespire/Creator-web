@@ -178,7 +178,16 @@ export const creatorApi = {
 
   // Added based on user request
   getApplications: (params?: { page?: number; limit?: number; status?: string; creatorId?: string }) =>
-    api.get('/creators/applications', { params })
+    api.get('/creators/applications', { params }),
+
+  getFollowers: (params?: { page?: number; limit?: number }) =>
+    api.get('/creators/followers', { params }),
+
+  removeFollower: (followerId: string) =>
+    api.delete(`/creators/followers/${followerId}`),
+
+  getEngagementTrend: (days: number = 7) =>
+    api.get('/creators/analytics/engagement', { params: { days } })
 };
 
 // ===========================================
@@ -355,9 +364,9 @@ export const payoutApi = {
 
   requestPayout: (amount: number) => api.post('/payouts/request', { amount }),
 
-  getPayouts: () => api.get('/payouts'),
+  getPayouts: (params?: { page?: number; limit?: number }) => api.get('/payouts', { params }),
 
-  getLedger: () => api.get('/payouts/earnings/ledger')
+  getLedger: (params?: { page?: number; limit?: number }) => api.get('/payouts/earnings/ledger', { params })
 };
 
 // ===========================================
@@ -521,7 +530,10 @@ export const postApi = {
 
   // Get post likes
   getPostLikes: (id: string, params?: { page?: number; limit?: number }) =>
-    api.get(`/posts/${id}/likes`, { params })
+    api.get(`/posts/${id}/likes`, { params }),
+
+  // Creator stats overview for posts
+  getStatsOverview: () => api.get('/posts/stats/overview')
 };
 
 // ===========================================

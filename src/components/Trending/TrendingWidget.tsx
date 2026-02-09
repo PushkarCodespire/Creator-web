@@ -206,7 +206,7 @@ const TrendingItem: React.FC<TrendingItemProps> = ({ item, type, rank }) => {
             <span>💬 {item.commentsCount || 0}</span>
             {item._trendingScore && (
               <span style={{ color: '#F59E0B' }}>
-                🔥 {item._trendingScore.toFixed(1)}
+                🔥 {Number(item._trendingScore).toFixed(1)}
               </span>
             )}
           </div>
@@ -270,7 +270,7 @@ const TrendingItem: React.FC<TrendingItemProps> = ({ item, type, rank }) => {
           <span>👥 {item.followersCount || 0} followers</span>
           {item._trendingScore && (
             <span style={{ color: '#F59E0B' }}>
-              🔥 {item._trendingScore.toFixed(1)}
+              🔥 {Number(item._trendingScore).toFixed(1)}
             </span>
           )}
         </div>

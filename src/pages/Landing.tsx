@@ -375,7 +375,7 @@ const Landing = () => {
                     minWidth: 200,
                     borderRadius: 9999,
                     backgroundImage: colors.primary.gradient,
-                    color: '#E5E7EB',
+                    color: '#0F172A',
                     boxShadow: '0 20px 40px rgba(102,126,234,0.45)',
                   }}
                 >
@@ -390,7 +390,7 @@ const Landing = () => {
                     minWidth: 200,
                     borderRadius: 9999,
                     borderColor: 'rgba(148, 163, 184, 0.7)',
-                    color: '#E5E7EB',
+                    color: '#FFFFFF'
                   }}
                 >
                   Explore Creators

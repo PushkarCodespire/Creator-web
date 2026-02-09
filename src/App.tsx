@@ -57,6 +57,7 @@ const CreatorAnalytics = lazy(() => import('./pages/creator/CreatorAnalytics'));
 const CreatorOpportunities = lazy(() => import('./pages/creator/CreatorOpportunities'));
 const CreatorSettings = lazy(() => import('./pages/creator/CreatorSettings'));
 const CreatorPayouts = lazy(() => import('./pages/creator/CreatorPayouts'));
+const CreatorPosts = lazy(() => import('./pages/creator/CreatorPosts'));
 
 // Company Dashboard
 const CompanyDashboard = lazy(() => import('./pages/company/CompanyDashboard'));
@@ -181,6 +182,7 @@ function App() {
           <Route path="content" element={<CreatorContent />} />
           <Route path="content/:contentId" element={<ContentDetails />} />
           <Route path="analytics" element={<CreatorAnalytics />} />
+          <Route path="posts" element={<CreatorPosts />} />
           <Route path="opportunities" element={<CreatorOpportunities />} />
           <Route path="payouts" element={<CreatorPayouts />} />
           <Route path="settings" element={<CreatorSettings />} />

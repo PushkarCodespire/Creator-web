@@ -32,7 +32,7 @@ import {
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
 import { startConversation, fetchConversation, sendMessage, addMessage } from '../store/slices/chatSlice';
-import { creatorApi, chatApi, getImageUrl, reviewApi } from '../services/api';
+import { creatorApi, chatApi, getImageUrl, reviewApi, subscriptionApi } from '../services/api';
 import { Creator, Message, Review } from '../types';
 import { RateLimitStatus } from '../types/chat';
 import socketService from '../services/socket';
@@ -74,6 +74,10 @@ const Chat = () => {
   const [myReview, setMyReview] = useState<Review | null>(null);
   const [skipReviewForSession, setSkipReviewForSession] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
+  const [tokenBalance, setTokenBalance] = useState<number | null>(null);
+  const [tokenGrant, setTokenGrant] = useState<number | null>(null);
+  const [tokensPerMessage, setTokensPerMessage] = useState<number | null>(null);
+  const [showTokenRenewModal, setShowTokenRenewModal] = useState(false);
 
   // New state for streaming and rate limiting
   const [conversationId, setConversationId] = useState<string | null>(null);
@@ -131,6 +135,35 @@ const Chat = () => {
       setReviewText('');
     }
   }, [creatorId, isAuthenticated]);
+
+  useEffect(() => {
+    if (!isAuthenticated) {
+      setTokenBalance(null);
+      setTokenGrant(null);
+      setTokensPerMessage(null);
+      return;
+    }
+
+    const loadTokenInfo = async () => {
+      try {
+        const response = await subscriptionApi.getDetails();
+        const data = response?.data?.data || {};
+        const tokens = data?.usage?.tokens;
+        if (tokens) {
+          setTokenBalance(tokens.balance ?? null);
+          setTokenGrant(tokens.grant ?? null);
+          setTokensPerMessage(tokens.perMessage ?? null);
+        } else if (data?.subscription) {
+          setTokenBalance(data.subscription?.tokenBalance ?? null);
+          setTokenGrant(data.subscription?.tokenGrant ?? null);
+        }
+      } catch (error) {
+        // Token info is optional; ignore errors here
+      }
+    };
+
+    loadTokenInfo();
+  }, [isAuthenticated]);
 
   const initializeChat = async () => {
     try {
@@ -285,6 +318,10 @@ const Chat = () => {
 
   const handleSend = async () => {
     if ((!inputMessage.trim() && selectedFiles.length === 0) || !conversationId) return;
+    if (tokenBalance !== null && tokenBalance <= 0) {
+      setShowTokenRenewModal(true);
+      return;
+    }
 
     // Check rate limit locally if data available
     if (rateLimitStatus?.limits?.daily?.remaining !== undefined && rateLimitStatus.limits.daily.remaining <= 0) {
@@ -360,6 +397,20 @@ const Chat = () => {
         dispatch(addMessage(response.data.data.aiMessage));
       }
 
+      // Update token usage if provided (premium users)
+      if (response.data?.data?.tokens) {
+        const tokens = response.data.data.tokens;
+        if (typeof tokens.tokenBalance === 'number') {
+          setTokenBalance(tokens.tokenBalance);
+        }
+        if (typeof tokens.tokenGrant === 'number') {
+          setTokenGrant(tokens.tokenGrant);
+        }
+        if (typeof tokens.tokensPerMessage === 'number') {
+          setTokensPerMessage(tokens.tokensPerMessage);
+        }
+      }
+
       // Update rate limit status
       if (response.data.data.remainingMessages !== undefined) {
         // Manually update local state if server returns it, or fetch fresh
@@ -390,6 +441,9 @@ const Chat = () => {
           setShowGuestLimitModal(true);
         }
         antMessage.error('Message limit reached');
+      } else if (error.response?.status === 402) {
+        setShowTokenRenewModal(true);
+        antMessage.error('Out of tokens. Please renew to continue.');
       } else if (error.response?.status === 403) {
         antMessage.error('Your account is suspended');
       } else if (error.response?.status === 400) {
@@ -918,7 +972,7 @@ const Chat = () => {
                 className="send-inner-btn"
                 icon={<SendOutlined />}
                 onClick={handleSend}
-                disabled={!inputMessage.trim() && selectedFiles.length === 0}
+                disabled={(!inputMessage.trim() && selectedFiles.length === 0) || (tokenBalance !== null && tokenBalance <= 0)}
                 title="Send message"
               />
             </div>
@@ -954,6 +1008,32 @@ const Chat = () => {
                       style={{ padding: '0 8px', height: 'auto', color: '#6366F1' }}
                     >
                       Register for unlimited
+                    </Button>
+                  )}
+                </>
+              )}
+              {tokenBalance !== null && (
+                <>
+                  {' â€¢ '}
+                  <span style={{
+                    color: tokenBalance <= 0 ? '#EF4444' : '#10B981',
+                    fontWeight: 600
+                  }}>
+                    {Number(tokenBalance).toLocaleString()} tokens remaining
+                  </span>
+                  {tokensPerMessage !== null && (
+                    <span style={{ color: '#94A3B8', marginLeft: 6 }}>
+                      (burn {Number(tokensPerMessage).toLocaleString()}/msg)
+                    </span>
+                  )}
+                  {tokenBalance <= 0 && (
+                    <Button
+                      type="link"
+                      size="small"
+                      onClick={() => setShowTokenRenewModal(true)}
+                      style={{ padding: '0 8px', height: 'auto', color: '#EF4444' }}
+                    >
+                      Renew
                     </Button>
                   )}
                 </>
@@ -997,6 +1077,30 @@ const Chat = () => {
             />
           </div>
         </div>
+      </Modal>
+      <Modal
+        title="Out of tokens"
+        open={showTokenRenewModal}
+        onCancel={() => setShowTokenRenewModal(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setShowTokenRenewModal(false)}>
+            Not now
+          </Button>,
+          <Button
+            key="renew"
+            type="primary"
+            onClick={() => {
+              setShowTokenRenewModal(false);
+              navigate('/dashboard/subscription');
+            }}
+          >
+            Renew Tokens
+          </Button>
+        ]}
+      >
+        <p>
+          You’ve used all your premium tokens. Renew to continue chatting without interruption.
+        </p>
       </Modal>
       <UpgradeModal
         visible={showUpgradeModal}

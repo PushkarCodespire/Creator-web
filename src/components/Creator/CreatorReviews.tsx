@@ -231,7 +231,7 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
           <Col xs={24} md={8}>
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: typography.fontSize['4xl'], fontWeight: typography.fontWeight.bold, color: colors.warning.solid }}>
-                {displayStats.averageRating ? displayStats.averageRating.toFixed(1) : '0.0'}
+                {displayStats.averageRating ? Number(displayStats.averageRating).toFixed(1) : '0.0'}
               </div>
               <Rate allowHalf disabled value={displayStats.averageRating || 0} />
               <div style={{ marginTop: spacing[2], color: colors.gray[600] }}>

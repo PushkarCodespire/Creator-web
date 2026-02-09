@@ -14,7 +14,7 @@ import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { userDashboardApi, getImageUrl } from '../../services/api';
+import { userDashboardApi, subscriptionApi, getImageUrl } from '../../services/api';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
 
 const { Title, Text } = Typography;
@@ -32,6 +32,7 @@ const UserDashboard = () => {
     activeStreak: 0
   });
   const [subscription, setSubscription] = useState<any>(null);
+  const [tokenUsage, setTokenUsage] = useState<any>(null);
   const [conversations, setConversations] = useState<any[]>([]);
   const [recommendations, setRecommendations] = useState<any[]>([]);
   const [activities, setActivities] = useState<any[]>([]);
@@ -45,11 +46,12 @@ const UserDashboard = () => {
       setLoading(true);
 
       // Use new dedicated dashboard API endpoints
-      const [statsRes, conversationsRes, recommendationsRes, activityRes] = await Promise.allSettled([
+      const [statsRes, conversationsRes, recommendationsRes, activityRes, subscriptionRes] = await Promise.allSettled([
         userDashboardApi.getStats(),
         userDashboardApi.getRecentConversations({ limit: 3 }),
         userDashboardApi.getRecommendedCreators({ limit: 6 }),
-        userDashboardApi.getActivityFeed({ limit: 5, days: 7 })
+        userDashboardApi.getActivityFeed({ limit: 5, days: 7 }),
+        subscriptionApi.getDetails()
       ]);
 
       // Handle stats response
@@ -63,6 +65,14 @@ const UserDashboard = () => {
           activeStreak: data.stats?.activeStreak || 0
         });
         setSubscription(data.subscription);
+      }
+
+      if (subscriptionRes.status === 'fulfilled' && subscriptionRes.value.data.success) {
+        const data = subscriptionRes.value.data.data || {};
+        setTokenUsage(data.usage?.tokens || null);
+        if (!subscription) {
+          setSubscription(data.subscription || null);
+        }
       }
 
       // Handle conversations response
@@ -114,6 +124,12 @@ const UserDashboard = () => {
   if (loading) {
     return <DashboardContentLoader />;
   }
+
+  const isPremium = subscription?.plan === 'PREMIUM';
+  const tokenBalance = tokenUsage?.balance;
+  const tokenGrant = tokenUsage?.grant;
+  const tokensPerMessage = tokenUsage?.perMessage;
+  const tokenUsagePercentage = tokenGrant ? Math.round(((tokenGrant - (tokenBalance || 0)) / tokenGrant) * 100) : 0;
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -191,8 +207,18 @@ const UserDashboard = () => {
           { title: 'Total Chats', value: stats.totalChats, icon: <MessageOutlined />, color: '#6366F1' },
           { title: 'Messages Used (Today)', value: stats.messagesSent, icon: <SendOutlined />, color: '#10B981' },
           { title: 'Following', value: stats.following, icon: <UserAddOutlined />, color: '#F59E0B' },
-          { title: 'Unread Alerts', value: stats.unreadNotifications, icon: <BellOutlined />, color: '#EC4899' }
-        ].map((stat, index) => (
+          { title: 'Unread Alerts', value: stats.unreadNotifications, icon: <BellOutlined />, color: '#EC4899' },
+          ...(isPremium && tokenBalance !== undefined && tokenGrant !== undefined
+            ? [{
+              title: 'Tokens Remaining',
+              value: tokenBalance,
+              icon: <FireOutlined />,
+              color: '#22C55E',
+              subtitle: tokensPerMessage ? `Burn ${tokensPerMessage}/msg` : undefined,
+              footnote: `${tokenUsagePercentage}% used`
+            }]
+            : [])
+        ].map((stat: any, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>
             <motion.div variants={itemVariants}>
               <Card
@@ -223,8 +249,18 @@ const UserDashboard = () => {
                       {stat.title}
                     </Text>
                     <div style={{ color: '#fff', fontSize: '24px', fontWeight: 800 }}>
-                      {stat.value}
+                      {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                     </div>
+                    {stat.subtitle && (
+                      <div style={{ color: '#94A3B8', fontSize: '11px', marginTop: '4px' }}>
+                        {stat.subtitle}
+                      </div>
+                    )}
+                    {stat.footnote && (
+                      <div style={{ color: '#64748B', fontSize: '11px', marginTop: '2px' }}>
+                        {stat.footnote}
+                      </div>
+                    )}
                   </div>
                 </div>
               </Card>
