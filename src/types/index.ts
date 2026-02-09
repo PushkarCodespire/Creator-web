@@ -58,6 +58,8 @@ export interface Creator {
   };
   createdAt?: string;
   pricePerMessage?: number;
+  firstMessageFree?: boolean;
+  discountFirstFive?: number;
 }
 
 export interface CreatorProfile extends Creator {
@@ -256,3 +258,22 @@ export interface PaginatedResponse<T> {
 export interface LoginCredentials { email: string; password: string; }
 export interface RegisterData { email: string; password: string; name: string; role?: string; }
 export interface AuthResponse { user: User; token: string; isProfileComplete?: boolean; }
+export interface Notification {
+  id: string;
+  userId: string;
+  type: string;
+  title: string;
+  message: string;
+  actionUrl?: string;
+  data?: any;
+  priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  isRead: boolean;
+  readAt?: string | null;
+  createdAt: string;
+  expiresAt?: string | null;
+}
+
+export interface NotificationResponse {
+  notifications: Notification[];
+  pagination: { page: number; limit: number; total: number; totalPages: number };
+}

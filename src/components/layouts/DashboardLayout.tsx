@@ -439,9 +439,8 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             {type === 'creator' && (
               <NotificationCenter
                 theme="dark"
-                title="Opportunities"
-                emptyText="No new opportunities"
-                filterTypes={['opportunity']}
+                title="Notifications"
+                emptyText="No notifications yet"
               />
             )}
             <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">

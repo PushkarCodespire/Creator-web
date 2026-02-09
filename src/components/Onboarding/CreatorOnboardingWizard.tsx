@@ -4,7 +4,7 @@
 // ===========================================
 
 import { useState, useEffect } from 'react';
-import { Steps, Button, Card, Form, Input, Select, message as antMessage, Space, Divider, Alert, Tooltip, Modal, Avatar } from 'antd';
+import { Steps, Button, Card, Form, Input, Select, message as antMessage, Space, Divider, Alert, Tooltip, Modal, Avatar, Switch, InputNumber } from 'antd';
 import {
   UserOutlined,
   FileTextOutlined,
@@ -88,6 +88,10 @@ export const CreatorOnboardingWizard: React.FC = () => {
         accountHolderName: user.creator?.bankAccount?.accountHolderName,
         accountNumber: user.creator?.bankAccount?.accountNumber,
         ifscCode: user.creator?.bankAccount?.ifscCode,
+        pricePerMessage: user.creator?.pricePerMessage || 50,
+        firstMessageFree: user.creator?.firstMessageFree ?? true,
+        discountFirstFive: user.creator?.discountFirstFive || 0,
+        tags: user.creator?.tags || [],
       });
       socialForm.setFieldsValue({
         youtubeUrl: user.creator?.youtubeUrl,
@@ -103,7 +107,7 @@ export const CreatorOnboardingWizard: React.FC = () => {
     try {
       setLoading(true);
       if (current === 0) {
-        const values = await form.validateFields();
+        const values = await form.validateFields(['displayName', 'category', 'tagline', 'bio', 'tags']);
         await creatorApi.updateProfile(values);
         // We logicially update the creator part of the user
         dispatch(updateUser({ creator: { ...user?.creator, ...values } } as any));
@@ -118,10 +122,23 @@ export const CreatorOnboardingWizard: React.FC = () => {
         }
         antMessage.success({ content: 'Knowledge Base Synced', icon: < FileTextOutlined style={{ color: colors.primary.solid }} /> });
       } else if (current === 2) {
-        // Economics - Bank Details
-        const values = await form.validateFields(['bankName', 'accountHolderName', 'accountNumber', 'ifscCode']);
-        await api.put('/creators/profile', { bankAccount: values });
-        dispatch(updateUser({ creator: { ...user?.creator, bankAccount: values } } as any));
+        // Economics - Pricing & Bank Details
+        const pricingValues = await form.validateFields(['pricePerMessage', 'firstMessageFree', 'discountFirstFive']);
+        const bankValues = await form.validateFields(['bankName', 'accountHolderName', 'accountNumber', 'ifscCode']);
+
+        // Update top-level creator fields (pricing)
+        await creatorApi.updateProfile(pricingValues);
+
+        // Update nested bank account
+        await api.put('/creators/profile', { bankAccount: bankValues });
+
+        dispatch(updateUser({
+          creator: {
+            ...user?.creator,
+            ...pricingValues,
+            bankAccount: bankValues
+          }
+        } as any));
         antMessage.success({ content: 'Economics Synchronized', icon: <DollarOutlined style={{ color: colors.primary.solid }} /> });
       } else if (current === 3) {
         const values = await form.validateFields(['aiPersonality', 'aiTone', 'welcomeMessage']);
@@ -273,6 +290,11 @@ export const CreatorOnboardingWizard: React.FC = () => {
                 <TextArea rows={4} placeholder="Tell your fans who you are..." style={inputStyle} />
               </Form.Item>
 
+              <Form.Item name="tags" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Search Tags</span>}>
+                <Select mode="tags" style={{ width: '100%' }} placeholder="Add tags (e.g. Cooking, Chef, Healthy)" tokenSeparators={[',']} dropdownStyle={{ background: '#0f172a' }}>
+                </Select>
+              </Form.Item>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[4], marginTop: spacing[4] }}>
                 <div onClick={() => setIsMediaModalVisible(true)} style={{ ...glassStyle, padding: spacing[4], cursor: 'pointer', borderRadius: '20px', border: (profileImg && user?.creator?.coverImage) ? '1px solid #10b981' : '1px solid rgba(99, 102, 241, 0.2)' }} className="hover-glow">
                   <div style={{ display: 'flex', alignItems: 'center', gap: spacing[3] }}>
@@ -371,13 +393,35 @@ export const CreatorOnboardingWizard: React.FC = () => {
             </div>
 
             <Form form={form} layout="vertical" requiredMark={false}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6], marginBottom: spacing[6] }}>
-                <Form.Item name="bankName" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Bank Name</span>} rules={[{ required: true }]}>
-                  <Input size="large" placeholder="e.g. HDFC Bank" style={inputStyle} />
+              <div style={{ ...glassStyle, padding: spacing[6], marginBottom: spacing[6], background: 'rgba(255,255,255,0.02)' }}>
+                <h4 style={{ color: '#fff', marginBottom: spacing[4], display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <ThunderboltOutlined style={{ color: colors.primary.solid }} /> Pricing Strategy
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6] }}>
+                  <Form.Item name="pricePerMessage" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Price Per Message (₹)</span>} rules={[{ required: true }]}>
+                    <InputNumber size="large" style={{ ...inputStyle, width: '100%' }} min={0} placeholder="100" />
+                  </Form.Item>
+                  <Form.Item name="discountFirstFive" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>First 5 Msgs Discount (%)</span>}>
+                    <InputNumber size="large" style={{ ...inputStyle, width: '100%' }} min={0} max={100} placeholder="15.5" />
+                  </Form.Item>
+                </div>
+                <Form.Item name="firstMessageFree" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>First Message Free</span>} valuePropName="checked">
+                  <Switch />
                 </Form.Item>
-                <Form.Item name="accountHolderName" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Account Holder</span>} rules={[{ required: true }]}>
-                  <Input size="large" placeholder="Full legal name" style={inputStyle} />
-                </Form.Item>
+              </div>
+
+              <div style={{ marginBottom: spacing[4] }}>
+                <h4 style={{ color: '#fff', marginBottom: spacing[4], display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <GlobalOutlined style={{ color: colors.primary.solid }} /> Settlement Details
+                </h4>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6], marginBottom: spacing[4] }}>
+                  <Form.Item name="bankName" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Bank Name</span>} rules={[{ required: true }]}>
+                    <Input size="large" placeholder="e.g. HDFC Bank" style={inputStyle} />
+                  </Form.Item>
+                  <Form.Item name="accountHolderName" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Account Holder</span>} rules={[{ required: true }]}>
+                    <Input size="large" placeholder="Full legal name" style={inputStyle} />
+                  </Form.Item>
+                </div>
               </div>
 
               <Form.Item name="accountNumber" label={<span style={{ color: '#94a3b8', fontWeight: 600 }}>Account Number</span>} rules={[{ required: true }]}>

@@ -23,7 +23,11 @@ import {
   PlusOutlined,
   SearchOutlined,
   VerticalRightOutlined,
-  VerticalLeftOutlined
+  VerticalLeftOutlined,
+  MenuFoldOutlined,
+  MenuUnfoldOutlined,
+  HistoryOutlined,
+  MessageOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState, AppDispatch } from '../store';
@@ -57,7 +61,9 @@ const Chat = () => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [loadingCreator, setLoadingCreator] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768); // Open by default on desktop, closed on mobile
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false); // ChatGPT-style collapse
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // ChatGPT-style collapse - Default to true as per request
+  const [allConversations, setAllConversations] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isRecording, setIsRecording] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -102,6 +108,11 @@ const Chat = () => {
     if (creatorId) {
       initializeChat();
     }
+
+    if (isAuthenticated) {
+      loadHistory();
+    }
+
     return () => {
       cleanup();
     };
@@ -154,6 +165,19 @@ const Chat = () => {
       antMessage.error('Failed to load chat');
     } finally {
       setLoadingCreator(false);
+    }
+  };
+
+  const loadHistory = async () => {
+    if (!isAuthenticated) return;
+    try {
+      setLoadingHistory(true);
+      const response = await chatApi.getUserConversations({ limit: 50 });
+      setAllConversations(response.data.data.conversations || []);
+    } catch (error) {
+      console.error('Failed to load history:', error);
+    } finally {
+      setLoadingHistory(false);
     }
   };
 
@@ -497,33 +521,10 @@ const Chat = () => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  if (loadingCreator) {
-    return (
-      <div className={`chat-container chat-${theme}`}>
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: '100vh',
-          flexDirection: 'column',
-          gap: '20px',
-          background: 'var(--chat-bg-gradient)',
-          position: 'relative',
-          zIndex: 1
-        }}>
-          <Spin size="large" tip="Loading AI Assistant..." style={{ color: '#fff' }} />
-          <div style={{
-            color: 'rgba(255, 255, 255, 0.8)',
-            fontSize: '18px',
-            fontWeight: 500,
-            letterSpacing: '0.5px'
-          }}>
-            Preparing your experience...
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const filteredHistory = allConversations.filter(conv =>
+    conv.creator?.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    conv.lastMessage?.content?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <div className={`chat-container chat-${theme} ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
@@ -534,7 +535,7 @@ const Chat = () => {
             <>
               <h3 className="sidebar-title">ai-creator</h3>
               <Button
-                icon={<VerticalLeftOutlined />}
+                icon={<MenuFoldOutlined />}
                 type="text"
                 className="sidebar-toggle-btn"
                 onClick={() => setSidebarCollapsed(true)}
@@ -543,7 +544,7 @@ const Chat = () => {
           ) : (
             <div className="collapsed-header-icons">
               <Button
-                icon={<VerticalRightOutlined />}
+                icon={<MenuUnfoldOutlined />}
                 type="text"
                 className="sidebar-toggle-btn"
                 onClick={() => setSidebarCollapsed(false)}
@@ -579,20 +580,49 @@ const Chat = () => {
         </div>
 
         <div className="chat-sidebar-history">
-          {!sidebarCollapsed && <div className="history-label">Previous 7 Days</div>}
-          <div className="conversation-item active">
-            <Avatar
-              size={28}
-              src={creator?.profileImage ? getImageUrl(creator.profileImage) : undefined}
-              icon={!creator?.profileImage && <UserOutlined />}
-              className="history-avatar"
-            />
-            {!sidebarCollapsed && (
-              <div className="conversation-info">
-                <div className="conversation-name">{creator?.displayName || 'Active Chat'}</div>
-              </div>
-            )}
-          </div>
+          {isAuthenticated && (
+            <>
+              {!sidebarCollapsed && <div className="history-label">Past Conversations</div>}
+              {loadingHistory ? (
+                <div style={{ textAlign: 'center', padding: '20px' }}>
+                  <Spin size="small" />
+                </div>
+              ) : filteredHistory.length > 0 ? (
+                filteredHistory.map((conv) => (
+                  <div
+                    key={conv.id}
+                    className={`conversation-item ${conv.creatorId === creatorId ? 'active' : ''}`}
+                    onClick={() => navigate(`/chat/${conv.creatorId}`)}
+                  >
+                    <Avatar
+                      size={28}
+                      src={conv.creator?.profileImage ? getImageUrl(conv.creator.profileImage) : undefined}
+                      icon={!conv.creator?.profileImage && <UserOutlined />}
+                      className="history-avatar"
+                    />
+                    {!sidebarCollapsed && (
+                      <div className="conversation-info">
+                        <div className="conversation-name">{conv.creator?.displayName || 'Chat'}</div>
+                        <div className="conversation-preview" style={{ fontSize: '11px', color: 'var(--chat-text-muted)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {conv.lastMessage?.content || 'No messages yet'}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))
+              ) : !sidebarCollapsed && (
+                <div className="no-history-msg" style={{ padding: '20px', textAlign: 'center', color: 'var(--chat-text-muted)', fontSize: '12px' }}>
+                  No conversations found
+                </div>
+              )}
+            </>
+          )}
+
+          {!isAuthenticated && !sidebarCollapsed && (
+            <div className="guest-history-msg" style={{ padding: '20px', textAlign: 'center', color: 'var(--chat-text-muted)', fontSize: '12px' }}>
+              Log in to see your chat history
+            </div>
+          )}
         </div>
 
         <div className="chat-sidebar-footer">
@@ -670,7 +700,11 @@ const Chat = () => {
 
         {/* Messages Area */}
         <div className="chat-messages-area" ref={scrollContainerRef}>
-          {messages.length === 0 ? (
+          {loadingCreator ? (
+            <div className="chat-loading-overlay">
+              <Spin size="large" tip="Setting up your experience..." />
+            </div>
+          ) : messages.length === 0 ? (
             <div className="chat-empty-state">
               <Avatar
                 size={100}

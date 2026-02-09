@@ -14,25 +14,17 @@ import {
   LoadingOutlined,
   BulbOutlined,
   StarFilled,
+  CheckCircleOutlined,
 } from '@ant-design/icons';
-import { Badge, Dropdown, Empty, Spin } from 'antd';
+import { Badge, Dropdown, Empty, Spin, Button, Tooltip } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import api from '../../services/api';
 import { connectSocket, getSocket } from '../../utils/socket';
 import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { Notification } from '../../types';
+import './NotificationCenter.css';
 
-interface Notification {
-  id: string;
-  type: string;
-  title: string;
-  message: string;
-  isRead: boolean;
-  actionUrl?: string;
-  data?: any;
-  priority?: string;
-  createdAt: string;
-}
 
 interface NotificationCenterProps {
   filterTypes?: string[];
@@ -68,17 +60,29 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     );
   };
 
-  const normalizeNotification = (payload: any): Notification => ({
-    id: payload?.id || payload?._id || `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
-    type: payload?.type || payload?.notificationType || 'GENERAL',
-    title: payload?.title || payload?.subject || 'Notification',
-    message: payload?.message || payload?.body || payload?.content || '',
-    isRead: payload?.isRead ?? false,
-    actionUrl: payload?.actionUrl || payload?.url,
-    data: payload?.data,
-    priority: payload?.priority,
-    createdAt: payload?.createdAt || new Date().toISOString()
-  });
+  const normalizeNotification = (payload: any): Notification => {
+    // If it's already a clean notification object from our API
+    if (payload.id && payload.type && payload.message) {
+      return payload as Notification;
+    }
+
+    return {
+      id: payload?.id || payload?._id || `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      userId: payload?.userId || user?.id || '',
+      type: payload?.type || payload?.notificationType || 'GENERAL',
+      title: payload?.title || payload?.subject || 'Notification',
+      message: payload?.message || payload?.body || payload?.content || '',
+      isRead: payload?.isRead ?? false,
+      actionUrl: (payload?.type || '').toLowerCase().includes('opportunity') || (payload?.actionUrl || '').includes('/opportunities/')
+        ? '/creator-dashboard/opportunities'
+        : (payload?.actionUrl || payload?.url),
+      data: payload?.data,
+      priority: (payload?.priority as any) || 'NORMAL',
+      createdAt: payload?.createdAt || new Date().toISOString(),
+      readAt: payload?.readAt || null,
+      expiresAt: payload?.expiresAt || null
+    };
+  };
 
   const buildOpportunityNotification = (payload: any): Notification => {
     const opportunity = payload?.opportunity || payload;
@@ -87,11 +91,12 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     const message = companyName ? `From ${companyName}` : 'A new brand opportunity is available';
     return {
       id: payload?.notificationId || payload?.id || (opportunity?.id ? `opportunity_${opportunity.id}` : `opportunity_${Date.now()}`),
+      userId: payload?.userId || user?.id || '',
       type: 'OPPORTUNITY',
       title,
       message,
       isRead: false,
-      actionUrl: payload?.actionUrl || '/creator-dashboard/opportunities',
+      actionUrl: '/creator-dashboard/opportunities',
       data: payload,
       createdAt: payload?.createdAt || new Date().toISOString()
     };
@@ -190,23 +195,37 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
   const handleMarkAsRead = async (notificationId: string) => {
     try {
-      await api.put(`/notifications/${notificationId}/read`, {});
+      await api.put(`/notifications/${notificationId}/read`);
       setNotifications(prev =>
-        Array.isArray(prev)
-          ? prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
-          : []
+        prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );
     } catch (error) {
       console.error('Error marking notification as read:', error);
     }
   };
 
+  const handleMarkAllAsRead = async () => {
+    try {
+      await api.put('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+    }
+  };
+
   const handleClick = (notification: Notification) => {
     if (!notification || !notification.id) return;
     if (!notification.isRead) handleMarkAsRead(notification.id);
-    if (notification.actionUrl) {
+    setIsOpen(false);
+
+    const type = (notification.type || '').toLowerCase();
+    const url = (notification.actionUrl || '').toLowerCase();
+
+    // Force opportunity notifications (by type OR url) to the dashboard page
+    if (type.includes('opportunity') || url.includes('/opportunities/')) {
+      navigate('/creator-dashboard/opportunities');
+    } else if (notification.actionUrl) {
       navigate(notification.actionUrl);
-      setIsOpen(false);
     }
   };
 
@@ -224,6 +243,9 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     const normalized = (type || '').toLowerCase();
     if (normalized.includes('opportunity')) return <BulbOutlined style={{ color: colors.warning.solid }} />;
     if (normalized.includes('review')) return <StarFilled style={{ color: colors.warning.solid }} />;
+    if (normalized.includes('system') || normalized.includes('announcement')) {
+      return <BellFilled style={{ color: colors.info.solid || colors.primary.solid }} />;
+    }
     if (normalized.includes('chat') || normalized.includes('message')) {
       return <MessageFilled style={{ color: colors.primary.solid }} />;
     }
@@ -244,38 +266,56 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
   const inactiveColor = theme === 'dark' ? colors.gray[200] : colors.gray[600];
 
   const content = (
-    <div style={{ width: '380px', maxHeight: '600px', background: 'white', borderRadius: '12px', boxShadow: shadows['2xl'], overflow: 'hidden' }}>
-      <div style={{ padding: spacing[4], borderBottom: `1px solid ${colors.gray[200]}` }}>
-        <h3 style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold, margin: 0 }}>{title}</h3>
+    <div className="notification-dropdown">
+      <div className="notification-header">
+        <h3>{title}</h3>
+        {unreadCount > 0 && (
+          <Tooltip title="Mark all as read">
+            <Button
+              type="text"
+              size="small"
+              icon={<CheckCircleOutlined />}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleMarkAllAsRead();
+              }}
+              style={{ color: colors.primary.solid, display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              Mark all read
+            </Button>
+          </Tooltip>
+        )}
       </div>
-      <div style={{ maxHeight: '500px', overflowY: 'auto' }}>
+
+      <div className="notification-list">
         {isLoading ? (
-          <div style={{ padding: spacing[8], textAlign: 'center' }}><Spin indicator={<LoadingOutlined spin />} /></div>
-        ) : !Array.isArray(filteredNotifications) || filteredNotifications.length === 0 ? (
-          <div style={{ padding: spacing[8] }}><Empty description={emptyText} /></div>
+          <div style={{ padding: spacing[8], textAlign: 'center' }}>
+            <Spin indicator={<LoadingOutlined spin style={{ fontSize: 24, color: colors.primary.solid }} />} />
+          </div>
+        ) : filteredNotifications.length === 0 ? (
+          <div style={{ padding: spacing[12] }}>
+            <Empty
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+              description={<span style={{ color: '#64748b' }}>{emptyText}</span>}
+            />
+          </div>
         ) : (
           filteredNotifications.map(n => (
             <div
               key={n.id}
+              className={`notification-item ${!n.isRead ? 'unread' : ''}`}
               onClick={() => handleClick(n)}
-              style={{
-                padding: spacing[4],
-                borderBottom: `1px solid ${colors.gray[100]}`,
-                cursor: 'pointer',
-                background: n.isRead ? 'white' : colors.primary.light,
-                transition: 'background 0.2s',
-              }}
             >
-              <div style={{ display: 'flex', gap: spacing[3] }}>
-                <div style={{ fontSize: '20px' }}>{getIcon(n.type)}</div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: typography.fontWeight.semibold, marginBottom: spacing[1] }}>{n.title}</div>
-                  <div style={{ fontSize: typography.fontSize.sm, color: colors.gray[600], marginBottom: spacing[1] }}>{n.message}</div>
-                  <div style={{ fontSize: typography.fontSize.xs, color: colors.gray[500] }}>{formatTime(n.createdAt)}</div>
+              <div className="notification-icon-wrapper">
+                {getIcon(n.type)}
+              </div>
+              <div className="notification-content">
+                <div className="notification-title">{n.title}</div>
+                <div className="notification-message">{n.message}</div>
+                <div className="notification-time">
+                  <BulbOutlined style={{ fontSize: 10 }} />
+                  {formatTime(n.createdAt)}
                 </div>
-                {!n.isRead && (
-                  <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: colors.primary.solid, marginTop: '8px' }} />
-                )}
               </div>
             </div>
           ))

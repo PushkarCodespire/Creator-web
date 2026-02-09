@@ -44,6 +44,21 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Normalize backend error format: { success: false, error: { code, message, details } }
+    if (error.response?.data?.error && typeof error.response.data.error === 'object') {
+      const backendError = error.response.data.error;
+      if (backendError.message) {
+        error.response.data.error = backendError.message;
+      }
+      if (!error.response.data.message && backendError.message) {
+        error.response.data.message = backendError.message;
+      }
+      // Attach for convenience if callers use error.message
+      if (backendError.message) {
+        error.message = backendError.message;
+      }
+    }
+
     // Only redirect to login for 401 if user was previously authenticated
     // Don't redirect for public pages that optionally use auth (like feed)
     if (error.response?.status === 401) {
