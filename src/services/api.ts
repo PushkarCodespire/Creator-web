@@ -5,7 +5,7 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
-const UPLOAD_PUBLIC_PATH = import.meta.env.VITE_UPLOAD_PUBLIC_PATH || '/api/media';
+const UPLOAD_PUBLIC_PATH = import.meta.env.VITE_UPLOAD_PUBLIC_PATH || '/api/uploads';
 
 const normalizePath = (value: string) => (value.startsWith('/') ? value : `/${value}`);
 const apiBase = /^https?:\/\//i.test(API_URL)
