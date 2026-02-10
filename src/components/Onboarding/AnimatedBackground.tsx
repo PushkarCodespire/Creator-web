@@ -6,11 +6,11 @@ export const AnimatedBackground: React.FC<{ children: React.ReactNode }> = ({ ch
     const stars = useMemo(() => {
         return Array.from({ length: 50 }).map((_, i) => ({
             id: i,
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            size: Math.random() * 2 + 1,
-            duration: Math.random() * 3 + 2,
-            delay: Math.random() * 5
+            left: `${(i * 37) % 100}%`,
+            top: `${(i * 53) % 100}%`,
+            size: ((i * 7) % 20) / 10 + 1,
+            duration: ((i * 5) % 30) / 10 + 2,
+            delay: ((i * 3) % 50) / 10
         }));
     }, []);
 

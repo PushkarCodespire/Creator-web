@@ -28,7 +28,7 @@ const OnboardingProcessing: React.FC<OnboardingProcessingProps> = ({ onComplete,
                         clearInterval(interval);
                         return 100;
                     }
-                    return prev + Math.random() * 5;
+                    return Math.min(100, prev + 4);
                 });
             }, 500);
         } else if (status === 'training') {
@@ -39,7 +39,7 @@ const OnboardingProcessing: React.FC<OnboardingProcessingProps> = ({ onComplete,
                         clearInterval(interval);
                         return 100;
                     }
-                    return prev + Math.random() * 2;
+                    return Math.min(100, prev + 2);
                 });
             }, 800);
         } else if (status === 'completed') {

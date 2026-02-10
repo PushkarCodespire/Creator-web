@@ -46,7 +46,7 @@ const CreatorDashboardHome = () => {
   }, []);
 
   useEffect(() => {
-    // Set up real-time updates (polling every 30 seconds)
+    // Set up real-time updates (polling every 30 seconds) when backend provides realtime stats
     if (dashboard) {
       const interval = setInterval(() => {
         fetchRealtimeStats();
@@ -58,8 +58,9 @@ const CreatorDashboardHome = () => {
   const fetchDashboard = async () => {
     try {
       const response = await creatorApi.getDashboard();
-      setDashboard(response.data.data);
-      fetchRealtimeStats();
+      const data = response.data.data;
+      setDashboard(data);
+      fetchRealtimeStats(data);
       fetchEngagementTrend();
     } catch (err) {
       console.error('Failed to fetch dashboard:', err);
@@ -68,18 +69,16 @@ const CreatorDashboardHome = () => {
     }
   };
 
-  const fetchRealtimeStats = async () => {
+  const fetchRealtimeStats = async (source?: any) => {
     try {
-      // This would be a new endpoint for real-time stats
-      // For now, we'll calculate from dashboard data
-      if (dashboard) {
-        // Mock real-time stats - in production, this would come from an API
-        setRealtimeStats({
-          activeChats: Math.floor(Math.random() * 10),
-          messagesLastHour: Math.floor(Math.random() * 50),
-          earningsToday: Number((Math.random() * 100).toFixed(2)),
-        });
-      }
+      // Use dashboard data until a dedicated realtime endpoint is available
+      const data = source || dashboard;
+      if (!data) return;
+      setRealtimeStats({
+        activeChats: data.activeChats ?? 0,
+        messagesLastHour: data.messagesLastHour ?? data.messagesToday ?? 0,
+        earningsToday: data.earningsToday ?? 0,
+      });
     } catch (err) {
       console.error('Failed to fetch real-time stats:', err);
     }

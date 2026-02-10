@@ -41,46 +41,11 @@ const Community = () => {
   const fetchTopics = async () => {
     try {
       setLoading(true);
-      // Mock data for demo/fallback
-      const mockTopics: ForumTopic[] = [
-        {
-          id: '1',
-          title: 'Welcome to AI Creator Platform Community!',
-          content: 'Introduce yourself and share your experience with AI-powered conversations. This is the place to connect with fellow pioneers.',
-          author: { id: 'admin', name: 'System Admin', avatar: undefined },
-          category: 'Announcements',
-          replyCount: 156,
-          viewCount: 2450,
-          lastActivity: '2 hours ago',
-          isPinned: true,
-        },
-        {
-          id: '2',
-          title: 'How to optimize your AI responsiveness?',
-          content: 'I noticed that using specific prefixes helps the AI stay in character. What are your techniques for better prompting?',
-          author: { id: 'user1', name: 'Prompt Master', avatar: undefined },
-          category: 'Tips & Tricks',
-          replyCount: 42,
-          viewCount: 890,
-          lastActivity: '5 hours ago',
-        },
-        {
-          id: '3',
-          title: 'New Feature Request: Voice Cloning',
-          content: 'I would love to see voice cloning features for our AI creators. It would make the interaction so much more immersive.',
-          author: { id: 'user2', name: 'CreativeSoul', avatar: undefined },
-          category: 'Feedback',
-          replyCount: 89,
-          viewCount: 1205,
-          lastActivity: '1 day ago',
-        },
-      ];
-      setTopics(mockTopics);
+      setTopics([]);
     } catch (error) {
       console.error('Failed to fetch topics:', error);
     } finally {
-      // Smooth loading transition
-      setTimeout(() => setLoading(false), 600);
+      setLoading(false);
     }
   };
 

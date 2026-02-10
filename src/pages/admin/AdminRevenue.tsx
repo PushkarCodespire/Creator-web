@@ -88,6 +88,38 @@ const AdminRevenue = () => {
 
   const totalRevenue = Number(revenueData?.totalRevenue || 0);
 
+  const formatWeeklyRange = (start?: string | Date, end?: string | Date) => {
+    if (!start) return '';
+    const startDate = new Date(start);
+    if (Number.isNaN(startDate.getTime())) return String(start);
+
+    let endDate = end ? new Date(end) : new Date(startDate);
+    if (Number.isNaN(endDate.getTime())) {
+      endDate = new Date(startDate);
+    }
+    if (!end) {
+      endDate.setDate(endDate.getDate() + 6);
+    }
+
+    const startDay = startDate.getDate();
+    const endDay = endDate.getDate();
+    const startMonth = startDate.toLocaleDateString('en-US', { month: 'short' });
+    const endMonth = endDate.toLocaleDateString('en-US', { month: 'short' });
+
+    if (startMonth === endMonth) {
+      return `${startDay}-${endDay} ${startMonth}`;
+    }
+    return `${startDay} ${startMonth}-${endDay} ${endMonth}`;
+  };
+
+  const getWeekLabel = (item: any) => {
+    if (item?.rangeLabel) return item.rangeLabel;
+    const start = item?.startDate || item?.weekStart || item?.date;
+    const end = item?.endDate || item?.weekEnd;
+    const label = formatWeeklyRange(start, end);
+    return label || item?.date || '-';
+  };
+
   return (
     <div className="admin-page">
       <div className="admin-hero">
@@ -159,7 +191,7 @@ const AdminRevenue = () => {
       <Row gutter={[24, 24]} style={{ marginBottom: '24px' }}>
         {/* Performance Timeline (Replacing Area Chart) */}
         <Col xs={24} lg={12}>
-          <Card className="admin-card" title={<Text strong style={{ color: '#0F172A' }}>Daily Earnings Timeline</Text>}>
+          <Card className="admin-card" title={<Text strong style={{ color: '#0F172A' }}>Weekly Earnings Timeline</Text>}>
             <div style={{ maxHeight: '420px', overflowY: 'auto', paddingRight: '8px' }}>
               <List
                 itemLayout="horizontal"
@@ -182,7 +214,7 @@ const AdminRevenue = () => {
                           style={{ backgroundColor: '#f1f5f9', color: '#6366F1', borderRadius: '12px' }}
                         />
                       }
-                      title={<Text strong style={{ color: '#0F172A' }}>{item.date}</Text>}
+                      title={<Text strong style={{ color: '#0F172A' }}>{getWeekLabel(item)}</Text>}
                       description={<Text type="secondary">Generated Earnings</Text>}
                     />
                   </List.Item>

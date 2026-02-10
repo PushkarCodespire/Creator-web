@@ -30,7 +30,7 @@ const Leaderboard = () => {
     } catch (error) {
       console.error('Failed to fetch leaderboard:', error);
     } finally {
-      setTimeout(() => setLoading(false), 500);
+      setLoading(false);
     }
   };
 
@@ -71,6 +71,11 @@ const Leaderboard = () => {
     const rank = index + 1;
     const isTopThree = rank <= 3;
     const style = getRankStyle(rank);
+
+    const growth =
+      typeof entry.growthPercent === 'number'
+        ? entry.growthPercent
+        : (typeof entry.growthRate === 'number' ? entry.growthRate : null);
 
     return (
       <motion.div
@@ -131,10 +136,12 @@ const Leaderboard = () => {
           <div style={{ color: '#1E293B', fontWeight: 800, fontSize: '16px' }}>
             {activeTab === 'users' ? entry.conversationsCount || 0 : entry.chatsCount || 0}
           </div>
-          <div style={{ color: '#10B981', fontWeight: 700, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '2px', justifyContent: 'flex-end' }}>
-            <ArrowUpOutlined style={{ fontSize: '10px' }} />
-            {Math.floor(Math.random() * 20) + 1}%
-          </div>
+          {growth !== null && (
+            <div style={{ color: '#10B981', fontWeight: 700, fontSize: '12px', display: 'flex', alignItems: 'center', gap: '2px', justifyContent: 'flex-end' }}>
+              <ArrowUpOutlined style={{ fontSize: '10px' }} />
+              {growth}%
+            </div>
+          )}
         </div>
       </motion.div>
     );

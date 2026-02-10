@@ -25,6 +25,8 @@ import { colors, spacing, typography, shadows } from '../../styles/tokens';
 import { Notification } from '../../types';
 import './NotificationCenter.css';
 
+let notificationSequence = 0;
+const buildFallbackNotificationId = () => `notif_${Date.now()}_${++notificationSequence}`;
 
 interface NotificationCenterProps {
   filterTypes?: string[];
@@ -67,7 +69,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     }
 
     return {
-      id: payload?.id || payload?._id || `notif_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      id: payload?.id || payload?._id || buildFallbackNotificationId(),
       userId: payload?.userId || user?.id || '',
       type: payload?.type || payload?.notificationType || 'GENERAL',
       title: payload?.title || payload?.subject || 'Notification',

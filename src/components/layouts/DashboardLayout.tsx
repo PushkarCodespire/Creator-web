@@ -3,7 +3,7 @@
 // ===========================================
 
 import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
-import { Layout, Menu, Avatar, Dropdown, Space, Drawer, Grid, Button as AntButton } from 'antd';
+import { Layout, Menu, Avatar, Dropdown, Space, Drawer, Grid, Button as AntButton, type MenuProps } from 'antd';
 import {
   DashboardOutlined, MessageOutlined, FileTextOutlined, BarChartOutlined,
   SettingOutlined, ShopOutlined, TeamOutlined, UserOutlined, LogoutOutlined,
@@ -37,6 +37,9 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [subscription, setSubscription] = useState<any>(user?.subscription || null);
+  const isCreatorRejected = type === 'creator' && (user?.creator?.isRejected || user?.creator?.rejected);
+  const creatorRejectionReason = user?.creator?.rejectionReason;
+  const creatorRejectedAt = user?.creator?.rejectedAt;
 
   const isMobile = !screens.md;
   const isAdmin = type === 'admin';
@@ -77,6 +80,19 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
   const handleLogout = () => {
     dispatch(logout());
     navigate('/');
+  };
+
+  const disableMenuItems = (items: MenuProps['items'] = []): MenuProps['items'] => {
+    const next = (items || []).map((item) => {
+      if (!item) return item;
+      const typed = item as any;
+      if (typed.type === 'divider') return typed;
+      if (typed.children) {
+        return { ...typed, disabled: true, children: disableMenuItems(typed.children as any) } as any;
+      }
+      return { ...typed, disabled: true } as any;
+    });
+    return next as MenuProps['items'];
   };
 
   const getMenuItems = () => {
@@ -130,6 +146,10 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
         return [];
     }
   };
+
+  const menuItems = isCreatorRejected && type === 'creator'
+    ? disableMenuItems(getMenuItems())
+    : getMenuItems();
 
   const userMenuItems = [
     { key: 'home', icon: <HomeOutlined />, label: 'Back to Home', onClick: () => navigate('/') },
@@ -272,7 +292,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
         mode="inline"
         selectedKeys={[location.pathname]}
         className={`dashboard-menu ${isAdmin ? 'admin-menu' : ''}`}
-        items={getMenuItems()}
+        items={menuItems}
         onClick={() => setMobileMenuOpen(false)}
         style={{ background: 'transparent', borderRight: 'none', paddingTop: '8px' }}
       />
@@ -483,7 +503,51 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             zIndex: 1
           }}
         >
-          <Outlet />
+          {isCreatorRejected && (
+            <div style={{ marginBottom: '16px' }}>
+              <div
+                style={{
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.2)',
+                  color: '#F8FAFC',
+                  padding: '16px 20px',
+                  borderRadius: '16px',
+                  backdropFilter: 'blur(8px)'
+                }}
+              >
+                <div style={{ fontWeight: 800, fontSize: '16px', marginBottom: '6px', color: '#FCA5A5' }}>
+                  Creator Application Rejected
+                </div>
+                <div style={{ fontSize: '13px', color: '#E2E8F0' }}>
+                  {creatorRejectionReason || 'Your creator application was rejected.'}
+                </div>
+                {creatorRejectedAt && (
+                  <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px' }}>
+                    Rejected on {new Date(creatorRejectedAt).toLocaleDateString()}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <div style={{ position: 'relative' }}>
+            {isCreatorRejected && (
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  zIndex: 5,
+                  cursor: 'not-allowed',
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                }}
+              />
+            )}
+            <div style={{ opacity: isCreatorRejected ? 0.6 : 1, pointerEvents: isCreatorRejected ? 'none' : 'auto' }}>
+              <Outlet />
+            </div>
+          </div>
         </Content>
       </Layout>
     </Layout>

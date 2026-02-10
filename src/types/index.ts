@@ -70,6 +70,10 @@ export interface CreatorProfile extends Creator {
   totalEarnings?: number;
   totalMessages?: number;
   isProfileComplete?: boolean;
+  isRejected?: boolean;
+  rejected?: boolean;
+  rejectionReason?: string;
+  rejectedAt?: string;
   performance?: {
     responseRate: number;
     avgResponseTimeMs: number | null;

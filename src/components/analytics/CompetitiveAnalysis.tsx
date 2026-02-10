@@ -8,6 +8,7 @@ import { Select, Spin, Empty, Row, Col } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import CustomCard from '../common/Card/CustomCard';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { analyticsApi } from '../../services/api';
 
 interface CompetitiveAnalysisProps {
   creatorId: string;
@@ -22,43 +23,34 @@ export const CompetitiveAnalysis: React.FC<CompetitiveAnalysisProps> = () => {
     fetchComparisonData();
   }, [metric]);
 
+  const normalizeCompetitiveData = (data: any) => {
+    if (!data) return null;
+    const yourMetrics = data.yourMetrics || data.your || data.creator || data.metrics;
+    const categoryAverage = data.categoryAverage || data.average || data.benchmark || data.benchmarks;
+    const topPerformers = data.topPerformers || data.top || data.leaders;
+
+    if (!yourMetrics || !categoryAverage || !topPerformers) return null;
+
+    const radarData = data.radarData || [
+      { metric: 'Engagement', you: Number(yourMetrics.engagement ?? 0), average: Number(categoryAverage.engagement ?? 0), top: Number(topPerformers.engagement ?? 0) },
+      { metric: 'Revenue', you: Number(yourMetrics.revenue ?? 0), average: Number(categoryAverage.revenue ?? 0), top: Number(topPerformers.revenue ?? 0) },
+      { metric: 'Growth', you: Number(yourMetrics.growth ?? 0), average: Number(categoryAverage.growth ?? 0), top: Number(topPerformers.growth ?? 0) },
+      { metric: 'Response Rate', you: Number(yourMetrics.responseRate ?? 0), average: Number(categoryAverage.responseRate ?? 0), top: Number(topPerformers.responseRate ?? 0) },
+      { metric: 'Response Time', you: Number(yourMetrics.avgResponseTime ?? 0), average: Number(categoryAverage.avgResponseTime ?? 0), top: Number(topPerformers.avgResponseTime ?? 0) },
+    ];
+
+    return { yourMetrics, categoryAverage, topPerformers, radarData };
+  };
+
   const fetchComparisonData = async () => {
     try {
       setLoading(true);
-      // Mock data - would come from API
-      const mockData = {
-        yourMetrics: {
-          engagement: 75,
-          revenue: 1200,
-          growth: 15,
-          responseRate: 95,
-          avgResponseTime: 2.5,
-        },
-        categoryAverage: {
-          engagement: 65,
-          revenue: 1000,
-          growth: 12,
-          responseRate: 88,
-          avgResponseTime: 3.2,
-        },
-        topPerformers: {
-          engagement: 90,
-          revenue: 2000,
-          growth: 25,
-          responseRate: 98,
-          avgResponseTime: 1.8,
-        },
-        radarData: [
-          { metric: 'Engagement', you: 75, average: 65, top: 90 },
-          { metric: 'Revenue', you: 60, average: 50, top: 100 },
-          { metric: 'Growth', you: 60, average: 48, top: 100 },
-          { metric: 'Response Rate', you: 95, average: 88, top: 98 },
-          { metric: 'Response Time', you: 80, average: 70, top: 90 },
-        ],
-      };
-      setComparisonData(mockData);
+      const response = await analyticsApi.getCompetitiveAnalysis();
+      const data = response.data?.data ?? response.data;
+      setComparisonData(normalizeCompetitiveData(data));
     } catch (error) {
       console.error('Failed to fetch comparison data:', error);
+      setComparisonData(null);
     } finally {
       setLoading(false);
     }

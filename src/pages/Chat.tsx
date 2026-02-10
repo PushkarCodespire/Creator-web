@@ -45,6 +45,14 @@ import MediaMessage from '../components/Chat/MediaMessage';
 // uuid import removed
 import './ChatInterface.css';
 
+const getNextGuestSequence = () => {
+  const key = 'guestIdSequence';
+  const current = Number(localStorage.getItem(key) || '0');
+  const next = current + 1;
+  localStorage.setItem(key, String(next));
+  return next;
+};
+
 const Chat = () => {
   const { creatorId } = useParams<{ creatorId: string }>();
   const navigate = useNavigate();
@@ -103,8 +111,8 @@ const Chat = () => {
     if (!isAuthenticated) {
       const existingGuestId = localStorage.getItem('guestId');
       if (!existingGuestId) {
-        // Generate a simple ID if uuid package isn't available or just use random string
-        const newGuestId = `guest_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        // Generate a simple deterministic guest ID for anonymous sessions
+        const newGuestId = `guest_${Date.now()}_${getNextGuestSequence()}`;
         localStorage.setItem('guestId', newGuestId);
       }
     }

@@ -24,13 +24,13 @@ export const ChatPreview: React.FC<ChatPreviewProps> = ({
   creatorName,
   creatorAvatar,
   welcomeMessage,
-  sampleMessages = [
-    { role: 'user', content: `Hi! Can you help me?` },
-    { role: 'assistant', content: welcomeMessage || 'Of course! I\'d be happy to help you. What specific area would you like to focus on?' },
-  ],
+  sampleMessages = [],
 }) => {
   const navigate = useNavigate();
   const [expanded, setExpanded] = useState(false);
+  const previewMessages = sampleMessages.length > 0
+    ? sampleMessages
+    : (welcomeMessage ? [{ role: 'assistant', content: welcomeMessage }] : []);
 
   return (
     <Card
@@ -48,45 +48,51 @@ export const ChatPreview: React.FC<ChatPreviewProps> = ({
       style={{ marginBottom: spacing[4], background: 'white', color: colors.gray[900] }}
     >
       <div style={{ maxHeight: expanded ? 'none' : '300px', overflow: 'hidden' }}>
-        {sampleMessages.map((msg, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            style={{
-              display: 'flex',
-              justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
-              marginBottom: spacing[3],
-              alignItems: 'flex-end',
-              gap: spacing[2],
-            }}
-          >
-            {msg.role === 'assistant' && (
-              <Avatar size={32} src={creatorAvatar}>
-                {creatorName[0]}
-              </Avatar>
-            )}
-            <div
+        {previewMessages.length === 0 ? (
+          <div style={{ color: colors.gray[600], fontSize: typography.fontSize.sm, textAlign: 'center', padding: spacing[4] }}>
+            No preview available yet.
+          </div>
+        ) : (
+          previewMessages.map((msg, index) => (
+            <motion.div
+              key={index}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.1 }}
               style={{
-                maxWidth: '70%',
-                padding: `${spacing[2]} ${spacing[3]}`,
-                borderRadius: '12px',
-                background: msg.role === 'user' ? colors.primary.solid : colors.gray[100],
-                color: msg.role === 'user' ? '#fff' : colors.gray[900],
-                fontSize: typography.fontSize.sm,
-                lineHeight: 1.5,
+                display: 'flex',
+                justifyContent: msg.role === 'user' ? 'flex-end' : 'flex-start',
+                marginBottom: spacing[3],
+                alignItems: 'flex-end',
+                gap: spacing[2],
               }}
             >
-              {msg.content}
-            </div>
-            {msg.role === 'user' && (
-              <Avatar size={32} style={{ background: colors.primary.solid }}>
-                U
-              </Avatar>
-            )}
-          </motion.div>
-        ))}
+              {msg.role === 'assistant' && (
+                <Avatar size={32} src={creatorAvatar}>
+                  {creatorName[0]}
+                </Avatar>
+              )}
+              <div
+                style={{
+                  maxWidth: '70%',
+                  padding: `${spacing[2]} ${spacing[3]}`,
+                  borderRadius: '12px',
+                  background: msg.role === 'user' ? colors.primary.solid : colors.gray[100],
+                  color: msg.role === 'user' ? '#fff' : colors.gray[900],
+                  fontSize: typography.fontSize.sm,
+                  lineHeight: 1.5,
+                }}
+              >
+                {msg.content}
+              </div>
+              {msg.role === 'user' && (
+                <Avatar size={32} style={{ background: colors.primary.solid }}>
+                  U
+                </Avatar>
+              )}
+            </motion.div>
+          ))
+        )}
       </div>
       <div style={{ marginTop: spacing[4], textAlign: 'center' }}>
         <CustomButton
