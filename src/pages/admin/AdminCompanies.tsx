@@ -129,7 +129,6 @@ const AdminCompanies = () => {
           <h2 className="admin-hero-title">Companies</h2>
           <p className="admin-hero-subtitle">Manage partner companies, verification, and profiles.</p>
         </div>
-        <Tag className="admin-pill">Company Directory</Tag>
       </div>
 
       <div className="admin-toolbar">

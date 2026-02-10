@@ -223,10 +223,44 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     const type = (notification.type || '').toLowerCase();
     const url = (notification.actionUrl || '').toLowerCase();
 
-    // Force opportunity notifications (by type OR url) to the dashboard page
+    // Chat/message notifications → open chat interface
+    if (type.includes('chat') || type.includes('message')) {
+      // Prefer explicit conversation URL if backend provides it
+      if (notification.actionUrl) {
+        navigate(notification.actionUrl);
+        return;
+      }
+
+      // Fallback: if notification.data contains creatorId or conversationId
+      const data = notification.data || {};
+      if (data.creatorId) {
+        navigate(`/chat/${data.creatorId}`);
+        return;
+      }
+      if (data.conversation?.creatorId) {
+        navigate(`/chat/${data.conversation.creatorId}`);
+        return;
+      }
+
+      // As a last resort, go to general chats area for creators
+      navigate('/creator-dashboard'); // can be adjusted if you add a dedicated chats route
+      return;
+    }
+
+    // Like/comment & social interactions → go to creator posts page
+    if (type.includes('like') || type.includes('comment') || url.includes('/posts')) {
+      navigate('/creator-dashboard/posts');
+      return;
+    }
+
+    // Opportunity notifications (by type OR url) → creator opportunities
     if (type.includes('opportunity') || url.includes('/opportunities/')) {
       navigate('/creator-dashboard/opportunities');
-    } else if (notification.actionUrl) {
+      return;
+    }
+
+    // Fallback – respect any explicit actionUrl
+    if (notification.actionUrl) {
       navigate(notification.actionUrl);
     }
   };

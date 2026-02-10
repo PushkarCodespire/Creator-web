@@ -165,7 +165,6 @@ const AdminAIModeration = () => {
                     <h2 className="admin-hero-title">AI Moderation Center</h2>
                     <p className="admin-hero-subtitle">Automated content filter statistics and system simulation.</p>
                 </div>
-                <Tag className="admin-pill" icon={<RobotOutlined />}>AI System</Tag>
             </div>
 
             {/* Stats Section */}

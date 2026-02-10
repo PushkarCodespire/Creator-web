@@ -209,7 +209,6 @@ const AdminCreators = () => {
           <h2 className="admin-hero-title">Creators</h2>
           <p className="admin-hero-subtitle">Manage accounts, verify applications, and roles.</p>
         </div>
-        <Tag className="admin-pill">Creator Directory</Tag>
       </div>
 
       <div className="admin-tabs-container" style={{ marginBottom: '18px' }}>

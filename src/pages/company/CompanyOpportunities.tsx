@@ -54,12 +54,6 @@ const CompanyOpportunities = () => {
       render: (text: string) => <span style={{ fontWeight: 600, color: '#F8FAFC' }}>{text}</span>
     },
     {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      render: (t: string) => <Tag color="blue" style={{ border: 'none', background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA' }}>{(t || '').replace('_', ' ')}</Tag>
-    },
-    {
       title: 'Budget',
       dataIndex: 'budget',
       key: 'budget',

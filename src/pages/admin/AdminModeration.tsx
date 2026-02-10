@@ -260,7 +260,6 @@ const AdminModeration = () => {
           <h2 className="admin-hero-title">Reports & Moderation</h2>
           <p className="admin-hero-subtitle">Review user reports and manage content violations.</p>
         </div>
-        <Tag className="admin-pill">Moderation Queue</Tag>
       </div>
 
       {/* Statistics */}

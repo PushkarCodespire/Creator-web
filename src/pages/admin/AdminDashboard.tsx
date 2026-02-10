@@ -60,7 +60,6 @@ const AdminDashboard = () => {
           <h2 className="admin-hero-title">Platform Intelligence</h2>
           <p className="admin-hero-subtitle">Analytics, engagement, and operational oversight in real-time.</p>
         </div>
-        <Tag className="admin-pill">Systems Nominal</Tag>
       </div>
 
       {/* Overview Stat Cards */}

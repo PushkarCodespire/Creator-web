@@ -562,7 +562,6 @@ const AdminEmailPreview = () => {
           <h2 className="admin-hero-title">Email Template Preview</h2>
           <p className="admin-hero-subtitle">Preview all email templates with customizable sample data.</p>
         </div>
-        <Tag className="admin-pill">Deliverability Studio</Tag>
       </div>
 
       <Row gutter={[24, 24]}>

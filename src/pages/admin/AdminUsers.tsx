@@ -133,7 +133,6 @@ const AdminUsers = () => {
           <h2 className="admin-hero-title">Users</h2>
           <p className="admin-hero-subtitle">Manage accounts, roles, and verification status.</p>
         </div>
-        <Tag className="admin-pill">User Directory</Tag>
       </div>
 
       <div className="admin-toolbar">

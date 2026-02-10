@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { Card, Form, Input, Button, Select, message, Spin, Divider, Space, Tag, List, Typography, Alert, Grid, InputNumber, Switch } from 'antd';
 import {
   PictureOutlined,
@@ -35,6 +35,8 @@ const CreatorSettings = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
+  const [isDirty, setIsDirty] = useState(false);
+  const initialValuesRef = useRef<any>({});
 
   const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
@@ -60,6 +62,9 @@ const CreatorSettings = () => {
       };
 
       form.setFieldsValue(formValues);
+      // Capture the pristine snapshot after data is loaded
+      initialValuesRef.current = form.getFieldsValue(true);
+      setIsDirty(false);
     } catch (err) {
       console.error('Failed to fetch profile:', err);
     } finally {
@@ -145,7 +150,15 @@ const CreatorSettings = () => {
   };
 
   const cardTitleStyle = { color: '#fff', fontSize: '18px', fontWeight: 700 };
-  const labelStyle = { color: '#94a3b8', fontWeight: 600, fontSize: '14px', marginBottom: '8px', display: 'block' };
+  // Slightly brighter labels for better contrast on dark background
+  const labelStyle = { color: '#e2e8f0', fontWeight: 600, fontSize: '14px', marginBottom: '8px', display: 'block' };
+
+  const handleValuesChange = () => {
+    const currentValues = form.getFieldsValue(true);
+    // Simple deep comparison for this form – values are primitives/arrays
+    const hasChanges = JSON.stringify(currentValues) !== JSON.stringify(initialValuesRef.current);
+    setIsDirty(hasChanges);
+  };
 
   if (loading) {
     return (
@@ -165,7 +178,13 @@ const CreatorSettings = () => {
           <Text style={{ color: '#64748b', fontSize: isMobile ? '16px' : '18px' }}>Refine your digital twin and identity matrix.</Text>
         </div>
 
-        <Form form={form} layout="vertical" onFinish={handleSave} requiredMark={false}>
+        <Form
+          form={form}
+          layout="vertical"
+          onFinish={handleSave}
+          requiredMark={false}
+          onValuesChange={handleValuesChange}
+        >
           <div style={{
             display: 'grid',
             gridTemplateColumns: isMobile ? '1fr' : '1fr 340px',
@@ -356,6 +375,7 @@ const CreatorSettings = () => {
                   variant="primary"
                   htmlType="submit"
                   loading={saving}
+                  disabled={!isDirty || saving}
                   style={{ width: '100%', height: '56px', borderRadius: '14px', fontSize: '18px', fontWeight: 800, border: 'none', boxShadow: shadows.glow.primary }}
                 >
                   Save Changes
@@ -457,14 +477,20 @@ const CreatorSettings = () => {
         </Form>
 
         <style>{`
-          .ant-form-item-label label { height: auto !important; margin-bottom: 4px; color: #94a3b8 !important; }
+          .ant-form-item-label label { height: auto !important; margin-bottom: 4px; color: #e2e8f0 !important; }
           .ant-select-selector { background: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: #fff !important; border-radius: 12px !important; transition: all 0.3s ease !important; }
           .ant-select-selector:hover { border-color: rgba(99, 102, 241, 0.5) !important; background: rgba(255, 255, 255, 0.05) !important; }
           .ant-select-selection-placeholder { color: #4b5563 !important; }
           .ant-card-head { border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important; padding: 0 24px !important; min-height: 64px; display: flex; align-items: center; }
           .ant-input-affix-wrapper { background: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; transition: all 0.3s ease !important; }
           .ant-input-affix-wrapper:hover { border-color: rgba(99, 102, 241, 0.5) !important; }
-          .ant-input { background: transparent !important; color: #fff !important; }
+          .ant-input { background: transparent !important; color: #f9fafb !important; }
+          .ant-input::placeholder { color: #9ca3af !important; }
+          /* Ensure numeric fields in Monetization Matrix / Pricing Strategy are readable */
+          .ant-input-number { background: rgba(255, 255, 255, 0.02) !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; border-radius: 12px !important; }
+          .ant-input-number:hover { border-color: rgba(99, 102, 241, 0.5) !important; }
+          .ant-input-number-input { background: transparent !important; color: #f9fafb !important; }
+          .ant-input-number-input::placeholder { color: #9ca3af !important; }
           .ant-input-textarea-show-count::after { color: #64748b; }
           .ant-select-selection-item { background: rgba(99, 102, 241, 0.2) !important; border: 1px solid rgba(99, 102, 241, 0.3) !important; color: #fff !important; }
           .ant-select-selection-item-remove { color: #fff !important; }
