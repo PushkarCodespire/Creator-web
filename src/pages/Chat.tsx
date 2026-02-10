@@ -381,6 +381,8 @@ const Chat = () => {
         } catch (uploadError) {
           console.error('Failed to upload media:', uploadError);
           antMessage.error('Failed to upload attachments');
+          // Stop typing indicator if upload fails
+          setIsTyping(false);
           // Start over - in a real app would probably show error state on message
           return;
         }
@@ -404,6 +406,8 @@ const Chat = () => {
       if (response.data?.data?.aiMessage) {
         dispatch(addMessage(response.data.data.aiMessage));
       }
+      // In non-streaming scenarios ensure typing indicator is cleared
+      setIsTyping(false);
 
       // Update token usage if provided (premium users)
       if (response.data?.data?.tokens) {
@@ -438,8 +442,17 @@ const Chat = () => {
         await fetchRateLimitStatus();
       }
 
+      // For non-streaming responses, ensure typing indicator is cleared once reply is handled
+      setIsTyping(false);
+      setIsAIStreaming(false);
+      setStreamingMessage('');
+
     } catch (error: any) {
       console.error('Failed to send message:', error);
+      // Always clear typing/streaming state on failure
+      setIsTyping(false);
+      setIsAIStreaming(false);
+      setStreamingMessage('');
 
       // Handle rate limit error
       if (error.response?.status === 429) {
@@ -459,6 +472,11 @@ const Chat = () => {
       } else {
         antMessage.error('Failed to send message');
       }
+
+      // Always clear typing state on error so UI doesn't get stuck
+      setIsTyping(false);
+      setIsAIStreaming(false);
+      setStreamingMessage('');
     }
   };
 

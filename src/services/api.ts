@@ -51,6 +51,20 @@ export const getImageUrl = (path?: string) => {
   return `${apiBase}${resolvedPath}`;
 };
 
+// Build download URL for binary files (images, content assets, etc.)
+// Backend pattern: GET /api/download/<folder>/<filename>
+export const getDownloadUrl = (folder: string, filename?: string) => {
+  if (!filename) return '';
+  if (filename.startsWith('http')) return filename;
+
+  // Remove any leading slashes so we don't break the pattern
+  const cleanFilename = filename.replace(/^\/+/, '');
+  const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+
+  // apiBase already normalizes API_URL and ensures no trailing slash
+  return `${apiBase}/download/${cleanFolder}/${cleanFilename}`;
+};
+
 // Add auth token to requests
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');

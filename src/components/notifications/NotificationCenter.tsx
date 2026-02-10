@@ -225,20 +225,24 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
     // Chat/message notifications → open chat interface
     if (type.includes('chat') || type.includes('message')) {
-      // Prefer explicit conversation URL if backend provides it
-      if (notification.actionUrl) {
-        navigate(notification.actionUrl);
+      const data = notification.data || {};
+
+      // Prefer a proper creatorId derived from structured data
+      const creatorIdFromData =
+        data.creatorId ||
+        data.creator?.id ||
+        data.conversation?.creatorId ||
+        data.conversation?.creator?.id ||
+        data.conversation?.creator_id;
+
+      if (creatorIdFromData) {
+        navigate(`/chat/${creatorIdFromData}`);
         return;
       }
 
-      // Fallback: if notification.data contains creatorId or conversationId
-      const data = notification.data || {};
-      if (data.creatorId) {
-        navigate(`/chat/${data.creatorId}`);
-        return;
-      }
-      if (data.conversation?.creatorId) {
-        navigate(`/chat/${data.conversation.creatorId}`);
+      // Fallback: respect any explicit URL from backend (may be a conversation view)
+      if (notification.actionUrl) {
+        navigate(notification.actionUrl);
         return;
       }
 

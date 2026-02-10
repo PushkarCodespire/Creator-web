@@ -15,6 +15,7 @@ import {
 import { motion } from 'framer-motion';
 import { colors, spacing, typography } from '../../styles/tokens';
 import CustomCard from '../common/Card/CustomCard';
+import { getDownloadUrl } from '../../services/api';
 
 interface ContentItem {
   id: string;
@@ -114,7 +115,7 @@ export const CreatorContentGallery: React.FC<CreatorContentGalleryProps> = ({
                       >
                         {content.thumbnail ? (
                           <img
-                            src={content.thumbnail}
+                            src={getDownloadUrl('content', content.thumbnail)}
                             alt={content.title}
                             style={{
                               position: 'absolute',
