@@ -5,6 +5,20 @@
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL || '/api';
+const UPLOAD_PUBLIC_PATH = import.meta.env.VITE_UPLOAD_PUBLIC_PATH || '/api/uploads';
+
+const normalizePath = (value: string) => (value.startsWith('/') ? value : `/${value}`);
+const apiBase = /^https?:\/\//i.test(API_URL)
+  ? API_URL.replace(/\/+$/, '')
+  : normalizePath(API_URL).replace(/\/+$/, '');
+const apiOrigin = /^https?:\/\//i.test(API_URL) ? new URL(API_URL).origin : '';
+const apiPath = (() => {
+  if (/^https?:\/\//i.test(API_URL)) {
+    const pathname = new URL(API_URL).pathname.replace(/\/+$/, '');
+    return pathname ? pathname : '/';
+  }
+  return normalizePath(API_URL).replace(/\/+$/, '');
+})();
 
 const api = axios.create({
   baseURL: API_URL
@@ -15,15 +29,26 @@ export const getImageUrl = (path?: string) => {
   if (path.startsWith('http')) return path;
 
   // Ensure we don't have double slashes
-  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  const cleanPath = normalizePath(path);
+  const normalizedUploadPath = normalizePath(UPLOAD_PUBLIC_PATH).replace(/\/+$/, '');
 
-  // Ensure the base URL doesn't end with /api for static uploads
-  const baseUrl = API_URL.replace(/\/api\/?$/, '');
+  // Map legacy /uploads paths to the configured public uploads path
+  const resolvedPath = cleanPath.startsWith('/uploads/')
+    ? `${normalizedUploadPath}${cleanPath.slice('/uploads'.length)}`
+    : cleanPath;
 
-  // Remove trailing slash from baseUrl if present to avoid //
-  const finalBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  // If the path already includes the upload public path or API path, just add origin if needed
+  if (
+    resolvedPath === normalizedUploadPath ||
+    resolvedPath.startsWith(`${normalizedUploadPath}/`) ||
+    resolvedPath === apiPath ||
+    resolvedPath.startsWith(`${apiPath}/`)
+  ) {
+    return apiOrigin ? `${apiOrigin}${resolvedPath}` : resolvedPath;
+  }
 
-  return `${finalBaseUrl}${cleanPath}`;
+  // Otherwise, attach to the API base
+  return `${apiBase}${resolvedPath}`;
 };
 
 // Add auth token to requests
