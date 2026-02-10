@@ -206,7 +206,14 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
 
   return (
     <div>
-      <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
+      <CustomCard
+        depth={1}
+        style={{
+          marginBottom: spacing[6],
+          background: 'white',
+          color: colors.gray[900],
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing[4] }}>
           <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, margin: 0 }}>
             Reviews Summary
@@ -257,7 +264,14 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
         </Row>
       </CustomCard>
 
-      <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
+      <CustomCard
+        depth={1}
+        style={{
+          marginBottom: spacing[6],
+          background: 'white',
+          color: colors.gray[900],
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing[4] }}>
           <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, margin: 0 }}>
             {myReview ? 'Your Review' : 'Leave a Review'}
@@ -311,7 +325,13 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
         )}
       </CustomCard>
 
-      <CustomCard depth={1}>
+      <CustomCard
+        depth={1}
+        style={{
+          background: 'white',
+          color: colors.gray[900],
+        }}
+      >
         <h3 style={{ fontSize: typography.fontSize.xl, fontWeight: typography.fontWeight.semibold, marginBottom: spacing[4] }}>
           All Reviews
         </h3>

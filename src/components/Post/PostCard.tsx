@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -57,9 +57,15 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const [isDeleting, setIsDeleting] = useState(false);
   const [showComments, setShowComments] = useState(false);
-  const [isLiked, setIsLiked] = useState(post.isLiked);
-  const [likesCount, setLikesCount] = useState(post.likesCount);
+  const [isLiked, setIsLiked] = useState<boolean>(post.isLiked);
+  const [likesCount, setLikesCount] = useState<number>(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
+
+  // Keep local like state in sync if the server sends updated data (e.g. after refresh)
+  useEffect(() => {
+    setIsLiked(post.isLiked);
+    setLikesCount(post.likesCount);
+  }, [post.isLiked, post.likesCount]);
 
   const isOwnPost = user?.id === post.creator.id;
 

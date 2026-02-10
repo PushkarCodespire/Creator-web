@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, Avatar, Button, Typography, Image, Space, Divider, Dropdown, Menu, message } from 'antd';
 import {
     HeartOutlined,
@@ -47,12 +47,18 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelete, onUpdate }) => {
-    const [isLiked, setIsLiked] = useState(post.isLiked);
-    const [likesCount, setLikesCount] = useState(post.likesCount);
+    const [isLiked, setIsLiked] = useState<boolean>(!!post.isLiked);
+    const [likesCount, setLikesCount] = useState<number>(post.likesCount);
     const [showComments, setShowComments] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
 
     const isOwner = currentUserId === post.creator.userId;
+
+    // Sync local like state with fresh post data (e.g. after refetch/refresh)
+    useEffect(() => {
+        setIsLiked(!!post.isLiked);
+        setLikesCount(post.likesCount);
+    }, [post.isLiked, post.likesCount]);
 
     const handleLike = async () => {
         try {
