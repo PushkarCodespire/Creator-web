@@ -214,6 +214,7 @@ const CreatorPosts = () => {
                                     post={post}
                                     onPostDelete={handlePostDeleted}
                                     onPostUpdate={handlePostUpdate}
+                                    currentCreatorId={currentUser?.creator?.id}
                                 />
                             ))}
                         </div>

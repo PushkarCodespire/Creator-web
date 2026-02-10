@@ -119,6 +119,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
           { key: basePath, icon: <DashboardOutlined />, label: <Link to={basePath}>Dashboard</Link> },
           { key: `${basePath}/users`, icon: <TeamOutlined />, label: <Link to={`${basePath}/users`}>Users</Link> },
           { key: `${basePath}/creators`, icon: <UserOutlined />, label: <Link to={`${basePath}/creators`}>Creators</Link> },
+          { key: `${basePath}/companies`, icon: <ShopOutlined />, label: <Link to={`${basePath}/companies`}>Companies</Link> },
           { key: `${basePath}/deals`, icon: <ContainerOutlined />, label: <Link to={`${basePath}/deals`}>Deals</Link> },
           { key: `${basePath}/revenue`, icon: <DollarOutlined />, label: <Link to={`${basePath}/revenue`}>Revenue</Link> },
           { key: `${basePath}/moderation`, icon: <WarningOutlined />, label: <Link to={`${basePath}/moderation`}>Reports</Link> },
@@ -437,7 +438,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             </h2>
           </div>
           <Space size={isMobile ? "middle" : "large"}>
-            {type === 'creator' && (
+            {(type === 'creator' || type === 'user') && (
               <NotificationCenter
                 theme="dark"
                 title="Notifications"

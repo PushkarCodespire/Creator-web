@@ -459,21 +459,6 @@ const UserDashboard = () => {
                 )}
               </div>
 
-              <Button
-                block
-                style={{
-                  marginTop: '32px',
-                  borderRadius: '12px',
-                  background: 'rgba(255, 255, 255, 0.03)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  color: '#94A3B8',
-                  height: '44px',
-                  fontWeight: 600
-                }}
-                onClick={() => navigate('/notifications')}
-              >
-                View All Notifications
-              </Button>
             </Card>
           </motion.div>
 

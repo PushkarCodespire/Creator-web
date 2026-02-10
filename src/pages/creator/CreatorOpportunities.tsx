@@ -102,12 +102,24 @@ const CreatorOpportunities = () => {
   };
 
   const handleApply = async (values: any) => {
+    if (applyModal?.hasApplied || applyModal?.myApplicationStatus) {
+      message.info(`You already applied${applyModal?.myApplicationStatus ? ` (${applyModal.myApplicationStatus})` : ''}.`);
+      setApplyModal(null);
+      return;
+    }
     setSubmitting(true);
     try {
       await opportunityApi.apply(applyModal.id, values.pitch, values.proposedBudget);
       message.success('Application submitted!');
       setApplyModal(null);
       form.resetFields();
+      setOpportunities((prev) =>
+        prev.map((item) =>
+          item.id === applyModal.id
+            ? { ...item, hasApplied: true, myApplicationStatus: item.myApplicationStatus || 'PENDING' }
+            : item
+        )
+      );
       // Optionally refresh to show status if we were on the apps tab? 
       // But we are usually on opps tab when applying.
     } catch (err: any) {
@@ -204,7 +216,11 @@ const CreatorOpportunities = () => {
       ) : (
         <div style={{ width: '100%' }}>
           <Row gutter={[24, 24]}>
-            {opportunities.map((item: any) => (
+            {opportunities.map((item: any) => {
+              const alreadyApplied = !!item.hasApplied || !!item.myApplicationStatus;
+              const appliedStatus = item.myApplicationStatus ? item.myApplicationStatus.replace('_', ' ') : 'Applied';
+
+              return (
               <Col xs={24} sm={24} md={12} lg={8} key={item.id}>
                 <Card
                   bordered={false}
@@ -292,6 +308,11 @@ const CreatorOpportunities = () => {
                       <Tag icon={<TeamOutlined />} color="blue" bordered={false} style={{ borderRadius: '8px', fontWeight: 700, padding: '4px 12px' }}>
                         {item._count?.applications || 0} applied
                       </Tag>
+                      {alreadyApplied && (
+                        <Tag color="green" bordered={false} style={{ borderRadius: '8px', fontWeight: 700, padding: '4px 12px' }}>
+                          {appliedStatus}
+                        </Tag>
+                      )}
                     </div>
 
                     <p style={{
@@ -326,23 +347,27 @@ const CreatorOpportunities = () => {
                     <Button
                       type="primary"
                       block
-                      onClick={() => setApplyModal(item)}
+                      onClick={() => !alreadyApplied && setApplyModal(item)}
+                      disabled={alreadyApplied}
                       style={{
                         borderRadius: '16px',
                         height: '52px',
                         fontWeight: 800,
                         fontSize: '15px',
-                        background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+                        background: alreadyApplied
+                          ? 'rgba(148, 163, 184, 0.25)'
+                          : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
                         border: 'none',
                         boxShadow: '0 8px 20px rgba(99, 102, 241, 0.2)'
                       }}
                     >
-                      Analyze & Apply
+                      {alreadyApplied ? appliedStatus : 'Analyze & Apply'}
                     </Button>
                   </div>
                 </Card>
               </Col>
-            ))}
+            );
+            })}
           </Row>
 
           {total > pageSize && (

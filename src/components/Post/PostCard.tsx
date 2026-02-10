@@ -44,6 +44,7 @@ export interface PostCardProps {
   onPostDelete?: (postId: string) => void;
   onPostUpdate?: (postId: string) => void;
   showActions?: boolean;
+  currentCreatorId?: string;
 }
 
 const PostCard: React.FC<PostCardProps> = ({
@@ -51,6 +52,7 @@ const PostCard: React.FC<PostCardProps> = ({
   onPostDelete,
   onPostUpdate,
   showActions = true,
+  currentCreatorId,
 }) => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
@@ -67,7 +69,9 @@ const PostCard: React.FC<PostCardProps> = ({
     setLikesCount(post.likesCount);
   }, [post.isLiked, post.likesCount]);
 
-  const isOwnPost = user?.id === post.creator.id;
+  const isOwnPost = user?.id === post.creator.id
+    || user?.creator?.id === post.creator.id
+    || (!!currentCreatorId && currentCreatorId === post.creator.id);
 
   const handleCreatorClick = () => navigate(`/creator/${post.creator.id}`);
   const handleCommentClick = () => setShowComments(!showComments);

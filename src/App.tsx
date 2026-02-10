@@ -75,6 +75,7 @@ const CompanyDeals = lazy(() => import('./pages/company/CompanyDeals'));
 const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
 const AdminCreators = lazy(() => import('./pages/admin/AdminCreators'));
+const AdminCompanies = lazy(() => import('./pages/admin/AdminCompanies'));
 const AdminDeals = lazy(() => import('./pages/admin/AdminDeals'));
 const AdminRevenue = lazy(() => import('./pages/admin/AdminRevenue'));
 const AdminModeration = lazy(() => import('./pages/admin/AdminModeration'));
@@ -216,6 +217,7 @@ function App() {
           <Route index element={<AdminDashboard />} />
           <Route path="users" element={<AdminUsers />} />
           <Route path="creators" element={<AdminCreators />} />
+          <Route path="companies" element={<AdminCompanies />} />
           <Route path="deals" element={<AdminDeals />} />
           <Route path="revenue" element={<AdminRevenue />} />
           <Route path="moderation" element={<AdminModeration />} />
