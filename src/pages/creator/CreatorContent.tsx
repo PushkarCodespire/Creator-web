@@ -834,15 +834,45 @@ const CreatorContent = () => {
           .ant-pagination-item-active { border-color: ${colors.primary.solid} !important; background: ${colors.primary.solid} !important; }
           .ant-pagination-item-active a { color: #FFFFFF !important; }
 
-          .premium-select .ant-select-selector {
-            background: #FFFFFF !important;
+          /* Enhanced Select Styling for Visibility */
+          .ant-select-selector {
+            background: #ffffff !important;
             border: 1px solid ${colors.gray[200]} !important;
             color: ${colors.text.primary} !important;
             border-radius: 8px !important;
           }
 
+          .ant-select-selection-placeholder {
+            color: ${colors.text.tertiary} !important;
+            font-weight: 400 !important;
+          }
+
+          .ant-select-selection-item {
+            color: ${colors.text.primary} !important;
+            font-weight: 500 !important;
+          }
+
           .ant-select-dropdown {
-            background: #FFFFFF !important;
+            background: #ffffff !important;
+            border: 1px solid ${colors.gray[100]} !important;
+            box-shadow: ${shadows.lg} !important;
+            padding: 4px !important;
+          }
+
+          .ant-select-item {
+            color: ${colors.text.primary} !important;
+            border-radius: 6px !important;
+            margin: 2px 0 !important;
+          }
+
+          .ant-select-item-option-active {
+            background: ${colors.gray[50]} !important;
+          }
+
+          .ant-select-item-option-selected {
+            background: ${colors.primary.subtle} !important;
+            color: ${colors.primary.solid} !important;
+            font-weight: 600 !important;
           }
           
           .spin-anim { animation: spin 2s linear infinite; }
