@@ -16,9 +16,10 @@ import {
   ExternalLink,
   ChevronRight,
   TrendingUp,
-  Image as ImageIcon,
-  Play
+  Play,
+  Download
 } from 'lucide-react';
+import { downloadFromUrl } from '../../utils/fileDownloadUtils';
 import { Dropdown, Modal, message, Avatar, Button, Typography, Space, Tag } from 'antd';
 import type { MenuProps } from 'antd';
 import { useSelector } from 'react-redux';
@@ -169,13 +170,65 @@ const PostCard: React.FC<PostCardProps> = ({
         position: 'relative'
       }}>
         {media.type === 'image' ? (
-          <img src={media.url} alt="" style={{ width: '100%', maxHeight: '640px', objectFit: 'cover', display: 'block' }} />
+          <>
+            <img src={media.url} alt="" style={{ width: '100%', maxHeight: '640px', objectFit: 'cover', display: 'block' }} />
+            <motion.div
+              whileHover={{ scale: 1.1, background: 'rgba(0,0,0,0.8)' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadFromUrl(media.url, `post-image-${post.id}`);
+              }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.5)',
+                color: '#fff',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                zIndex: 2
+              }}
+            >
+              <Download size={20} />
+            </motion.div>
+          </>
         ) : (
           <div style={{ position: 'relative' }}>
             <video src={media.url} controls style={{ width: '100%', maxHeight: '640px', objectFit: 'cover', display: 'block' }} />
-            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+            <div style={{ position: 'absolute', top: '20px', left: '20px' }}>
               <Tag bordered={false} icon={<Play size={12} fill="currentColor" />} style={{ background: 'rgba(0,0,0,0.6)', color: '#fff', borderRadius: '8px', fontWeight: 700, backdropFilter: 'blur(10px)', padding: '4px 12px' }}>NEURAL FEED</Tag>
             </div>
+            <motion.div
+              whileHover={{ scale: 1.1, background: 'rgba(0,0,0,0.8)' }}
+              onClick={(e) => {
+                e.stopPropagation();
+                downloadFromUrl(media.url, `post-video-${post.id}`);
+              }}
+              style={{
+                position: 'absolute',
+                top: '20px',
+                right: '20px',
+                background: 'rgba(0,0,0,0.5)',
+                color: '#fff',
+                width: '40px',
+                height: '40px',
+                borderRadius: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                backdropFilter: 'blur(10px)',
+                zIndex: 2
+              }}
+            >
+              <Download size={20} />
+            </motion.div>
           </div>
         )}
       </div>

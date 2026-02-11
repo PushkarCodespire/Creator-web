@@ -70,6 +70,31 @@ export const MediaMessage: React.FC<MediaMessageProps> = ({ media }) => {
                   display: 'block',
                 }}
               />
+              <motion.div
+                whileHover={{ opacity: 1 }}
+                initial={{ opacity: 0 }}
+                style={{
+                  position: 'absolute',
+                  top: spacing[2],
+                  right: spacing[2],
+                  background: 'rgba(0,0,0,0.5)',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#fff',
+                  cursor: 'pointer',
+                  backdropFilter: 'blur(4px)',
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  downloadFromUrl(img.url, img.name || `image-${index}`);
+                }}
+              >
+                <DownloadOutlined style={{ fontSize: '16px' }} />
+              </motion.div>
             </motion.div>
           ))}
         </div>
@@ -127,8 +152,14 @@ export const MediaMessage: React.FC<MediaMessageProps> = ({ media }) => {
                     gap: spacing[2],
                   }}
                 >
-                  <PlayCircleOutlined />
-                  {video.name}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], flex: 1 }}>
+                    <PlayCircleOutlined />
+                    {video.name}
+                  </div>
+                  <DownloadOutlined
+                    style={{ cursor: 'pointer', color: colors.primary.solid }}
+                    onClick={() => downloadFromUrl(video.url, video.name || `video-${index}`)}
+                  />
                 </div>
               )}
             </motion.div>
@@ -161,8 +192,14 @@ export const MediaMessage: React.FC<MediaMessageProps> = ({ media }) => {
                   color: colors.gray[700],
                 }}
               >
-                <SoundOutlined style={{ fontSize: typography.fontSize.lg }} />
-                {audio.name || 'Audio message'}
+                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2], flex: 1 }}>
+                  <SoundOutlined style={{ fontSize: typography.fontSize.lg }} />
+                  {audio.name || 'Audio message'}
+                </div>
+                <DownloadOutlined
+                  style={{ cursor: 'pointer', color: colors.primary.solid }}
+                  onClick={() => downloadFromUrl(audio.url, audio.name || `audio-${index}`)}
+                />
               </div>
               <audio src={audio.url} controls style={{ width: '100%' }}>
                 Your browser does not support the audio element.
