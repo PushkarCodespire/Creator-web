@@ -3,16 +3,14 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  MailOutlined,
-  LockOutlined,
-  CheckCircleFilled,
-  GoogleOutlined,
-  FacebookFilled,
-  SafetyCertificateFilled,
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  LoadingOutlined
-} from '@ant-design/icons';
+  Mail,
+  Lock,
+  CheckCircle,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  Loader2
+} from 'lucide-react';
 import { message } from 'antd';
 import { RootState, AppDispatch } from '../store';
 import { login, clearError } from '../store/slices/authSlice';
@@ -67,7 +65,6 @@ const Login = () => {
       let path = '/dashboard';
 
       if (user.role === 'CREATOR') {
-        // use isProfileComplete to decide where to go
         path = isProfileComplete ? '/creator-dashboard' : '/onboarding/creator';
       } else if (user.role === 'COMPANY') {
         path = '/company-dashboard';
@@ -109,7 +106,9 @@ const Login = () => {
       {/* Left Brand Panel */}
       <div className="brand-panel">
         <div className="brand-content">
-          <div className="brand-icon">✨</div>
+          <div className="brand-logo-container" style={{ marginBottom: '32px' }}>
+            <img src="/Logo.png" alt="CodeSpire" style={{ height: '56px', width: 'auto' }} />
+          </div>
           <h1 className="brand-headline">
             Join 10,000+ creators <br />
             monetizing their expertise
@@ -120,15 +119,21 @@ const Login = () => {
 
           <ul className="benefit-list">
             <li className="benefit-item">
-              <span className="check-icon"><CheckCircleFilled /></span>
+              <span className="check-icon">
+                <CheckCircle size={14} color="#ffffff" strokeWidth={3} />
+              </span>
               Free to start, cancel anytime
             </li>
             <li className="benefit-item">
-              <span className="check-icon"><CheckCircleFilled /></span>
+              <span className="check-icon">
+                <CheckCircle size={14} color="#ffffff" strokeWidth={3} />
+              </span>
               No credit card required
             </li>
             <li className="benefit-item">
-              <span className="check-icon"><CheckCircleFilled /></span>
+              <span className="check-icon">
+                <CheckCircle size={14} color="#ffffff" strokeWidth={3} />
+              </span>
               Set up your profile in 2 minutes
             </li>
           </ul>
@@ -157,7 +162,9 @@ const Login = () => {
           </AnimatePresence>
 
           <div className="trust-badges">
-            <span><SafetyCertificateFilled /> SSL Secured</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <ShieldCheck size={16} /> SSL Secured
+            </span>
             <span>GDPR Compliant</span>
             <span>Verified by Stripe</span>
           </div>
@@ -173,11 +180,10 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Inputs */}
             <div className="input-group">
               <label className="input-label">Email Address</label>
               <div className="input-wrapper">
-                <MailOutlined className="field-icon" />
+                <Mail className="field-icon" size={18} strokeWidth={2} />
                 <input
                   type="email"
                   name="email"
@@ -192,7 +198,7 @@ const Login = () => {
             <div className="input-group">
               <label className="input-label">Password</label>
               <div className="input-wrapper">
-                <LockOutlined className="field-icon" />
+                <Lock className="field-icon" size={18} strokeWidth={2} />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -202,46 +208,41 @@ const Login = () => {
                   onChange={handleChange}
                 />
                 <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </div>
               </div>
             </div>
 
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#4B5563' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem', color: '#4a5565' }}>
                 <input
                   type="checkbox"
                   name="remember"
                   checked={formData.remember}
                   onChange={handleChange}
-                  style={{ width: '16px', height: '16px' }}
+                  style={{ width: '16px', height: '16px', borderRadius: '4px', border: '1px solid #e5e7eb' }}
                 />
                 Remember me
               </label>
-              <Link to="/forgot-password" style={{ color: '#667EEA', fontSize: '0.9rem', fontWeight: 500 }}>
+              <Link to="/forgot-password" style={{ color: '#1268ff', fontSize: '0.875rem', fontWeight: 600 }}>
                 Forgot password?
               </Link>
             </div>
 
             <button type="submit" className="submit-btn" disabled={isLoading}>
-              {isLoading ? 'Signing in...' : 'Sign In'}
+              {isLoading ? (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                  <Loader2 className="animate-spin" size={20} />
+                  Signing in...
+                </div>
+              ) : 'Sign In'}
             </button>
           </form>
 
-          <div className="divider">OR</div>
-
-          <div className="social-buttons">
-            <button className="social-btn">
-              <GoogleOutlined style={{ color: '#EA4335' }} /> Google
-            </button>
-            <button className="social-btn">
-              <FacebookFilled style={{ color: '#1877F2' }} /> Facebook
-            </button>
-          </div>
 
           <div style={{ textAlign: 'center', marginTop: '32px' }}>
-            <span style={{ color: '#6B7280' }}>New here? </span>
-            <Link to="/register" style={{ color: '#667EEA', fontWeight: 600 }}>Create an account</Link>
+            <span style={{ color: '#6a7282', fontSize: '0.95rem' }}>New here? </span>
+            <Link to="/register" style={{ color: '#1268ff', fontWeight: 600, fontSize: '0.95rem' }}>Create an account</Link>
           </div>
         </div>
       </div>

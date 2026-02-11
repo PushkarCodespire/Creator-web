@@ -29,91 +29,81 @@ const CustomButton: React.FC<CustomButtonProps> = ({
   // Get button styles based on variant
   const getButtonStyle = (): React.CSSProperties => {
     const defaultStyle: React.CSSProperties = {
-      borderRadius: '12px',
-      fontWeight: 600,
+      borderRadius: '10px',
+      fontWeight: 500,
       border: 'none',
-      transition: 'all 0.3s ease',
+      height: props.size === 'large' ? '44px' : props.size === 'small' ? '32px' : '40px',
+      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      display: 'inline-flex',
+      alignItems: 'center',
+      justifyContent: 'center',
     };
 
     let variantStyle: React.CSSProperties = {};
 
-    if (gradient) {
-      switch (variant) {
-        case 'primary':
-          variantStyle = {
-            background: colors.primary.gradient,
-            color: '#ffffff',
-            boxShadow: glow ? shadows.glow.primary : shadows.md,
-          };
-          break;
-        case 'success':
-          variantStyle = {
-            background: colors.success.gradient,
-            color: '#ffffff',
-            boxShadow: glow ? shadows.glow.success : shadows.md,
-          };
-          break;
-        case 'danger':
-          variantStyle = {
-            background: colors.error.gradient,
-            color: '#ffffff',
-            boxShadow: glow ? shadows.glow.error : shadows.md,
-          };
-          break;
-      }
-    } else {
-      // Non-gradient styles
-      switch (variant) {
-        case 'secondary':
-          variantStyle = {
-            background: colors.gray[100],
-            color: colors.text.primary,
-          };
-          break;
-        case 'ghost':
-          variantStyle = {
-            background: 'transparent',
-            border: `1px solid ${colors.gray[300]}`,
-            color: colors.text.primary,
-          };
-          break;
-        case 'danger':
-          variantStyle = {
-            background: colors.error.solid,
-            color: '#ffffff',
-          };
-          break;
-        case 'success':
-          variantStyle = {
-            background: colors.success.solid,
-            color: '#ffffff',
-          };
-          break;
-      }
+    switch (variant) {
+      case 'primary':
+        variantStyle = {
+          background: colors.primary.solid,
+          color: colors.primary.foreground,
+          boxShadow: shadows.md,
+        };
+        break;
+      case 'secondary':
+        variantStyle = {
+          background: colors.surface,
+          border: `1px solid ${colors.gray[200]}`,
+          color: colors.text.primary,
+          boxShadow: shadows.sm,
+        };
+        break;
+      case 'ghost':
+        variantStyle = {
+          background: 'transparent',
+          color: colors.primary.solid,
+          padding: 0,
+          height: 'auto',
+        };
+        break;
+      case 'danger':
+        variantStyle = {
+          background: colors.error.solid,
+          color: '#ffffff',
+          boxShadow: shadows.sm,
+        };
+        break;
+      case 'success':
+        variantStyle = {
+          background: colors.success.solid,
+          color: '#ffffff',
+          boxShadow: shadows.sm,
+        };
+        break;
     }
 
     return {
       ...defaultStyle,
       ...variantStyle,
-      ...style, // Props style should always override component defaults
+      ...style,
     };
   };
 
-  // Wrap button in motion.div to avoid deprecation warning
   return (
     <motion.div
-      whileHover={!disabled && !loading ? buttonHover : undefined}
-      whileTap={!disabled && !loading ? buttonTap : undefined}
-      style={{ display: 'inline-block' }}
+      whileHover={!disabled && !loading ? { y: -1, boxShadow: shadows.hover } : undefined}
+      whileTap={!disabled && !loading ? { scale: 0.98 } : undefined}
+      style={{ display: 'inline-block', width: props.block ? '100%' : 'auto' }}
     >
       <Button
         {...props}
         disabled={disabled}
         loading={loading}
         style={getButtonStyle()}
-        type={variant === 'primary' && !gradient ? 'primary' : 'default'}
+        type={variant === 'primary' ? 'primary' : 'default'}
       >
-        {children}
+        <span style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+          {children}
+        </span>
       </Button>
     </motion.div>
   );

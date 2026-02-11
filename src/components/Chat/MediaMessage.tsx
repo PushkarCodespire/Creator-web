@@ -3,11 +3,12 @@
 // ===========================================
 
 import { useState } from 'react';
-import { Modal, Image } from 'antd';
-import { PlayCircleOutlined, SoundOutlined, FileOutlined } from '@ant-design/icons';
+import { Modal, Image, message } from 'antd';
+import { PlayCircleOutlined, SoundOutlined, FileOutlined, DownloadOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { MediaFile } from '../../types';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { downloadFromUrl } from '../../utils/fileDownloadUtils';
 
 interface MediaMessageProps {
   media: MediaFile[];
@@ -174,38 +175,54 @@ export const MediaMessage: React.FC<MediaMessageProps> = ({ media }) => {
       {/* Other files */}
       {files.length > 0 && (
         <div style={{ marginTop: images.length > 0 || videos.length > 0 || audios.length > 0 ? spacing[2] : 0 }}>
-          {files.map((file, index) => (
-            <motion.a
-              key={index}
-              href={file.url}
-              download={file.name}
-              target="_blank"
-              rel="noopener noreferrer"
-              whileHover={{ scale: 1.02 }}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: spacing[2],
-                padding: spacing[3],
-                background: colors.gray[100],
-                borderRadius: '12px',
-                marginBottom: files.length > 1 && index < files.length - 1 ? spacing[2] : 0,
-                textDecoration: 'none',
-                color: colors.gray[800],
-                fontSize: typography.fontSize.sm,
-              }}
-            >
-              <FileOutlined style={{ fontSize: typography.fontSize.lg }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: typography.fontWeight.medium }}>{file.name || 'File'}</div>
-                {file.size && (
-                  <div style={{ fontSize: typography.fontSize.xs, color: colors.gray[500] }}>
-                    {(file.size / 1024).toFixed(1)} KB
-                  </div>
-                )}
-              </div>
-            </motion.a>
-          ))}
+          {files.map((file, index) => {
+            const handleDownload = async (e: React.MouseEvent) => {
+              e.preventDefault();
+              try {
+                await downloadFromUrl(file.url, file.name);
+                message.success('Download started');
+              } catch (error) {
+                console.error('Download failed:', error);
+                message.error('Failed to download file');
+              }
+            };
+
+            return (
+              <motion.div
+                key={index}
+                whileHover={{ scale: 1.02 }}
+                onClick={handleDownload}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: spacing[2],
+                  padding: spacing[3],
+                  background: colors.gray[100],
+                  borderRadius: '12px',
+                  marginBottom: files.length > 1 && index < files.length - 1 ? spacing[2] : 0,
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = colors.gray[200];
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = colors.gray[100];
+                }}
+              >
+                <FileOutlined style={{ fontSize: typography.fontSize.lg, color: colors.primary.solid }} />
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontWeight: typography.fontWeight.medium, color: colors.gray[800] }}>{file.name || 'File'}</div>
+                  {file.size && (
+                    <div style={{ fontSize: typography.fontSize.xs, color: colors.gray[500] }}>
+                      {(file.size / 1024).toFixed(1)} KB
+                    </div>
+                  )}
+                </div>
+                <DownloadOutlined style={{ fontSize: typography.fontSize.lg, color: colors.primary.solid }} />
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>

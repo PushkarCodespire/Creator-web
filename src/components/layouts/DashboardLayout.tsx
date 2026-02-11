@@ -5,21 +5,19 @@
 import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
 import { Layout, Menu, Avatar, Dropdown, Space, Drawer, Grid, Button as AntButton, type MenuProps } from 'antd';
 import {
-  DashboardOutlined, MessageOutlined, FileTextOutlined, BarChartOutlined,
-  SettingOutlined, ShopOutlined, TeamOutlined, UserOutlined, LogoutOutlined,
-  SearchOutlined, BulbOutlined, HomeOutlined, DollarOutlined, ContainerOutlined,
-  WalletOutlined, MailOutlined, MenuOutlined, StarOutlined, TrophyOutlined,
-  ReadOutlined, GlobalOutlined, WarningOutlined, RobotOutlined, FormOutlined
-} from '@ant-design/icons';
-import { motion } from 'framer-motion';
+  LayoutDashboard, MessageSquare, Star, Users, CircleDollarSign, Settings,
+  Search, Trophy, Globe, PenSquare, FileText, BarChart3, Lightbulb, Wallet,
+  Box, Store, User, LogOut, Mail, Menu as MenuIcon, AlertCircle, Bot, ChevronRight, Bell, Home
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { getImageUrl, subscriptionApi } from '../../services/api';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 import DemoModeBanner from '../DemoModeBanner';
 import { NotificationCenter } from '../notifications';
-import '../../styles/AdminPanel.css';
 
 const { Header, Sider, Content } = Layout;
 const { useBreakpoint } = Grid;
@@ -101,46 +99,45 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
     switch (type) {
       case 'user':
         return [
-          { key: basePath, icon: <DashboardOutlined />, label: <Link to={basePath}>Overview</Link> },
-          { key: `${basePath}/chats`, icon: <MessageOutlined />, label: <Link to={`${basePath}/chats`}>Chats</Link> },
-          { key: `${basePath}/bookmarks`, icon: <StarOutlined />, label: <Link to={`${basePath}/bookmarks`}>Bookmarks</Link> },
-          { key: `${basePath}/following`, icon: <TeamOutlined />, label: <Link to={`${basePath}/following`}>Following</Link> },
-          { key: `${basePath}/subscription`, icon: <DollarOutlined />, label: <Link to={`${basePath}/subscription`}>Subscription</Link> },
-          { key: `${basePath}/settings`, icon: <SettingOutlined />, label: <Link to={`${basePath}/settings`}>Settings</Link> },
+          { key: basePath, icon: <LayoutDashboard size={18} />, label: <Link to={basePath}>Overview</Link> },
+          { key: `${basePath}/chats`, icon: <MessageSquare size={18} />, label: <Link to={`${basePath}/chats`}>Chats</Link> },
+          { key: `${basePath}/bookmarks`, icon: <Star size={18} />, label: <Link to={`${basePath}/bookmarks`}>Bookmarks</Link> },
+          { key: `${basePath}/following`, icon: <Users size={18} />, label: <Link to={`${basePath}/following`}>Following</Link> },
+          { key: `${basePath}/subscription`, icon: <CircleDollarSign size={18} />, label: <Link to={`${basePath}/subscription`}>Subscription</Link> },
+          { key: `${basePath}/settings`, icon: <Settings size={18} />, label: <Link to={`${basePath}/settings`}>Settings</Link> },
           { type: 'divider' as const },
-          { key: '/creators', icon: <SearchOutlined />, label: <Link to="/creators">Browse Creators</Link> },
-          { key: '/trending', icon: <TrophyOutlined />, label: <Link to="/trending">Leaderboard</Link> },
-          { key: '/feed', icon: <ReadOutlined />, label: <Link to="/feed">Feed</Link> },
-          { key: '/community', icon: <GlobalOutlined />, label: <Link to="/community">Community</Link> }
+          { key: '/creators', icon: <Search size={18} />, label: <Link to="/creators">Browse Creators</Link> },
+          { key: '/trending', icon: <Trophy size={18} />, label: <Link to="/trending">Leaderboard</Link> },
+          { key: '/community', icon: <Globe size={18} />, label: <Link to="/community">Community</Link> }
         ];
       case 'creator':
         return [
-          { key: basePath, icon: <DashboardOutlined />, label: <Link to={basePath}>Dashboard</Link> },
-          { key: `${basePath}/posts`, icon: <FormOutlined />, label: <Link to={`${basePath}/posts`}>Posts</Link> },
-          { key: `${basePath}/content`, icon: <FileTextOutlined />, label: <Link to={`${basePath}/content`}>Content</Link> },
-          { key: `${basePath}/analytics`, icon: <BarChartOutlined />, label: <Link to={`${basePath}/analytics`}>Analytics</Link> },
-          { key: `${basePath}/opportunities`, icon: <BulbOutlined />, label: <Link to={`${basePath}/opportunities`}>Opportunities</Link> },
-          { key: `${basePath}/payouts`, icon: <WalletOutlined />, label: <Link to={`${basePath}/payouts`}>Payouts</Link> },
-          { key: `${basePath}/settings`, icon: <SettingOutlined />, label: <Link to={`${basePath}/settings`}>Settings</Link> }
+          { key: basePath, icon: <LayoutDashboard size={18} />, label: <Link to={basePath}>Dashboard</Link> },
+          { key: `${basePath}/posts`, icon: <PenSquare size={18} />, label: <Link to={`${basePath}/posts`}>Posts</Link> },
+          { key: `${basePath}/content`, icon: <FileText size={18} />, label: <Link to={`${basePath}/content`}>Content</Link> },
+          { key: `${basePath}/analytics`, icon: <BarChart3 size={18} />, label: <Link to={`${basePath}/analytics`}>Analytics</Link> },
+          { key: `${basePath}/opportunities`, icon: <Lightbulb size={18} />, label: <Link to={`${basePath}/opportunities`}>Opportunities</Link> },
+          { key: `${basePath}/payouts`, icon: <Wallet size={18} />, label: <Link to={`${basePath}/payouts`}>Payouts</Link> },
+          { key: `${basePath}/settings`, icon: <Settings size={18} />, label: <Link to={`${basePath}/settings`}>Settings</Link> }
         ];
       case 'company':
         return [
-          { key: basePath, icon: <DashboardOutlined />, label: <Link to={basePath}>Dashboard</Link> },
-          { key: `${basePath}/opportunities`, icon: <BulbOutlined />, label: <Link to={`${basePath}/opportunities`}>My Opportunities</Link> },
-          { key: `${basePath}/deals`, icon: <ContainerOutlined />, label: <Link to={`${basePath}/deals`}>Manage Deals</Link> },
-          { key: `${basePath}/discover`, icon: <SearchOutlined />, label: <Link to={`${basePath}/discover`}>Discover Creators</Link> }
+          { key: basePath, icon: <LayoutDashboard size={18} />, label: <Link to={basePath}>Dashboard</Link> },
+          { key: `${basePath}/opportunities`, icon: <Lightbulb size={18} />, label: <Link to={`${basePath}/opportunities`}>My Opportunities</Link> },
+          { key: `${basePath}/deals`, icon: <Box size={18} />, label: <Link to={`${basePath}/deals`}>Manage Deals</Link> },
+          { key: `${basePath}/discover`, icon: <Search size={18} />, label: <Link to={`${basePath}/discover`}>Discover Creators</Link> }
         ];
       case 'admin':
         return [
-          { key: basePath, icon: <DashboardOutlined />, label: <Link to={basePath}>Dashboard</Link> },
-          { key: `${basePath}/users`, icon: <TeamOutlined />, label: <Link to={`${basePath}/users`}>Users</Link> },
-          { key: `${basePath}/creators`, icon: <UserOutlined />, label: <Link to={`${basePath}/creators`}>Creators</Link> },
-          { key: `${basePath}/companies`, icon: <ShopOutlined />, label: <Link to={`${basePath}/companies`}>Companies</Link> },
-          { key: `${basePath}/deals`, icon: <ContainerOutlined />, label: <Link to={`${basePath}/deals`}>Deals</Link> },
-          { key: `${basePath}/revenue`, icon: <DollarOutlined />, label: <Link to={`${basePath}/revenue`}>Revenue</Link> },
-          { key: `${basePath}/moderation`, icon: <WarningOutlined />, label: <Link to={`${basePath}/moderation`}>Reports</Link> },
-          { key: `${basePath}/ai-moderation`, icon: <RobotOutlined />, label: <Link to={`${basePath}/ai-moderation`}>AI Moderation</Link> },
-          { key: `${basePath}/email-preview`, icon: <MailOutlined />, label: <Link to={`${basePath}/email-preview`}>Email Preview</Link> }
+          { key: basePath, icon: <LayoutDashboard size={18} />, label: <Link to={basePath}>Dashboard</Link> },
+          { key: `${basePath}/users`, icon: <Users size={18} />, label: <Link to={`${basePath}/users`}>Users</Link> },
+          { key: `${basePath}/creators`, icon: <User size={18} />, label: <Link to={`${basePath}/creators`}>Creators</Link> },
+          { key: `${basePath}/companies`, icon: <Store size={18} />, label: <Link to={`${basePath}/companies`}>Companies</Link> },
+          { key: `${basePath}/deals`, icon: <Box size={18} />, label: <Link to={`${basePath}/deals`}>Deals</Link> },
+          { key: `${basePath}/revenue`, icon: <CircleDollarSign size={18} />, label: <Link to={`${basePath}/revenue`}>Revenue</Link> },
+          { key: `${basePath}/moderation`, icon: <AlertCircle size={18} />, label: <Link to={`${basePath}/moderation`}>Reports</Link> },
+          { key: `${basePath}/ai-moderation`, icon: <Bot size={18} />, label: <Link to={`${basePath}/ai-moderation`}>AI Moderation</Link> },
+          { key: `${basePath}/email-preview`, icon: <Mail size={18} />, label: <Link to={`${basePath}/email-preview`}>Email Preview</Link> }
         ];
       default:
         return [];
@@ -152,8 +149,8 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
     : getMenuItems();
 
   const userMenuItems = [
-    { key: 'home', icon: <HomeOutlined />, label: 'Back to Home', onClick: () => navigate('/') },
-    { key: 'logout', icon: <LogoutOutlined />, label: 'Logout', onClick: handleLogout }
+    { key: 'home', icon: <Home size={18} />, label: 'Back to Home', onClick: () => navigate('/') },
+    { key: 'logout', icon: <LogOut size={18} />, label: 'Logout', onClick: handleLogout }
   ];
 
   const getTitle = () => {
@@ -171,9 +168,8 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
       height: '100%',
       position: 'relative',
       overflow: 'hidden',
-      background: isAdmin
-        ? 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)'
-        : 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)'
+      background: colors.dark.surface,
+      borderRight: `1px solid ${colors.dark.border}`
     }}>
       {/* Subtle Mesh Glow */}
       <div style={{
@@ -200,30 +196,17 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
           <Link
             to="/"
             onClick={() => setMobileMenuOpen(false)}
-            style={{
-              fontSize: isMobile ? 18 : 22,
-              fontWeight: 800,
-              backgroundImage: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              letterSpacing: '-0.03em',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-            }}
+            style={{ display: 'block' }}
           >
-            <div style={{
-              width: isMobile ? 28 : 32,
-              height: isMobile ? 28 : 32,
-              background: 'linear-gradient(135deg, #667EEA 0%, #764BA2 100%)',
-              borderRadius: '8px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: isMobile ? '16px' : '18px'
-            }}>AI</div>
-            <span>Platform</span>
+            <img
+              src="/Logo.png"
+              alt="CodeSpire"
+              style={{
+                height: isMobile ? 36 : 42,
+                width: 'auto',
+                display: 'block'
+              }}
+            />
           </Link>
         </div>
 
@@ -257,7 +240,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                 fontWeight: 600
               }}
             >
-              {user?.name?.[0]?.toUpperCase() || <UserOutlined />}
+              {user?.name?.[0]?.toUpperCase() || <User size={18} />}
             </Avatar>
             <div style={{ overflow: 'hidden' }}>
               <div style={{
@@ -281,7 +264,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                 marginTop: '2px'
               }}>
                 {subscription?.plan === 'PREMIUM' ? 'Premium Member' : subscription?.plan === 'FREE' ? 'Free Member' : 'Member'}
-                {subscription?.plan === 'PREMIUM' && <StarOutlined style={{ fontSize: '10px', color: '#FCD34D' }} />}
+                {subscription?.plan === 'PREMIUM' && <Star size={10} style={{ color: '#FCD34D' }} />}
               </div>
             </div>
           </motion.div>
@@ -335,10 +318,18 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
           border: 1px solid rgba(102, 126, 234, 0.2);
         }
         .dashboard-menu .ant-menu-item-selected .anticon {
-          color: #818CF8 !important;
+          color: #ffffff !important;
+        }
+        .dashboard-menu .ant-menu-item-selected {
+          background: ${colors.primary.solid} !important;
+          color: #ffffff !important;
+        }
+        .dashboard-menu .ant-menu-item:hover {
+          background: rgba(18, 104, 255, 0.1) !important;
+          color: ${colors.primary.solid} !important;
         }
       `}</style>
-    </div>
+    </div >
   );
 
   return (
@@ -440,7 +431,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             {isMobile && (
               <AntButton
                 type="text"
-                icon={<MenuOutlined style={{ fontSize: '18px', color: '#FFFFFF' }} />}
+                icon={<MenuIcon size={18} style={{ color: '#FFFFFF' }} />}
                 onClick={() => setMobileMenuOpen(true)}
                 style={{ padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               />
@@ -481,7 +472,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                   }}
                   size={isMobile ? "small" : "default"}
                 >
-                  {user?.name?.[0]?.toUpperCase() || <UserOutlined />}
+                  {user?.name?.[0]?.toUpperCase() || <User size={isMobile ? 14 : 18} />}
                 </Avatar>
                 {!isMobile && (
                   <span style={{ fontWeight: 600, color: isAdmin ? '#4b5563' : '#94A3B8' }}>

@@ -5,19 +5,20 @@
 import { useEffect, useState, useMemo } from 'react';
 import { Row, Col, Spin, Tag, Grid, Typography, ConfigProvider, theme } from 'antd';
 import {
-  MessageOutlined,
-  RiseOutlined,
-  DollarOutlined,
-  UserOutlined,
-  BarChartOutlined,
-  RadarChartOutlined,
-  DashboardOutlined,
-  HeatMapOutlined,
-  FunnelPlotOutlined,
-  TeamOutlined,
-  StarFilled,
-  CalendarOutlined
-} from '@ant-design/icons';
+  MessageSquare,
+  TrendingUp,
+  CircleDollarSign,
+  User,
+  BarChart,
+  Activity,
+  LayoutDashboard,
+  Grid3X3,
+  Filter,
+  Users,
+  Star,
+  Calendar,
+  History
+} from 'lucide-react';
 import {
   XAxis,
   YAxis,
@@ -99,13 +100,13 @@ const CreatorAnalytics = () => {
   };
 
   const menuItems = [
-    { id: 'overview', label: 'Overview', icon: <DashboardOutlined /> },
-    { id: 'engagement', label: 'Engagement', icon: <RiseOutlined /> },
-    { id: 'revenue', label: 'Revenue', icon: <DollarOutlined /> },
-    { id: 'activity', label: 'Heatmap', icon: <HeatMapOutlined /> },
-    { id: 'funnel', label: 'Funnel', icon: <FunnelPlotOutlined /> },
-    { id: 'comparison', label: 'Comparison', icon: <RadarChartOutlined /> },
-    { id: 'competitive', label: 'Competitive', icon: <BarChartOutlined /> },
+    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
+    { id: 'engagement', label: 'Engagement', icon: <TrendingUp size={18} /> },
+    { id: 'revenue', label: 'Revenue', icon: <CircleDollarSign size={18} /> },
+    { id: 'activity', label: 'Heatmap', icon: <Activity size={18} /> },
+    { id: 'funnel', label: 'Funnel', icon: <Filter size={18} /> },
+    { id: 'comparison', label: 'Comparison', icon: <Grid3X3 size={18} /> },
+    { id: 'competitive', label: 'Competitive', icon: <BarChart size={18} /> },
   ];
 
   const chartData = useMemo(() => {
@@ -207,10 +208,10 @@ const CreatorAnalytics = () => {
               {/* Stats Grid */}
               <Row gutter={[24, 24]} style={{ marginBottom: spacing[8] }}>
                 {[
-                  { title: 'Total Revenue', value: analytics?.overview?.totalEarnings || 0, prefix: '₹', color: '#F59E0B', icon: <DollarOutlined /> },
-                  { title: 'Active Chats', value: analytics?.overview?.totalChats || 0, color: '#6366F1', icon: <MessageOutlined /> },
-                  { title: 'Avg Messages', value: analytics?.avgMessagesPerConversation || 0, color: '#10B981', icon: <TeamOutlined /> },
-                  { title: '30D Conv.', value: analytics?.totalConversationsLast30Days || 0, color: '#EC4899', icon: <CalendarOutlined /> }
+                  { title: 'Total Revenue', value: analytics?.overview?.totalEarnings || 0, prefix: '₹', color: '#F59E0B', icon: <CircleDollarSign size={20} /> },
+                  { title: 'Active Chats', value: analytics?.overview?.totalChats || 0, color: '#6366F1', icon: <MessageSquare size={20} /> },
+                  { title: 'Avg Messages', value: analytics?.avgMessagesPerConversation || 0, color: '#10B981', icon: <Users size={20} /> },
+                  { title: '30D Conv.', value: analytics?.totalConversationsLast30Days || 0, color: '#EC4899', icon: <Calendar size={20} /> }
                 ].map((stat, i) => (
                   <Col xs={12} lg={6} key={i}>
                     <div style={{
@@ -314,7 +315,7 @@ const CreatorAnalytics = () => {
                   justifyContent: 'center',
                   boxShadow: '0 20px 40px rgba(99, 102, 241, 0.2)'
                 }}>
-                  <BarChartOutlined style={{ fontSize: '48px', marginBottom: '24px' }} />
+                  <BarChart size={48} style={{ marginBottom: '24px' }} />
                   <div style={{ fontSize: '32px', fontWeight: 900, marginBottom: '8px' }}>Peak Momentum</div>
                   <div style={{ fontSize: '18px', opacity: 0.9 }}>
                     Your creator velocity is up by 12% compared to last week. Most interactions happen between 4 PM and 8 PM.

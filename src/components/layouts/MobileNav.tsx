@@ -7,17 +7,14 @@ import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Badge } from 'antd';
 import {
-  HomeOutlined,
-  HomeFilled,
-  CompassOutlined,
-  CompassFilled,
-  MessageOutlined,
-  MessageFilled,
-  UserOutlined,
-  UserOutlined as UserFilled,
-  AppstoreOutlined,
-  AppstoreFilled,
-} from '@ant-design/icons';
+  Home,
+  Compass,
+  MessageSquare,
+  User,
+  LayoutGrid,
+  CreditCard,
+  LogIn
+} from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { colors, shadows, zIndex } from '../../styles/tokens';
@@ -46,73 +43,58 @@ const MobileNav: React.FC = () => {
   // Navigation items (different for guests vs authenticated users)
   const navItems = isAuthenticated
     ? [
-        {
-          key: 'home',
-          label: 'Home',
-          icon: <HomeOutlined />,
-          activeIcon: <HomeFilled />,
-          path: '/',
-        },
-        {
-          key: 'feed',
-          label: 'Feed',
-          icon: <AppstoreOutlined />,
-          activeIcon: <AppstoreFilled />,
-          path: '/feed',
-        },
-        {
-          key: 'explore',
-          label: 'Explore',
-          icon: <CompassOutlined />,
-          activeIcon: <CompassFilled />,
-          path: '/creators',
-        },
-        {
-          key: 'chats',
-          label: 'Chats',
-          icon: <MessageOutlined />,
-          activeIcon: <MessageFilled />,
-          path: '/dashboard/chats',
-          badge: 0, // TODO: Connect to unread messages count
-        },
-        {
-          key: 'profile',
-          label: 'Profile',
-          icon: <UserOutlined />,
-          activeIcon: <UserFilled />,
-          path: getDashboardPath(),
-        },
-      ]
+      {
+        key: 'home',
+        label: 'Home',
+        icon: <Home size={20} />,
+        path: '/',
+      },
+      {
+        key: 'explore',
+        label: 'Explore',
+        icon: <Compass size={20} />,
+        path: '/creators',
+      },
+      {
+        key: 'chats',
+        label: 'Chats',
+        icon: <MessageSquare size={20} />,
+        path: '/dashboard/chats',
+        badge: 0,
+      },
+      {
+        key: 'profile',
+        label: 'Profile',
+        icon: <User size={20} />,
+        path: getDashboardPath(),
+      },
+    ]
     : [
-        {
-          key: 'home',
-          label: 'Home',
-          icon: <HomeOutlined />,
-          activeIcon: <HomeFilled />,
-          path: '/',
-        },
-        {
-          key: 'explore',
-          label: 'Creators',
-          icon: <CompassOutlined />,
-          activeIcon: <CompassFilled />,
-          path: '/creators',
-        },
-        {
-          key: 'pricing',
-          label: 'Pricing',
-          icon: <AppstoreOutlined />,
-          activeIcon: <AppstoreFilled />,
-          path: '/pricing',
-        },
-        {
-          key: 'login',
-          label: 'Log in',
-          icon: <UserOutlined />,
-          activeIcon: <UserFilled />,
-          path: '/login',
-        },
-      ];
+      {
+        key: 'home',
+        label: 'Home',
+        icon: <Home size={20} />,
+        path: '/',
+      },
+      {
+        key: 'explore',
+        label: 'Creators',
+        icon: <Compass size={20} />,
+        path: '/creators',
+      },
+      {
+        key: 'pricing',
+        label: 'Pricing',
+        icon: <CreditCard size={20} />,
+        path: '/pricing',
+      },
+      {
+        key: 'login',
+        label: 'Log in',
+        icon: <LogIn size={20} />,
+        path: '/login',
+      },
+    ];
 
   // Check if current path matches nav item
   const isActive = (path: string) => {
@@ -174,7 +156,7 @@ const MobileNav: React.FC = () => {
                     transition: 'color 0.3s',
                   }}
                 >
-                  {active ? item.activeIcon : item.icon}
+                  {item.icon}
                 </div>
               </Badge>
             ) : (
@@ -185,7 +167,7 @@ const MobileNav: React.FC = () => {
                   transition: 'color 0.3s',
                 }}
               >
-                {active ? item.activeIcon : item.icon}
+                {item.icon}
               </div>
             )}
 

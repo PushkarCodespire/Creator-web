@@ -1,7 +1,3 @@
-// ===========================================
-// CREATOR PAYOUTS PAGE
-// ===========================================
-
 import { useState, useEffect } from 'react';
 import {
   Card,
@@ -25,16 +21,16 @@ import {
   Grid
 } from 'antd';
 import {
-  WalletOutlined,
-  BankOutlined,
-  DollarOutlined,
-  HistoryOutlined,
-  PlusOutlined,
-  CheckCircleOutlined,
-  ClockCircleOutlined,
-  CloseCircleOutlined,
-  ExclamationCircleOutlined
-} from '@ant-design/icons';
+  Wallet,
+  Landmark,
+  CircleDollarSign,
+  History,
+  Plus,
+  CheckCircle,
+  Clock,
+  XCircle,
+  AlertCircle
+} from 'lucide-react';
 import { payoutApi } from '../../services/api';
 import { format } from 'date-fns';
 
@@ -202,12 +198,12 @@ const CreatorPayouts = () => {
 
   const getStatusTag = (status: string) => {
     const statusConfig: Record<string, { color: string; icon: any }> = {
-      PENDING: { color: 'orange', icon: <ClockCircleOutlined /> },
-      PROCESSING: { color: 'blue', icon: <ClockCircleOutlined /> },
-      COMPLETED: { color: 'green', icon: <CheckCircleOutlined /> },
-      FAILED: { color: 'red', icon: <CloseCircleOutlined /> },
-      REJECTED: { color: 'red', icon: <CloseCircleOutlined /> },
-      CANCELLED: { color: 'default', icon: <CloseCircleOutlined /> }
+      PENDING: { color: 'orange', icon: <Clock size={14} /> },
+      PROCESSING: { color: 'blue', icon: <Clock size={14} /> },
+      COMPLETED: { color: 'green', icon: <CheckCircle size={14} /> },
+      FAILED: { color: 'red', icon: <XCircle size={14} /> },
+      REJECTED: { color: 'red', icon: <XCircle size={14} /> },
+      CANCELLED: { color: 'default', icon: <XCircle size={14} /> }
     };
 
     const config = statusConfig[status] || statusConfig.PENDING;
@@ -241,13 +237,13 @@ const CreatorPayouts = () => {
       title: 'Amount',
       dataIndex: 'amount',
       key: 'amount',
-      render: (amount: number | string) => `₹${Number(amount).toFixed(2)}`
+      render: (amount: number | string) => `₹${Number(amount).toFixed(2)} `
     },
     {
       title: 'Fee',
       dataIndex: 'fee',
       key: 'fee',
-      render: (fee: number | string) => `-₹${Number(fee).toFixed(2)}`
+      render: (fee: number | string) => `-₹${Number(fee).toFixed(2)} `
     },
     {
       title: 'Net Amount',
@@ -334,7 +330,7 @@ const CreatorPayouts = () => {
       title: 'Balance After',
       dataIndex: 'balanceAfter',
       key: 'balanceAfter',
-      render: (balance: number | string) => `₹${Number(balance).toFixed(2)}`
+      render: (balance: number | string) => `₹${Number(balance).toFixed(2)} `
     }
   ];
 
@@ -379,7 +375,7 @@ const CreatorPayouts = () => {
 
             <div>
               <div style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <WalletOutlined /> Available Balance
+                <Wallet size={16} /> Available Balance
               </div>
               <div style={{ fontSize: isMobile ? '32px' : '42px', fontWeight: 800, letterSpacing: '-0.02em' }}>
                 ₹{(earnings?.availableBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
@@ -462,12 +458,12 @@ const CreatorPayouts = () => {
               color: '#818CF8',
               border: '1px solid rgba(99, 102, 241, 0.1)'
             }}>
-              <BankOutlined style={{ fontSize: '22px' }} />
+              <Landmark size={22} />
             </div>
             <h3 style={{ margin: 0, fontWeight: 800, fontSize: '22px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>Bank Account</h3>
           </div>
           <Button
-            icon={<PlusOutlined />}
+            icon={<Plus size={16} />}
             onClick={() => {
               if (bankAccount) {
                 bankForm.setFieldsValue(bankAccount);
@@ -519,7 +515,7 @@ const CreatorPayouts = () => {
                 alignItems: 'center',
                 gap: '12px'
               }}>
-                <ExclamationCircleOutlined style={{ color: '#D97706', fontSize: '18px' }} />
+                <AlertCircle size={18} style={{ color: '#D97706' }} />
                 <span style={{ color: '#92400E', fontSize: '13px', fontWeight: 500 }}>
                   Complete your identity verification (KYC) to enable withdrawals to this account.
                 </span>
@@ -528,7 +524,7 @@ const CreatorPayouts = () => {
           </div>
         ) : (
           <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(255, 255, 255, 0.01)', borderRadius: '24px', border: '1px dashed rgba(255, 255, 255, 0.1)' }}>
-            <BankOutlined style={{ fontSize: '64px', color: 'rgba(255, 255, 255, 0.05)', marginBottom: '24px' }} />
+            <Landmark size={64} style={{ color: 'rgba(255, 255, 255, 0.05)', marginBottom: '24px' }} />
             <p style={{ color: '#94A3B8', marginBottom: '32px', fontSize: '16px', fontWeight: 500 }}>Establish your payout matrix to receive earnings</p>
             <Button type="primary" size="large" onClick={() => setIsBankModalVisible(true)} style={{ borderRadius: '16px', fontWeight: 800, padding: '0 40px', height: '52px' }}>
               Initialize Payout Method
@@ -550,8 +546,8 @@ const CreatorPayouts = () => {
         <Tabs defaultActiveKey="payouts" className="vibrant-tabs">
           <TabPane
             tab={
-              <span style={{ fontWeight: 800 }}>
-                <HistoryOutlined />
+              <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <History size={16} />
                 Payout History
               </span>
             }
@@ -576,8 +572,8 @@ const CreatorPayouts = () => {
           </TabPane>
           <TabPane
             tab={
-              <span style={{ fontWeight: 800 }}>
-                <DollarOutlined />
+              <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <CircleDollarSign size={16} />
                 Earnings Ledger
               </span>
             }
@@ -603,25 +599,25 @@ const CreatorPayouts = () => {
         </Tabs>
 
         <style>{`
-          .vibrant-tabs .ant-tabs-nav::before { border-bottom: 2px solid rgba(255,255,255,0.05) !important; }
-          .vibrant-tabs .ant-tabs-tab { color: #64748B !important; font-size: 16px !important; transition: all 0.3s ease !important; }
-          .vibrant-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: #6366F1 !important; transform: scale(1.05); }
-          .vibrant-tabs .ant-tabs-ink-bar { background: #6366F1 !important; height: 3px !important; border-radius: 3px 3px 0 0; }
+  .vibrant - tabs.ant - tabs - nav::before { border - bottom: 2px solid rgba(255, 255, 255, 0.05)!important; }
+          .vibrant - tabs.ant - tabs - tab { color: #64748B!important; font - size: 16px!important; transition: all 0.3s ease!important; }
+          .vibrant - tabs.ant - tabs - tab - active.ant - tabs - tab - btn { color: #6366F1!important; transform: scale(1.05); }
+          .vibrant - tabs.ant - tabs - ink - bar { background: #6366F1!important; height: 3px!important; border - radius: 3px 3px 0 0; }
           
-          .flagship-table { background: transparent !important; }
-          .flagship-table .ant-table { background: transparent !important; color: #E2E8F0 !important; }
-          .flagship-table .ant-table-thead > tr > th { 
-            background: rgba(255, 255, 255, 0.03) !important; 
-            color: #94A3B8 !important; 
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-            font-weight: 700 !important;
-            text-transform: uppercase;
-            font-size: 12px;
-            letter-spacing: 0.05em;
-          }
-          .flagship-table .ant-table-tbody > tr > td { border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important; }
-          .flagship-table .ant-table-tbody > tr:hover > td { background: rgba(255, 255, 255, 0.02) !important; }
-        `}</style>
+          .flagship - table { background: transparent!important; }
+          .flagship - table.ant - table { background: transparent!important; color: #E2E8F0!important; }
+          .flagship - table.ant - table - thead > tr > th {
+  background: rgba(255, 255, 255, 0.03)!important;
+  color: #94A3B8!important;
+  border - bottom: 1px solid rgba(255, 255, 255, 0.05)!important;
+  font - weight: 700!important;
+  text - transform: uppercase;
+  font - size: 12px;
+  letter - spacing: 0.05em;
+}
+          .flagship - table.ant - table - tbody > tr > td { border - bottom: 1px solid rgba(255, 255, 255, 0.03)!important; }
+          .flagship - table.ant - table - tbody > tr: hover > td { background: rgba(255, 255, 255, 0.02)!important; }
+`}</style>
       </div>
 
       {/* Bank Account Modal */}

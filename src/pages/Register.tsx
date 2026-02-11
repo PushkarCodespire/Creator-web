@@ -3,17 +3,17 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  UserOutlined,
-  MailOutlined,
-  LockOutlined,
-  CheckCircleFilled,
-  GoogleOutlined,
-  FacebookFilled,
-  SafetyCertificateFilled,
-  EyeInvisibleOutlined,
-  EyeOutlined,
-  LoadingOutlined
-} from '@ant-design/icons';
+  User,
+  Mail,
+  Lock,
+  CheckCircle,
+  ShieldCheck,
+  EyeOff,
+  Eye,
+  Loader2,
+  LayoutGrid,
+  Building2
+} from 'lucide-react';
 import { message } from 'antd';
 import { RootState, AppDispatch } from '../store';
 import { register, clearError } from '../store/slices/authSlice';
@@ -225,7 +225,7 @@ const Register = () => {
           ? (isProfileComplete ? '/creator-dashboard' : '/onboarding/creator')
           : role === 'COMPANY' ? '/company-dashboard' : '/dashboard';
         navigate(path);
-      }, 1000);
+      }, 500);
     } catch (error: any) {
       // Error handling is done in useEffect via Redux error state
       // But we can add more specific error messages here if needed
@@ -246,7 +246,9 @@ const Register = () => {
       {/* Left Brand Panel */}
       <div className="brand-panel">
         <div className="brand-content">
-          <div className="brand-icon">✨</div>
+          <div className="brand-logo-container" style={{ marginBottom: '32px' }}>
+            <img src="/Logo.png" alt="CodeSpire" style={{ height: '56px', width: 'auto' }} />
+          </div>
           <h1 className="brand-headline">
             Join 10,000+ creators <br />
             monetizing their expertise
@@ -257,15 +259,15 @@ const Register = () => {
 
           <ul className="benefit-list">
             <li className="benefit-item">
-              <span className="check-icon"><CheckCircleFilled /></span>
+              <span className="check-icon"><CheckCircle size={14} /></span>
               Free to start, cancel anytime
             </li>
             <li className="benefit-item">
-              <span className="check-icon"><CheckCircleFilled /></span>
+              <span className="check-icon"><CheckCircle size={14} /></span>
               No credit card required
             </li>
             <li className="benefit-item">
-              <span className="check-icon"><CheckCircleFilled /></span>
+              <span className="check-icon"><CheckCircle size={14} /></span>
               Set up your profile in 2 minutes
             </li>
           </ul>
@@ -294,7 +296,7 @@ const Register = () => {
           </AnimatePresence>
 
           <div className="trust-badges">
-            <span><SafetyCertificateFilled /> SSL Secured</span>
+            <span><ShieldCheck size={14} /> SSL Secured</span>
             <span>GDPR Compliant</span>
             <span>Verified by Stripe</span>
           </div>
@@ -316,7 +318,7 @@ const Register = () => {
                 className={`account-type-card ${role === 'USER' ? 'selected' : ''}`}
                 onClick={() => setRole('USER')}
               >
-                <div className="type-icon"><UserOutlined /></div>
+                <div className="type-icon"><User size={20} /></div>
                 <div className="type-info">
                   <h4>Fan / User</h4>
                   <p>Chat with AI creators</p>
@@ -327,7 +329,7 @@ const Register = () => {
                 className={`account-type-card ${role === 'CREATOR' ? 'selected' : ''}`}
                 onClick={() => setRole('CREATOR')}
               >
-                <div className="type-icon">✨</div>
+                <div className="type-icon"><LayoutGrid size={20} /></div>
                 <div className="type-info">
                   <h4>AI Creator</h4>
                   <p>Monetize your expertise</p>
@@ -338,7 +340,7 @@ const Register = () => {
                 className={`account-type-card ${role === 'COMPANY' ? 'selected' : ''}`}
                 onClick={() => setRole('COMPANY')}
               >
-                <div className="type-icon">🏢</div>
+                <div className="type-icon"><Building2 size={20} /></div>
                 <div className="type-info">
                   <h4>Company</h4>
                   <p>Find partners & talent</p>
@@ -350,7 +352,7 @@ const Register = () => {
             <div className="input-group">
               <label className="input-label">Full Name</label>
               <div className="input-wrapper">
-                <UserOutlined className="field-icon" />
+                <User className="field-icon" size={18} />
                 <input
                   type="text"
                   name="name"
@@ -366,7 +368,7 @@ const Register = () => {
             <div className="input-group">
               <label className="input-label">Email Address</label>
               <div className="input-wrapper">
-                <MailOutlined className="field-icon" />
+                <Mail className="field-icon" size={18} />
                 <input
                   type="email"
                   name="email"
@@ -375,8 +377,8 @@ const Register = () => {
                   value={formData.email}
                   onChange={handleChange}
                 />
-                {emailStatus === 'checking' && <LoadingOutlined className="validation-icon" spin />}
-                {emailStatus === 'available' && <CheckCircleFilled className="validation-icon success" />}
+                {emailStatus === 'checking' && <Loader2 className="validation-icon animate-spin" size={16} />}
+                {emailStatus === 'available' && <CheckCircle className="validation-icon success" size={16} />}
               </div>
               {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
@@ -384,7 +386,7 @@ const Register = () => {
             <div className="input-group">
               <label className="input-label">Password</label>
               <div className="input-wrapper">
-                <LockOutlined className="field-icon" />
+                <Lock className="field-icon" size={18} />
                 <input
                   type={showPassword ? "text" : "password"}
                   name="password"
@@ -394,7 +396,7 @@ const Register = () => {
                   onChange={handleChange}
                 />
                 <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-                  {showPassword ? <EyeInvisibleOutlined /> : <EyeOutlined />}
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </div>
               </div>
 
@@ -444,16 +446,7 @@ const Register = () => {
             </button>
           </form>
 
-          <div className="divider">OR</div>
 
-          <div className="social-buttons">
-            <button className="social-btn">
-              <GoogleOutlined style={{ color: '#EA4335' }} /> Google
-            </button>
-            <button className="social-btn">
-              <FacebookFilled style={{ color: '#1877F2' }} /> Facebook
-            </button>
-          </div>
 
           <div style={{ textAlign: 'center', marginTop: '32px' }}>
             <span style={{ color: '#6B7280' }}>Already have an account? </span>

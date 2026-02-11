@@ -34,7 +34,7 @@ const CustomCard: React.FC<CustomCardProps> = ({
       case 2:
         return shadows.lg;
       case 3:
-        return shadows.xl;
+        return shadows.hover;
       default:
         return shadows.md;
     }
@@ -42,58 +42,41 @@ const CustomCard: React.FC<CustomCardProps> = ({
 
   // Base card styles
   const cardStyle: React.CSSProperties = {
-    borderRadius: borderRadius.lg,
+    borderRadius: borderRadius.md, // CodeSpire Card 12px
     boxShadow: getShadow(),
-    border: 'none',
+    border: `1px solid ${colors.gray[200]}`,
     overflow: 'hidden',
+    background: colors.surface,
     ...style,
   };
-
-  // Gradient background
-  if (gradient) {
-    cardStyle.background = colors.primary.gradient;
-    cardStyle.color = '#ffffff';
-  }
-
-  // Gradient border effect
-  if (gradientBorder) {
-    cardStyle.background = '#ffffff';
-    cardStyle.position = 'relative';
-    cardStyle.padding = '2px';
-  }
 
   // Wrap card in motion.div to avoid deprecation warning
   const cardContent = (
     <Card
       {...props}
-      style={gradientBorder ? {
-        ...cardStyle,
-        background: colors.primary.gradient,
-      } : cardStyle}
+      style={cardStyle}
       bordered={false}
+      styles={{
+        header: {
+          borderBottom: `1px solid ${colors.gray[100]}`,
+          padding: '16px 24px',
+          fontWeight: 600,
+        },
+        body: {
+          padding: '24px',
+          ...props.styles?.body,
+        }
+      }}
     >
-      {gradientBorder ? (
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: borderRadius.md,
-            padding: '20px',
-          }}
-        >
-          {children}
-        </div>
-      ) : (
-        children
-      )}
+      {children}
     </Card>
   );
 
   if (hoverable) {
     return (
       <motion.div
-        variants={cardHover}
-        initial="rest"
-        whileHover="hover"
+        whileHover={{ y: -4, boxShadow: shadows.hover }}
+        transition={{ duration: 0.2 }}
         style={{ width: '100%' }}
       >
         {cardContent}

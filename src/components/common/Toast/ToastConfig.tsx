@@ -6,7 +6,12 @@
 import { toast, ToastOptions, ToastContainer as ToastifyContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { colors, borderRadius, shadows } from '../../../styles/tokens';
-import { CheckCircleFilled, CloseCircleFilled, InfoCircleFilled, WarningFilled } from '@ant-design/icons';
+import {
+  CheckCircle,
+  XCircle,
+  Info,
+  AlertTriangle
+} from 'lucide-react';
 
 /**
  * Default Toast Configuration
@@ -23,6 +28,7 @@ export const defaultToastConfig: ToastOptions = {
     borderRadius: borderRadius.lg,
     boxShadow: shadows.xl,
     fontFamily: "'Inter', sans-serif",
+    padding: '12px 16px',
   },
 };
 
@@ -34,7 +40,7 @@ export const showToast = {
     toast.success(message, {
       ...defaultToastConfig,
       ...options,
-      icon: <CheckCircleFilled style={{ color: colors.success.solid }} />,
+      icon: <CheckCircle size={20} color="#ffffff" />,
     });
   },
 
@@ -42,7 +48,7 @@ export const showToast = {
     toast.error(message, {
       ...defaultToastConfig,
       ...options,
-      icon: <CloseCircleFilled style={{ color: colors.error.solid }} />,
+      icon: <XCircle size={20} color="#ffffff" />,
     });
   },
 
@@ -50,7 +56,7 @@ export const showToast = {
     toast.info(message, {
       ...defaultToastConfig,
       ...options,
-      icon: <InfoCircleFilled style={{ color: colors.primary.solid }} />,
+      icon: <Info size={20} color="#ffffff" />,
     });
   },
 
@@ -58,7 +64,7 @@ export const showToast = {
     toast.warning(message, {
       ...defaultToastConfig,
       ...options,
-      icon: <WarningFilled style={{ color: colors.warning.solid }} />,
+      icon: <AlertTriangle size={20} color="#ffffff" />,
     });
   },
 

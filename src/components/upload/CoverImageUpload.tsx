@@ -68,23 +68,22 @@ export const CoverImageUpload: React.FC<CoverImageUploadProps> = ({
             position: 'relative',
             width: '100%',
             height: `${height}px`,
-            backgroundColor: coverUrl ? 'transparent' : '#1e293b',
+            backgroundColor: coverUrl ? 'transparent' : '#f8fafc',
             backgroundImage: coverUrl ? `url(${getImageUrl(coverUrl)})` : 'none',
             backgroundSize: 'cover',
             backgroundPosition: 'center',
             borderRadius: '16px',
             overflow: 'hidden',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: `1px solid ${coverUrl ? 'transparent' : '#e5e7eb'}`,
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: 'inset 0 0 40px rgba(0,0,0,0.5)'
           }}
         >
           {!coverUrl && (
-            <div style={{ textAlign: 'center', color: '#64748b' }}>
-              <PictureOutlined style={{ fontSize: '48px', marginBottom: '8px', opacity: 0.5 }} />
-              <div style={{ fontWeight: 600 }}>Neural Network Cover Missing</div>
+            <div style={{ textAlign: 'center', color: '#94a3b8' }}>
+              <PictureOutlined style={{ fontSize: '48px', marginBottom: '12px', opacity: 0.3 }} />
+              <div style={{ fontWeight: 600, fontSize: '15px', letterSpacing: '-0.01em' }}>Neural Network Cover Missing</div>
             </div>
           )}
 

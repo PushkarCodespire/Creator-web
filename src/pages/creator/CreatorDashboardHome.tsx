@@ -1,19 +1,17 @@
-// ===========================================
-// CREATOR DASHBOARD HOME - Enhanced
-// ===========================================
-
 import { useEffect, useState } from 'react';
 import {
-  MessageOutlined,
-  FileTextOutlined,
-  DollarOutlined,
-  UserOutlined,
-  TrophyOutlined,
-  FireOutlined,
-  StarFilled,
-  DeleteOutlined,
-  TeamOutlined
-} from '@ant-design/icons';
+  MessageSquare,
+  FileText,
+  CircleDollarSign,
+  User,
+  Trophy,
+  Flame,
+  Star,
+  Trash2,
+  Users,
+  TrendingUp,
+  ArrowRight
+} from 'lucide-react';
 import { Row, Col, Statistic, List, Tag, Spin, Button, Progress, Alert, Grid, Avatar, Modal } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -122,10 +120,10 @@ const CreatorDashboardHome = () => {
       {/* Real-time Stats */}
       <Row gutter={[24, 24]} style={{ marginBottom: spacing[8] }}>
         {[
-          { title: 'Active Chats', value: realtimeStats.activeChats, icon: <MessageOutlined />, color: colors.primary.gradient, label: 'Right now' },
-          { title: 'Messages (1h)', value: realtimeStats.messagesLastHour, icon: <FireOutlined />, color: colors.success.gradient, label: '+12% from yesterday' },
-          { title: 'Earnings Today', value: realtimeStats.earningsToday, icon: <DollarOutlined />, color: colors.warning.gradient, suffix: '₹', label: `Month: ₹${dashboard?.totalEarnings || 0}` },
-          { title: 'Total Chats', value: dashboard?.totalChats || 0, icon: <UserOutlined />, color: colors.error.gradient, label: 'All time' }
+          { title: 'Active Chats', value: realtimeStats.activeChats, icon: <MessageSquare size={20} />, color: colors.primary.solid, label: 'Right now' },
+          { title: 'Messages (1h)', value: realtimeStats.messagesLastHour, icon: <Flame size={20} />, color: colors.success.solid, label: '+12% from yesterday' },
+          { title: 'Earnings Today', value: realtimeStats.earningsToday, icon: <CircleDollarSign size={20} />, color: colors.warning.solid, suffix: '₹', label: `Month: ₹${dashboard?.totalEarnings || 0}` },
+          { title: 'Total Chats', value: dashboard?.totalChats || 0, icon: <User size={20} />, color: colors.error.solid, label: 'All time' }
         ].map((item, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>
             <motion.div
@@ -187,10 +185,10 @@ const CreatorDashboardHome = () => {
       {/* Main Stats */}
       <Row gutter={[24, 24]} style={{ marginBottom: spacing[8] }}>
         {[
-          { title: 'Total Messages', value: dashboard?.totalMessages || 0, icon: <MessageOutlined />, color: colors.primary.gradient },
-          { title: 'Total Earnings', value: dashboard?.totalEarnings || 0, icon: <DollarOutlined />, color: colors.success.gradient, precision: 2, prefix: '₹' },
-          { title: 'Content Pieces', value: dashboard?.contents?.length || 0, icon: <FileTextOutlined />, color: colors.info.solid },
-          { title: 'Rating', value: dashboard?.rating || 0, icon: <TrophyOutlined />, color: colors.warning.gradient, precision: 1 }
+          { title: 'Total Messages', value: dashboard?.totalMessages || 0, icon: <MessageSquare size={20} />, color: colors.primary.solid },
+          { title: 'Total Earnings', value: dashboard?.totalEarnings || 0, icon: <CircleDollarSign size={20} />, color: colors.success.solid, precision: 2, prefix: '₹' },
+          { title: 'Content Pieces', value: dashboard?.contents?.length || 0, icon: <FileText size={20} />, color: colors.primary.light },
+          { title: 'Rating', value: dashboard?.rating || 0, icon: <Trophy size={20} />, color: colors.warning.solid, precision: 1 }
         ].map((item, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>
             <div style={{
@@ -351,7 +349,7 @@ const CreatorDashboardHome = () => {
             </div>
             {dashboard?.contents?.length === 0 ? (
               <div style={{ textAlign: 'center', padding: spacing[6] }}>
-                <FileTextOutlined style={{ fontSize: '48px', color: colors.gray[400], marginBottom: spacing[3] }} />
+                <FileText size={48} style={{ color: colors.gray[400], marginBottom: spacing[3] }} />
                 <p style={{ color: colors.gray[600], marginBottom: spacing[4] }}>No content yet. Add content to train your AI!</p>
                 <Button type="primary" onClick={() => navigate('/creator-dashboard/content')}>Add Content</Button>
               </div>
@@ -402,7 +400,7 @@ const CreatorDashboardHome = () => {
             </div>
             {dashboard?.applications?.length === 0 ? (
               <div style={{ textAlign: 'center', padding: spacing[6] }}>
-                <FireOutlined style={{ fontSize: '48px', color: colors.gray[400], marginBottom: spacing[3] }} />
+                <Flame size={48} style={{ color: colors.gray[400], marginBottom: spacing[3] }} />
                 <p style={{ color: colors.gray[600], marginBottom: spacing[4] }}>No applications yet</p>
                 <Button type="primary" onClick={() => navigate('/creator-dashboard/opportunities')}>Browse Opportunities</Button>
               </div>
@@ -488,7 +486,7 @@ const CreatorDashboardHome = () => {
                 <h3 style={{ margin: 0, fontWeight: 800, fontSize: '20px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>Reviews</h3>
                 {dashboard?.reviews?.summary && (
                   <Tag color="gold" style={{ borderRadius: '6px', fontWeight: 800 }}>
-                    <StarFilled style={{ marginRight: '4px' }} />
+                    <Star size={12} fill="#faad14" style={{ marginRight: '4px' }} />
                     {Number(dashboard.reviews.summary.averageRating).toFixed(1)}
                   </Tag>
                 )}
@@ -507,7 +505,7 @@ const CreatorDashboardHome = () => {
                         <span style={{ color: '#FFFFFF', fontWeight: 600 }}>{review.user?.name}</span>
                         <div style={{ color: colors.warning.solid }}>
                           {[...Array(5)].map((_, i) => (
-                            <StarFilled key={i} style={{ opacity: i < review.rating ? 1 : 0.2, fontSize: '12px' }} />
+                            <Star key={i} size={12} fill={i < review.rating ? colors.warning.solid : "transparent"} style={{ opacity: i < review.rating ? 1 : 0.2 }} />
                           ))}
                         </div>
                       </div>

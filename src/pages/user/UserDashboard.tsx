@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Avatar, Button, Typography, Alert } from 'antd';
 import {
-  MessageOutlined,
-  SendOutlined,
-  UserAddOutlined,
-  ArrowRightOutlined,
-  StarFilled,
-  BellOutlined,
-  TrophyOutlined,
-  FireOutlined
-} from '@ant-design/icons';
+  MessageSquare,
+  Send,
+  UserPlus,
+  ArrowRight,
+  Star,
+  Bell,
+  Trophy,
+  Flame
+} from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
@@ -94,13 +94,13 @@ const UserDashboard = () => {
 
         // Transform activities with appropriate icons
         const formattedActivities = activityList.map((item: any) => {
-          let icon = <BellOutlined style={{ color: '#60A5FA' }} />;
+          let icon = <Bell size={18} style={{ color: '#60A5FA' }} />;
           if (item.type === 'notification' && item.message?.includes('message')) {
-            icon = <MessageOutlined style={{ color: '#10B981' }} />;
+            icon = <MessageSquare size={18} style={{ color: '#10B981' }} />;
           } else if (item.type === 'follow') {
-            icon = <UserAddOutlined style={{ color: '#F59E0B' }} />;
+            icon = <UserPlus size={18} style={{ color: '#F59E0B' }} />;
           } else if (item.type === 'ACHIEVEMENT') {
-            icon = <TrophyOutlined style={{ color: '#FCD34D' }} />;
+            icon = <Trophy size={18} style={{ color: '#FCD34D' }} />;
           }
 
           return {
@@ -204,15 +204,15 @@ const UserDashboard = () => {
       {/* Stats Row */}
       <Row gutter={[20, 20]} style={{ marginBottom: '32px' }}>
         {[
-          { title: 'Total Chats', value: stats.totalChats, icon: <MessageOutlined />, color: '#6366F1' },
-          { title: 'Messages Used (Today)', value: stats.messagesSent, icon: <SendOutlined />, color: '#10B981' },
-          { title: 'Following', value: stats.following, icon: <UserAddOutlined />, color: '#F59E0B' },
-          { title: 'Unread Alerts', value: stats.unreadNotifications, icon: <BellOutlined />, color: '#EC4899' },
+          { title: 'Total Chats', value: stats.totalChats, icon: <MessageSquare size={20} />, color: '#6366F1' },
+          { title: 'Messages Used (Today)', value: stats.messagesSent, icon: <Send size={20} />, color: '#10B981' },
+          { title: 'Following', value: stats.following, icon: <UserPlus size={20} />, color: '#F59E0B' },
+          { title: 'Unread Alerts', value: stats.unreadNotifications, icon: <Bell size={20} />, color: '#EC4899' },
           ...(isPremium && tokenBalance !== undefined && tokenGrant !== undefined
             ? [{
               title: 'Tokens Remaining',
               value: tokenBalance,
-              icon: <FireOutlined />,
+              icon: <Flame size={20} />,
               color: '#22C55E',
               subtitle: tokensPerMessage ? `Burn ${tokensPerMessage}/msg` : undefined,
               footnote: `${tokenUsagePercentage}% used`
@@ -276,7 +276,7 @@ const UserDashboard = () => {
           <motion.div variants={itemVariants} style={{ marginBottom: '24px' }}>
             <Card
               title={<span style={{ color: '#fff', fontWeight: 700 }}>💬 Recent Conversations</span>}
-              extra={<Button type="link" onClick={() => navigate('/dashboard/chats')} style={{ color: '#818CF8' }}>View All Chats <ArrowRightOutlined /></Button>}
+              extra={<Button type="link" onClick={() => navigate('/dashboard/chats')} style={{ color: '#818CF8', display: 'flex', alignItems: 'center', gap: '8px' }}>View All Chats <ArrowRight size={16} /></Button>}
               style={{
                 background: 'rgba(30, 41, 59, 0.4)',
                 backdropFilter: 'blur(20px)',
@@ -329,7 +329,7 @@ const UserDashboard = () => {
                         type="text"
                         style={{ color: '#818CF8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
                       >
-                        Continue Chat <ArrowRightOutlined />
+                        Continue Chat <ArrowRight size={16} />
                       </Button>
                     </div>
                   ))}
@@ -349,7 +349,7 @@ const UserDashboard = () => {
                 <span style={{ color: '#fff', fontWeight: 700 }}>✨ Recommended For You</span>
                 <span style={{ color: '#94A3B8', fontSize: '12px', fontWeight: 400 }}>Based on your usage</span>
               </div>}
-              extra={<Button type="link" onClick={() => navigate('/creators')} style={{ color: '#818CF8' }}>See All <ArrowRightOutlined /></Button>}
+              extra={<Button type="link" onClick={() => navigate('/creators')} style={{ color: '#818CF8', display: 'flex', alignItems: 'center', gap: '8px' }}>See All <ArrowRight size={16} /></Button>}
               style={{
                 background: 'rgba(30, 41, 59, 0.4)',
                 backdropFilter: 'blur(20px)',
@@ -472,7 +472,7 @@ const UserDashboard = () => {
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{ color: '#FCD34D', fontSize: '20px' }}><StarFilled /></div>
+                <div style={{ color: '#FCD34D', fontSize: '20px' }}><Star size={20} fill="#FCD34D" /></div>
                 <Text style={{ color: '#fff', fontWeight: 700 }}>Premium Tip</Text>
               </div>
               <Text style={{ color: '#CBD5E1', fontSize: '14px', lineHeight: '1.6', display: 'block' }}>
@@ -480,10 +480,10 @@ const UserDashboard = () => {
               </Text>
               <Button
                 type="link"
-                style={{ padding: 0, marginTop: '12px', color: '#818CF8', fontWeight: 600 }}
+                style={{ padding: 0, marginTop: '12px', color: '#818CF8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
                 onClick={() => navigate('/dashboard/subscription')}
               >
-                Learn More <ArrowRightOutlined />
+                Learn More <ArrowRight size={16} />
               </Button>
             </Card>
           </motion.div>

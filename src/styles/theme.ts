@@ -4,7 +4,7 @@
 // ===========================================
 
 import { ThemeConfig } from 'antd';
-import { colors, typography, borderRadius, shadows, spacing, transitions } from './tokens';
+import { colors, typography, shadows } from './tokens';
 
 /**
  * Ant Design Theme Configuration
@@ -22,7 +22,7 @@ export const antdTheme: ThemeConfig = {
     // Background
     colorBgContainer: colors.background,
     colorBgElevated: colors.surface,
-    colorBgLayout: colors.gray[50],
+    colorBgLayout: colors.background,
 
     // Text
     colorText: colors.text.primary,
@@ -30,22 +30,22 @@ export const antdTheme: ThemeConfig = {
     colorTextDisabled: colors.text.disabled,
 
     // Border
-    colorBorder: colors.gray[300],
-    colorBorderSecondary: colors.gray[200],
+    colorBorder: colors.gray[200],
+    colorBorderSecondary: colors.gray[100],
 
     // Typography
     fontFamily: typography.fontFamily.base,
-    fontSize: 16,
-    fontSizeHeading1: 48,
-    fontSizeHeading2: 36,
-    fontSizeHeading3: 30,
-    fontSizeHeading4: 24,
-    fontSizeHeading5: 20,
+    fontSize: 15, // CodeSpire base
+    fontSizeHeading1: 36,
+    fontSizeHeading2: 28,
+    fontSizeHeading3: 20,
+    fontSizeHeading4: 18,
+    fontSizeHeading5: 15,
     lineHeight: typography.lineHeight.normal,
 
     // Border Radius
-    borderRadius: 12,
-    borderRadiusLG: 16,
+    borderRadius: 8,
+    borderRadiusLG: 12, // CodeSpire card radius
     borderRadiusSM: 8,
     borderRadiusXS: 4,
 
@@ -54,13 +54,11 @@ export const antdTheme: ThemeConfig = {
     paddingLG: 24,
     paddingSM: 12,
     paddingXS: 8,
-    paddingXXS: 4,
 
     margin: 16,
     marginLG: 24,
     marginSM: 12,
     marginXS: 8,
-    marginXXS: 4,
 
     // Shadows
     boxShadow: shadows.md,
@@ -68,22 +66,8 @@ export const antdTheme: ThemeConfig = {
 
     // Control Heights
     controlHeight: 40,
-    controlHeightLG: 48,
+    controlHeightLG: 44, // CodeSpire primary button height
     controlHeightSM: 32,
-
-    // Transitions
-    motionDurationFast: '0.15s',
-    motionDurationMid: '0.3s',
-    motionDurationSlow: '0.5s',
-
-    // Z-Index
-    zIndexBase: 0,
-    zIndexPopupBase: 1000,
-
-    // Link
-    colorLink: colors.primary.solid,
-    colorLinkHover: colors.primary.light,
-    colorLinkActive: colors.primary.dark,
   },
 
   components: {
@@ -91,11 +75,10 @@ export const antdTheme: ThemeConfig = {
      * Button Component
      */
     Button: {
-      borderRadius: 12,
+      borderRadius: 8,
       controlHeight: 40,
-      controlHeightLG: 48,
-      controlHeightSM: 32,
-      fontWeight: typography.fontWeight.semibold,
+      controlHeightLG: 44,
+      fontWeight: 500,
       primaryShadow: shadows.md,
     },
 
@@ -103,8 +86,8 @@ export const antdTheme: ThemeConfig = {
      * Card Component
      */
     Card: {
-      borderRadiusLG: 16,
-      boxShadowTertiary: shadows.lg,
+      borderRadiusLG: 12,
+      boxShadowTertiary: shadows.md,
       paddingLG: 24,
     },
 
@@ -112,102 +95,17 @@ export const antdTheme: ThemeConfig = {
      * Input Component
      */
     Input: {
-      borderRadius: 12,
+      borderRadius: 8,
       controlHeight: 40,
-      controlHeightLG: 48,
-      controlHeightSM: 32,
-      paddingBlock: 8,
-      paddingInline: 12,
-    },
-
-    /**
-     * Select Component
-     */
-    Select: {
-      borderRadius: 12,
-      controlHeight: 40,
-      controlHeightLG: 48,
-      controlHeightSM: 32,
     },
 
     /**
      * Modal Component
      */
     Modal: {
-      borderRadiusLG: 16,
+      borderRadiusLG: 12,
       paddingLG: 24,
-      boxShadow: shadows['2xl'],
-    },
-
-    /**
-     * Notification Component
-     */
-    Notification: {
-      borderRadiusLG: 12,
-      boxShadow: shadows.xl,
-    },
-
-    /**
-     * Message Component
-     */
-    Message: {
-      borderRadiusLG: 12,
       boxShadow: shadows.lg,
-    },
-
-    /**
-     * Dropdown Component
-     */
-    Dropdown: {
-      borderRadiusLG: 12,
-      boxShadowSecondary: shadows.lg,
-      paddingBlock: 8,
-    },
-
-    /**
-     * Menu Component
-     */
-    Menu: {
-      borderRadius: 8,
-      itemBorderRadius: 8,
-      itemPaddingInline: 16,
-    },
-
-    /**
-     * Tabs Component
-     */
-    Tabs: {
-      borderRadius: 8,
-      cardPadding: '16px 24px',
-    },
-
-    /**
-     * Tag Component
-     */
-    Tag: {
-      borderRadiusSM: 8,
-    },
-
-    /**
-     * Avatar Component
-     */
-    Avatar: {
-      borderRadius: 9999,
-    },
-
-    /**
-     * Badge Component
-     */
-    Badge: {
-      dotSize: 8,
-    },
-
-    /**
-     * Tooltip Component
-     */
-    Tooltip: {
-      borderRadius: 8,
-      boxShadowSecondary: shadows.md,
     },
 
     /**
@@ -215,56 +113,7 @@ export const antdTheme: ThemeConfig = {
      */
     Table: {
       borderRadius: 12,
-      headerBg: colors.gray[50],
-    },
-
-    /**
-     * Pagination Component
-     */
-    Pagination: {
-      borderRadius: 8,
-      itemActiveBg: colors.primary.solid,
-    },
-
-    /**
-     * Switch Component
-     */
-    Switch: {
-      handleSize: 18,
-      innerMinMargin: 6,
-    },
-
-    /**
-     * Slider Component
-     */
-    Slider: {
-      handleSize: 14,
-      handleSizeHover: 16,
-      railSize: 6,
-      handleLineWidth: 2,
-    },
-
-    /**
-     * Progress Component
-     */
-    Progress: {
-      circleTextFontSize: '1em',
-      lineBorderRadius: 100,
-    },
-
-    /**
-     * Upload Component
-     */
-    Upload: {
-      borderRadiusLG: 12,
-    },
-
-    /**
-     * Form Component
-     */
-    Form: {
-      itemMarginBottom: 24,
-      verticalLabelPadding: '0 0 8px',
+      headerBg: colors.gray[100],
     },
   },
 
@@ -273,18 +122,18 @@ export const antdTheme: ThemeConfig = {
 };
 
 /**
- * Dark Theme Configuration
+ * Dark Theme Configuration (Simplified for CodeSpire)
  */
 export const darkTheme: ThemeConfig = {
   ...antdTheme,
   token: {
     ...antdTheme.token,
-    colorBgContainer: colors.dark.background,
-    colorBgElevated: colors.dark.surface,
-    colorBgLayout: colors.dark.background,
-    colorText: colors.dark.text.primary,
-    colorTextSecondary: colors.dark.text.secondary,
-    colorTextDisabled: colors.dark.text.disabled,
+    colorBgContainer: colors.gray[900],
+    colorBgElevated: '#1a202c',
+    colorBgLayout: colors.gray[900],
+    colorText: '#ffffff',
+    colorTextSecondary: colors.gray[400],
+    colorTextDisabled: colors.gray[600],
     colorBorder: colors.gray[700],
     colorBorderSecondary: colors.gray[800],
   },
@@ -311,6 +160,8 @@ export const globalStyles = `
 
   body {
     font-family: ${typography.fontFamily.base};
+    background-color: ${colors.background};
+    color: ${colors.text.primary};
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
@@ -327,18 +178,18 @@ export const globalStyles = `
   }
 
   ::-webkit-scrollbar-thumb {
-    background: ${colors.gray[400]};
+    background: ${colors.gray[300]};
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: ${colors.gray[500]};
+    background: ${colors.gray[400]};
   }
 
   /* Selection */
   ::selection {
-    background-color: ${colors.primary.light};
-    color: white;
+    background-color: ${colors.primary.subtle};
+    color: ${colors.primary.solid};
   }
 
   /* Focus Visible (Accessibility) */
@@ -347,98 +198,60 @@ export const globalStyles = `
     outline-offset: 2px;
   }
 
-  /* Remove default focus outline for mouse users */
-  *:focus:not(:focus-visible) {
-    outline: none;
-  }
-
   /* Transitions */
   a, button {
-    transition: all ${transitions.duration.base} ${transitions.timing.easeInOut};
+    transition: all 0.2s ease-in-out;
   }
 
-  /* Loading Dots Animation */
-  @keyframes loading-dots {
-    0%, 20% { opacity: 0.2; }
-    50% { opacity: 1; }
-    80%, 100% { opacity: 0.2; }
+  /* Card and Depth Classes */
+  .codespire-card {
+    background: ${colors.surface};
+    border: 1px solid ${colors.gray[200]};
+    border-radius: 12px;
+    box-shadow: ${shadows.md};
+    padding: 24px;
   }
 
-  .loading-dots span {
-    animation: loading-dots 1.4s infinite;
-    display: inline-block;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background-color: currentColor;
-    margin: 0 2px;
+  .codespire-button-primary {
+    background: ${colors.primary.solid};
+    color: ${colors.primary.foreground};
+    height: 44px;
+    font-weight: 500;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 20px;
+    cursor: pointer;
+    border: none;
   }
 
-  .loading-dots span:nth-child(1) {
-    animation-delay: 0s;
+  /* Typography Utilities */
+  .title-main {
+    font-size: 36px;
+    font-weight: 700;
+    color: ${colors.text.primary};
+    letter-spacing: -0.02em;
   }
 
-  .loading-dots span:nth-child(2) {
-    animation-delay: 0.2s;
+  .subtitle-main {
+    font-size: 18px;
+    font-weight: 600;
+    color: ${colors.text.primary};
   }
 
-  .loading-dots span:nth-child(3) {
-    animation-delay: 0.4s;
+  .body-text {
+    font-size: 15px;
+    color: ${colors.text.secondary};
   }
 
-  /* Shimmer Animation for Skeletons */
-  @keyframes shimmer {
-    0% {
-      background-position: -1000px 0;
-    }
-    100% {
-      background-position: 1000px 0;
-    }
-  }
-
-  .shimmer {
-    background: linear-gradient(
-      90deg,
-      ${colors.gray[200]} 0%,
-      ${colors.gray[100]} 50%,
-      ${colors.gray[200]} 100%
-    );
-    background-size: 1000px 100%;
-    animation: shimmer 2s infinite;
-  }
-
-  /* Gradient Text */
-  .gradient-text {
-    background: ${colors.primary.gradient};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  /* Utility Classes */
-  .text-center { text-align: center; }
-  .text-left { text-align: left; }
-  .text-right { text-align: right; }
-
-  .flex { display: flex; }
-  .flex-col { flex-direction: column; }
-  .items-center { align-items: center; }
-  .justify-center { justify-content: center; }
-  .justify-between { justify-content: space-between; }
-  .gap-1 { gap: ${spacing[1]}; }
-  .gap-2 { gap: ${spacing[2]}; }
-  .gap-4 { gap: ${spacing[4]}; }
-
-  .cursor-pointer { cursor: pointer; }
-  .cursor-not-allowed { cursor: not-allowed; }
-
-  /* Responsive Utilities */
-  @media (max-width: 768px) {
-    .hide-mobile { display: none !important; }
-  }
-
-  @media (min-width: 769px) {
-    .hide-desktop { display: none !important; }
+  .label-caps {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: ${colors.text.tertiary};
   }
 `;
 

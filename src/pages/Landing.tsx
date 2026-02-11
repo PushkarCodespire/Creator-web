@@ -5,15 +5,19 @@
 import { useNavigate } from 'react-router-dom';
 import { Collapse, Avatar } from 'antd';
 import {
-  MessageOutlined,
-  RocketOutlined,
-  DollarOutlined,
-  TeamOutlined,
-  CheckCircleFilled,
-  StarFilled,
-  ArrowRightOutlined,
-  PlayCircleOutlined,
-} from '@ant-design/icons';
+  MessageSquare,
+  Rocket,
+  CircleDollarSign,
+  Users,
+  CheckCircle2,
+  Star,
+  ArrowRight,
+  Play,
+  ShieldCheck,
+  Sparkles,
+  TrendingUp,
+  Zap
+} from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
 import { motion, useInView, useAnimation } from 'framer-motion';
 import CustomButton from '../components/common/Button/CustomButton';
@@ -37,6 +41,7 @@ const AnimatedCounter = ({
   const [count, setCount] = useState(0);
   const ref = useRef<HTMLDivElement>(null);
   const isInView = useInView(ref, { once: true });
+  const isDecimal = end % 1 !== 0;
 
   useEffect(() => {
     if (isInView) {
@@ -44,7 +49,8 @@ const AnimatedCounter = ({
       const animate = (timestamp: number) => {
         if (!startTime) startTime = timestamp;
         const progress = Math.min((timestamp - startTime) / duration, 1);
-        setCount(Math.floor(progress * end));
+        const currentCount = progress * end;
+        setCount(currentCount);
         if (progress < 1) requestAnimationFrame(animate);
       };
       requestAnimationFrame(animate);
@@ -64,7 +70,9 @@ const AnimatedCounter = ({
         wordBreak: 'break-word',
       }}
     >
-      {count.toLocaleString()}
+      {isDecimal
+        ? count.toFixed(1)
+        : Math.floor(count).toLocaleString()}
       {suffix}
     </div>
   );
@@ -95,32 +103,32 @@ const Landing = () => {
 
   const features = [
     {
-      icon: <MessageOutlined style={{ fontSize: 32, color: colors.primary.solid }} />,
+      icon: <MessageSquare size={32} color={colors.primary.solid} />,
       title: 'AI-Powered Conversations',
       desc: 'Your AI twin, trained on your content, answers questions in your voice 24/7.',
     },
     {
-      icon: <DollarOutlined style={{ fontSize: 32, color: colors.success.solid }} />,
+      icon: <CircleDollarSign size={32} color={colors.success.solid} />,
       title: 'Monetize Your Expertise',
       desc: 'Earn from every conversation while you sleep with flexible pricing controls.',
     },
     {
-      icon: <RocketOutlined style={{ fontSize: 32, color: colors.info.solid }} />,
+      icon: <Rocket size={32} color={colors.primary.light} />,
       title: 'Scale Without Burnout',
       desc: 'Serve thousands of fans simultaneously without adding to your workload.',
     },
     {
-      icon: <TeamOutlined style={{ fontSize: 32, color: colors.warning.solid }} />,
+      icon: <Users size={32} color={colors.warning.solid} />,
       title: 'Deep Community Insights',
       desc: 'See what your audience asks most and create content that actually resonates.',
     },
     {
-      icon: <CheckCircleFilled style={{ fontSize: 32, color: colors.brand.creatorBadge }} />,
+      icon: <CheckCircle2 size={32} color={colors.primary.solid} />,
       title: 'Personalized AI',
       desc: 'Configure tone, depth, and boundaries so the AI always feels authentically you.',
     },
     {
-      icon: <PlayCircleOutlined style={{ fontSize: 32, color: colors.error.solid }} />,
+      icon: <ShieldCheck size={32} color={colors.success.solid} />,
       title: 'Secure & Private',
       desc: 'Enterprise-grade encryption and strict privacy controls to keep your data safe.',
     },
@@ -310,10 +318,10 @@ const Landing = () => {
                 style={{
                   fontSize: typography.fontSize.sm,
                   fontWeight: typography.fontWeight.medium,
-                  letterSpacing: typography.letterSpacing.wide,
                   textTransform: 'uppercase',
                   color: 'rgba(209, 213, 219, 0.9)',
                   marginBottom: spacing[2],
+                  letterSpacing: '0.05em',
                 }}
               >
                 AI Creator Platform · Built for modern creators
@@ -322,19 +330,18 @@ const Landing = () => {
               <motion.h1
                 variants={slideUp}
                 style={{
-                  fontSize: isMobile ? typography.fontSize['3xl'] : typography.fontSize['5xl'],
+                  fontSize: isMobile ? typography.fontSize['3xl'] : typography.fontSize['4xl'],
                   lineHeight: 1.1,
-                  fontWeight: typography.fontWeight.extrabold,
+                  fontWeight: 800,
                   marginBottom: spacing[4],
+                  color: '#ffffff',
                 }}
               >
                 Turn Your Expertise Into
                 <br />
                 <span
                   style={{
-                    backgroundImage: colors.primary.gradient,
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    color: colors.primary.solid,
                   }}
                 >
                   24/7 AI Conversations
@@ -369,17 +376,18 @@ const Landing = () => {
               >
                 <CustomButton
                   size="large"
-                  variant="secondary"
+                  variant="primary"
                   onClick={() => navigate('/register')}
                   style={{
                     minWidth: 200,
-                    borderRadius: 9999,
-                    backgroundImage: colors.primary.gradient,
-                    color: '#0F172A',
-                    boxShadow: '0 20px 40px rgba(102,126,234,0.45)',
+                    borderRadius: '8px',
+                    height: '48px',
+                    boxShadow: '0 8px 16px rgba(18, 104, 255, 0.25)',
                   }}
                 >
-                  Start as Creator <ArrowRightOutlined />
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                    Start as Creator <ArrowRight size={18} />
+                  </div>
                 </CustomButton>
 
                 <CustomButton
@@ -388,8 +396,9 @@ const Landing = () => {
                   onClick={() => navigate('/creators')}
                   style={{
                     minWidth: 200,
-                    borderRadius: 9999,
-                    borderColor: 'rgba(148, 163, 184, 0.7)',
+                    borderRadius: '8px',
+                    height: '48px',
+                    borderColor: 'rgba(255, 255, 255, 0.3)',
                     color: '#FFFFFF'
                   }}
                 >
@@ -405,23 +414,24 @@ const Landing = () => {
                   gap: spacing[6],
                   alignItems: 'center',
                   justifyContent: isMobile ? 'center' : 'flex-start',
+                  color: '#ffffff'
                 }}
               >
                 <div>
-                  <div style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold }}>
+                  <div style={{ fontSize: typography.fontSize.lg, fontWeight: 700 }}>
                     1,000+ creators
                   </div>
-                  <div style={{ fontSize: typography.fontSize.sm, color: '#9CA3AF' }}>trust AI Creator Platform</div>
+                  <div style={{ fontSize: typography.fontSize.sm, color: '#9CA3AF' }}>trust CodeSpire</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: typography.fontSize.lg, fontWeight: typography.fontWeight.semibold }}>
+                  <div style={{ fontSize: typography.fontSize.lg, fontWeight: 700 }}>
                     10M+ conversations
                   </div>
                   <div style={{ fontSize: typography.fontSize.sm, color: '#9CA3AF' }}>powered for fans worldwide</div>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
-                  <StarFilled style={{ color: colors.warning.solid }} />
-                  <span style={{ fontWeight: typography.fontWeight.semibold }}>4.9/5</span>
+                  <Star size={16} fill={colors.warning.solid} color={colors.warning.solid} />
+                  <span style={{ fontWeight: 700 }}>4.9/5</span>
                   <span style={{ fontSize: typography.fontSize.sm, color: '#9CA3AF' }}>average rating</span>
                 </div>
               </div>
@@ -444,7 +454,7 @@ const Landing = () => {
                   borderRadius: 24,
                   padding: spacing[5],
                   border: '1px solid rgba(148,163,184,0.4)',
-                  boxShadow: '0 25px 50px rgba(15,23,42,0.8)',
+                  boxShadow: '0 25px 50px rgba(0,0,0,0.5)',
                 }}
               >
                 <div
@@ -465,7 +475,7 @@ const Landing = () => {
                     >
                       Live demo · No signup required
                     </div>
-                    <div style={{ fontWeight: typography.fontWeight.semibold, color: '#E5E7EB' }}>AI Chat Preview</div>
+                    <div style={{ fontWeight: 600, color: '#E5E7EB' }}>AI Chat Preview</div>
                   </div>
                   <div
                     style={{
@@ -505,8 +515,8 @@ const Landing = () => {
                       padding: '10px 14px',
                       borderRadius: 16,
                       borderBottomRightRadius: 4,
-                      backgroundColor: colors.chat.userBubble,
-                      color: '#E5E7EB',
+                      backgroundColor: colors.primary.solid,
+                      color: '#ffffff',
                       fontSize: typography.fontSize.sm,
                     }}
                   >
@@ -520,8 +530,8 @@ const Landing = () => {
                       padding: '10px 14px',
                       borderRadius: 16,
                       borderBottomLeftRadius: 4,
-                      backgroundColor: colors.chat.aiBubble,
-                      color: colors.text.primary,
+                      backgroundColor: '#1E293B',
+                      color: '#E2E8F0',
                       fontSize: typography.fontSize.sm,
                     }}
                   >
@@ -536,8 +546,8 @@ const Landing = () => {
                       padding: '10px 14px',
                       borderRadius: 16,
                       borderBottomLeftRadius: 4,
-                      backgroundColor: colors.chat.aiBubble,
-                      color: colors.text.primary,
+                      backgroundColor: '#1E293B',
+                      color: '#E2E8F0',
                       fontSize: typography.fontSize.sm,
                     }}
                   >
@@ -555,11 +565,6 @@ const Landing = () => {
                       fontSize: 11,
                     }}
                   >
-                    <span className="loading-dots">
-                      <span />
-                      <span />
-                      <span />
-                    </span>
                     <span>AI is typing a follow-up...</span>
                   </div>
                 </div>
@@ -574,7 +579,7 @@ const Landing = () => {
                   }}
                 >
                   <span>Try asking: &quot;How much can I earn each month?&quot;</span>
-                  <PlayCircleOutlined style={{ color: colors.primary.light }} />
+                  <Play size={14} color={colors.primary.light} />
                 </div>
               </CustomCard>
             </motion.div>
@@ -612,7 +617,7 @@ const Landing = () => {
               <div style={{ color: colors.gray[600], marginTop: spacing[2] }}>Conversations powered</div>
             </motion.div>
             <motion.div variants={fadeIn}>
-              <AnimatedCounter end={49} suffix="/5" />
+              <AnimatedCounter end={4.9} suffix="/5" />
               <div style={{ color: colors.gray[600], marginTop: spacing[2] }}>Average rating</div>
             </motion.div>
           </div>
@@ -765,7 +770,7 @@ const Landing = () => {
               <h3
                 style={{
                   fontSize: typography.fontSize.xl,
-                  fontWeight: typography.fontWeight.semibold,
+                  fontWeight: 700,
                   marginBottom: spacing[4],
                   color: colors.text.primary,
                 }}
@@ -794,13 +799,13 @@ const Landing = () => {
                         minWidth: 32,
                         height: 32,
                         borderRadius: 9999,
-                        background: colors.primary.gradient,
+                        background: colors.primary.solid,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        color: '#E5E7EB',
+                        color: '#ffffff',
                         fontSize: 14,
-                        fontWeight: typography.fontWeight.semibold,
+                        fontWeight: 700,
                       }}
                     >
                       {index + 1}
@@ -808,7 +813,7 @@ const Landing = () => {
                     <div>
                       <div
                         style={{
-                          fontWeight: typography.fontWeight.semibold,
+                          fontWeight: 600,
                           marginBottom: 4,
                           color: colors.text.primary,
                         }}
@@ -829,7 +834,7 @@ const Landing = () => {
               <h3
                 style={{
                   fontSize: typography.fontSize.xl,
-                  fontWeight: typography.fontWeight.semibold,
+                  fontWeight: 700,
                   marginBottom: spacing[4],
                   color: colors.text.primary,
                 }}
@@ -863,7 +868,7 @@ const Landing = () => {
                         justifyContent: 'center',
                         color: colors.primary.solid,
                         fontSize: 14,
-                        fontWeight: typography.fontWeight.semibold,
+                        fontWeight: 700,
                       }}
                     >
                       {index + 1}
@@ -871,7 +876,7 @@ const Landing = () => {
                     <div>
                       <div
                         style={{
-                          fontWeight: typography.fontWeight.semibold,
+                          fontWeight: 600,
                           marginBottom: 4,
                           color: colors.text.primary,
                         }}
@@ -894,7 +899,7 @@ const Landing = () => {
       <section
         style={{
           padding: isMobile ? '72px 0' : '96px 0',
-          background: '#FFFFFF', // Ensure light background for contrast
+          background: '#FFFFFF',
         }}
       >
         <div className="container">
@@ -918,15 +923,16 @@ const Landing = () => {
               <h2
                 style={{
                   fontSize: typography.fontSize['3xl'],
-                  fontWeight: typography.fontWeight.bold,
+                  fontWeight: 800,
                   marginBottom: spacing[2],
                   color: colors.text.primary,
                   display: 'flex',
                   alignItems: 'center',
                   gap: spacing[2],
+                  letterSpacing: '-0.02em',
                 }}
               >
-                <span role="img" aria-label="fire">🔥</span> Featured Creators
+                <Sparkles size={24} color={colors.primary.solid} /> Featured Creators
               </h2>
               <p
                 style={{
@@ -943,10 +949,13 @@ const Landing = () => {
               onClick={() => navigate('/creators')}
               style={{
                 color: colors.primary.solid,
-                fontWeight: typography.fontWeight.semibold,
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
               }}
             >
-              View All <ArrowRightOutlined />
+              View All <ArrowRight size={16} />
             </CustomButton>
           </div>
 
@@ -974,8 +983,9 @@ const Landing = () => {
             <h2
               style={{
                 fontSize: typography.fontSize['3xl'],
-                fontWeight: typography.fontWeight.bold,
+                fontWeight: 800,
                 marginBottom: spacing[3],
+                letterSpacing: '-0.02em',
               }}
             >
               Loved by creators and fans
@@ -1002,12 +1012,13 @@ const Landing = () => {
                     justifyContent: 'space-between',
                     background: '#020617',
                     color: '#E5E7EB',
+                    border: '1px solid rgba(255,255,255,0.05)',
                   }}
                 >
                   <div>
                     <div style={{ display: 'flex', gap: spacing[1], marginBottom: spacing[3] }}>
                       {[...Array(testimonial.rating)].map((_, i) => (
-                        <StarFilled key={i} style={{ color: colors.warning.solid, fontSize: 16 }} />
+                        <Star key={i} size={16} fill={colors.warning.solid} color={colors.warning.solid} />
                       ))}
                     </div>
                     <p
@@ -1034,9 +1045,8 @@ const Landing = () => {
                         src={testimonial.avatar || undefined}
                         size={48}
                         style={{
-                          background: !testimonial.avatar ? colors.primary.solid : undefined,
-                          color: '#fff',
-                          fontWeight: 600
+                          border: `2px solid ${colors.primary.solid}`,
+                          backgroundColor: colors.primary.solid,
                         }}
                       >
                         {testimonial.name?.[0]?.toUpperCase()}
@@ -1044,7 +1054,7 @@ const Landing = () => {
                       <div>
                         <div
                           style={{
-                            fontWeight: typography.fontWeight.semibold,
+                            fontWeight: 600,
                             color: '#F9FAFB',
                           }}
                         >
@@ -1064,7 +1074,7 @@ const Landing = () => {
                       style={{
                         fontSize: typography.fontSize.sm,
                         color: colors.success.light,
-                        fontWeight: typography.fontWeight.semibold,
+                        fontWeight: 600,
                       }}
                     >
                       {testimonial.earned}
@@ -1097,9 +1107,10 @@ const Landing = () => {
             <h2
               style={{
                 fontSize: typography.fontSize['3xl'],
-                fontWeight: typography.fontWeight.bold,
+                fontWeight: 800,
                 marginBottom: spacing[3],
                 color: colors.text.primary,
+                letterSpacing: '-0.02em',
               }}
             >
               Simple, transparent pricing
@@ -1132,11 +1143,11 @@ const Landing = () => {
                     height: '100%',
                     padding: spacing[6],
                     borderRadius: 20,
-                    border: plan.recommended ? `1px solid ${colors.primary.solid}` : undefined,
+                    border: plan.recommended ? `2px solid ${colors.primary.solid}` : '1px solid #e2e8f0',
                     position: 'relative',
                     overflow: 'hidden',
-                    background: '#020617',
-                    color: '#E5E7EB',
+                    background: plan.recommended ? '#020617' : '#ffffff',
+                    color: plan.recommended ? '#E5E7EB' : colors.text.primary,
                   }}
                 >
                   {plan.recommended && (
@@ -1145,15 +1156,16 @@ const Landing = () => {
                         position: 'absolute',
                         top: 16,
                         right: 16,
-                        fontSize: 11,
-                        fontWeight: typography.fontWeight.semibold,
+                        fontSize: 10,
+                        fontWeight: 700,
                         padding: '4px 10px',
                         borderRadius: 9999,
-                        background: colors.primary.gradient,
-                        color: '#E5E7EB',
+                        background: colors.primary.solid,
+                        color: '#ffffff',
+                        textTransform: 'uppercase',
                       }}
                     >
-                      Recommended
+                      Most Popular
                     </div>
                   )}
                   <div style={{ marginBottom: spacing[4] }}>
@@ -1161,9 +1173,10 @@ const Landing = () => {
                       style={{
                         fontSize: typography.fontSize.sm,
                         textTransform: 'uppercase',
-                        letterSpacing: typography.letterSpacing.wide,
-                        color: '#9CA3AF',
+                        fontWeight: 700,
+                        color: plan.recommended ? '#9CA3AF' : colors.gray[500],
                         marginBottom: spacing[1],
+                        letterSpacing: '0.05em',
                       }}
                     >
                       {plan.name}
@@ -1178,9 +1191,9 @@ const Landing = () => {
                     >
                       <span
                         style={{
-                          fontSize: typography.fontSize['2xl'],
-                          fontWeight: typography.fontWeight.bold,
-                          color: '#F9FAFB',
+                          fontSize: typography.fontSize['3xl'],
+                          fontWeight: 800,
+                          color: plan.recommended ? '#F9FAFB' : colors.text.primary,
                         }}
                       >
                         {plan.price}
@@ -1189,7 +1202,7 @@ const Landing = () => {
                         <span
                           style={{
                             fontSize: typography.fontSize.sm,
-                            color: '#9CA3AF',
+                            color: plan.recommended ? '#9CA3AF' : colors.gray[500],
                           }}
                         >
                           {plan.period}
@@ -1199,7 +1212,7 @@ const Landing = () => {
                     <div
                       style={{
                         fontSize: typography.fontSize.sm,
-                        color: '#E5E7EB',
+                        color: plan.recommended ? '#E5E7EB' : colors.gray[600],
                       }}
                     >
                       {plan.highlight}
@@ -1224,10 +1237,10 @@ const Landing = () => {
                           alignItems: 'center',
                           gap: 8,
                           fontSize: typography.fontSize.sm,
-                          color: '#E5E7EB',
+                          color: plan.recommended ? '#E5E7EB' : colors.gray[600],
                         }}
                       >
-                        <CheckCircleFilled style={{ color: colors.success.solid, fontSize: 14 }} />
+                        <CheckCircle2 size={16} color={colors.success.solid} />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -1235,7 +1248,7 @@ const Landing = () => {
 
                   <CustomButton
                     size="large"
-                    variant={plan.variant as any}
+                    variant={plan.recommended ? 'primary' : 'secondary'}
                     onClick={() =>
                       plan.name === 'Creator'
                         ? navigate('/register')
@@ -1245,7 +1258,8 @@ const Landing = () => {
                     }
                     style={{
                       width: '100%',
-                      borderRadius: 9999,
+                      borderRadius: '8px',
+                      height: '48px',
                     }}
                   >
                     {plan.cta}
@@ -1277,9 +1291,10 @@ const Landing = () => {
             <h2
               style={{
                 fontSize: typography.fontSize['3xl'],
-                fontWeight: typography.fontWeight.bold,
+                fontWeight: 800,
                 marginBottom: spacing[4],
                 color: colors.text.primary,
+                letterSpacing: '-0.02em',
               }}
             >
               Frequently Asked Questions
@@ -1291,8 +1306,8 @@ const Landing = () => {
             bordered={false}
             style={{ background: 'transparent' }}
             expandIcon={({ isActive }) => (
-              <span style={{ color: colors.primary.solid, fontSize: 16 }}>
-                {isActive ? '▼' : '▶'}
+              <span style={{ color: colors.primary.solid }}>
+                <Zap size={16} fill={isActive ? colors.primary.solid : 'transparent'} />
               </span>
             )}
             items={faqs.map((faq) => ({
@@ -1300,7 +1315,7 @@ const Landing = () => {
               label: (
                 <span
                   style={{
-                    fontWeight: typography.fontWeight.semibold,
+                    fontWeight: 600,
                     color: colors.text.primary,
                   }}
                 >
@@ -1312,6 +1327,7 @@ const Landing = () => {
                   style={{
                     color: colors.gray[600],
                     lineHeight: 1.6,
+                    fontSize: '15px',
                   }}
                 >
                   {faq.children}
@@ -1323,24 +1339,38 @@ const Landing = () => {
       </section>
 
       {/* Final CTA */}
-      <div style={{ background: colors.primary.gradient, padding: isMobile ? '60px 20px' : '100px 50px', textAlign: 'center' }}>
-        <motion.div variants={fadeIn}>
-          <h2 style={{ fontSize: typography.fontSize['3xl'], fontWeight: typography.fontWeight.bold, marginBottom: spacing[4], color: '#E5E7EB' }}>
+      <div style={{ background: colors.primary.solid, padding: isMobile ? '80px 24px' : '100px 48px', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%), radial-gradient(circle at 80% 50%, rgba(0,0,0,0.1) 0%, transparent 50%)',
+          pointerEvents: 'none'
+        }} />
+        <motion.div variants={fadeIn} style={{ position: 'relative', zIndex: 1 }}>
+          <h2 style={{ fontSize: typography.fontSize['4xl'], fontWeight: 800, marginBottom: spacing[4], color: '#ffffff', letterSpacing: '-0.02em' }}>
             Ready to Transform Your Creator Journey?
           </h2>
-          <p style={{ fontSize: typography.fontSize.lg, marginBottom: spacing[8], color: '#D1D5DB', maxWidth: '600px', margin: `0 auto ${spacing[8]}` }}>
-            Join thousands of creators and fans already using AI-powered conversations
+          <p style={{ fontSize: typography.fontSize.lg, marginBottom: spacing[8], color: 'rgba(255,255,255,0.9)', maxWidth: '640px', margin: `0 auto ${spacing[8]}`, lineHeight: 1.6 }}>
+            Join thousands of creators who are already scaling their expertise with CodeSpire. Get started today.
           </p>
           <div style={{ display: 'flex', gap: spacing[4], justifyContent: 'center', flexWrap: 'wrap' }}>
             <CustomButton
               size="large"
               variant="secondary"
               onClick={() => navigate('/register')}
-              style={{ background: '#E5E7EB', color: colors.primary.solid }}
+              style={{ background: '#ffffff', color: colors.primary.solid, height: '56px', padding: '0 32px', fontSize: '16px' }}
             >
               Start Free Today
             </CustomButton>
-            <CustomButton size="large" variant="ghost" onClick={() => navigate('/creators')} style={{ borderColor: '#E5E7EB', color: '#E5E7EB' }}>
+            <CustomButton
+              size="large"
+              variant="ghost"
+              onClick={() => navigate('/creators')}
+              style={{ color: '#ffffff', border: '1px solid rgba(255,255,255,0.3)', height: '56px', padding: '0 32px', fontSize: '16px' }}
+            >
               Explore Creators
             </CustomButton>
           </div>

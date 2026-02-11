@@ -4,9 +4,13 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Table, Tag, Card, Spin, Space, Input, Select, Button, Avatar } from 'antd';
-import { SearchOutlined, FilterOutlined, ShopOutlined } from '@ant-design/icons';
+import { Search, Filter, RefreshCcw, Building } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import '../../styles/AdminPanel.css';
+import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import CustomTable from '../../components/common/Table/CustomTable';
+import CustomCard from '../../components/common/Card/CustomCard';
+import CustomInput from '../../components/common/Form/CustomInput';
+import CustomButton from '../../components/common/Button/CustomButton';
 
 const AdminCompanies = () => {
   const [companies, setCompanies] = useState<any[]>([]);
@@ -69,11 +73,11 @@ const AdminCompanies = () => {
       render: (record: any) => (
         <Space>
           <Avatar
-            icon={<ShopOutlined />}
+            icon={<Building size={16} />}
             src={record.logo || undefined}
-            style={{ backgroundColor: '#F1F5F9', color: '#F59E0B' }}
+            style={{ backgroundColor: colors.gray[100], color: colors.warning.solid }}
           />
-          <div style={{ fontWeight: 600 }}>{record.companyName}</div>
+          <div style={{ fontWeight: 600, color: colors.text.primary }}>{record.companyName}</div>
         </Space>
       )
     },
@@ -124,27 +128,49 @@ const AdminCompanies = () => {
 
   return (
     <div className="admin-page">
-      <div className="admin-hero">
-        <div>
-          <h2 className="admin-hero-title">Companies</h2>
-          <p className="admin-hero-subtitle">Manage partner companies, verification, and profiles.</p>
-        </div>
+      <div style={{ marginBottom: spacing[6] }}>
+        <h1 style={{
+          fontSize: typography.fontSize['4xl'],
+          fontWeight: typography.fontWeight.bold,
+          color: colors.text.primary,
+          letterSpacing: '-0.02em',
+          marginBottom: spacing[1]
+        }}>
+          Companies
+        </h1>
+        <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
+          Manage partner companies, verification, and profiles.
+        </p>
       </div>
 
-      <div className="admin-toolbar">
-        <div className="admin-hero-subtitle">Showing {companies.length} companies</div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing[4],
+        gap: spacing[4],
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ color: colors.text.tertiary, fontWeight: 600 }}>
+          Showing {companies.length} companies
+        </div>
         <Space wrap>
           <Input
             placeholder="Search companies..."
-            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+            prefix={<Search size={16} style={{ color: colors.gray[400] }} />}
             allowClear
-            style={{ width: 220 }}
+            style={{
+              width: 240,
+              height: '40px',
+              borderRadius: '8px',
+              border: `1px solid ${colors.gray[200]}`
+            }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Select
             placeholder="Verification"
-            style={{ width: 160 }}
+            style={{ width: 160, height: '40px' }}
             allowClear
             value={filters.verified}
             onChange={(val) => {
@@ -158,7 +184,7 @@ const AdminCompanies = () => {
           />
           <Select
             placeholder="Industry"
-            style={{ width: 160 }}
+            style={{ width: 160, height: '40px' }}
             allowClear
             value={filters.industry}
             onChange={(val) => {
@@ -175,36 +201,34 @@ const AdminCompanies = () => {
               { label: 'Health', value: 'Health' }
             ]}
           />
-          <Button icon={<FilterOutlined />} onClick={handleReset}>
-            Reset
-          </Button>
+          <CustomButton variant="secondary" onClick={handleReset} style={{ height: '40px' }}>
+            <RefreshCcw size={14} /> Reset
+          </CustomButton>
         </Space>
       </div>
 
-      <Card className="admin-card admin-table">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px' }}>
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            dataSource={companies}
-            columns={columns}
-            rowKey="id"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} companies`,
-              pageSizeOptions: ['10', '20', '50'],
-              onChange: (page, pageSize) => {
-                setPagination(prev => ({ ...prev, current: page, pageSize }));
-              }
-            }}
-          />
-        )}
-      </Card>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '48px' }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <CustomTable
+          dataSource={companies}
+          columns={columns}
+          rowKey="id"
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} companies`,
+            pageSizeOptions: ['10', '20', '50'],
+            onChange: (page, pageSize) => {
+              setPagination(prev => ({ ...prev, current: page, pageSize }));
+            }
+          }}
+        />
+      )}
     </div>
   );
 };

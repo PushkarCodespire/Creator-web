@@ -4,10 +4,14 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Table, Tag, Select, Card, Spin, Button, Space, Tooltip, Input } from 'antd';
-import { EyeOutlined, SearchOutlined, FilterOutlined } from '@ant-design/icons';
+import { Eye, Search, Filter, RefreshCcw } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import UserDetailModal from '../../components/admin/UserDetailModal';
-import '../../styles/AdminPanel.css';
+import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import CustomTable from '../../components/common/Table/CustomTable';
+import CustomCard from '../../components/common/Card/CustomCard';
+import CustomInput from '../../components/common/Form/CustomInput';
+import CustomButton from '../../components/common/Button/CustomButton';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<any[]>([]);
@@ -112,15 +116,13 @@ const AdminUsers = () => {
       key: 'actions',
       render: (record: any) => (
         <Tooltip title="View Details">
-          <Button
-            type="primary"
-            ghost
-            icon={<EyeOutlined />}
+          <CustomButton
+            variant="ghost"
             size="small"
             onClick={() => handleViewUser(record.id)}
           >
-            View
-          </Button>
+            <Eye size={16} /> View
+          </CustomButton>
         </Tooltip>
       )
     }
@@ -128,28 +130,50 @@ const AdminUsers = () => {
 
   return (
     <div className="admin-page">
-      <div className="admin-hero">
-        <div>
-          <h2 className="admin-hero-title">Users</h2>
-          <p className="admin-hero-subtitle">Manage accounts, roles, and verification status.</p>
-        </div>
+      <div style={{ marginBottom: spacing[6] }}>
+        <h1 style={{
+          fontSize: typography.fontSize['4xl'],
+          fontWeight: typography.fontWeight.bold,
+          color: colors.text.primary,
+          letterSpacing: '-0.02em',
+          marginBottom: spacing[1]
+        }}>
+          User Management
+        </h1>
+        <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
+          Manage accounts, roles, and verification status.
+        </p>
       </div>
 
-      <div className="admin-toolbar">
-        <div className="admin-hero-subtitle">Showing {users.length} users</div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing[4],
+        gap: spacing[4],
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ color: colors.text.tertiary, fontWeight: 600 }}>
+          Showing {users.length} users
+        </div>
         <Space wrap>
           <Input
             placeholder="Search users..."
-            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+            prefix={<Search size={16} style={{ color: colors.gray[400] }} />}
             allowClear
-            style={{ width: 220 }}
+            style={{
+              width: 240,
+              height: '40px',
+              borderRadius: '8px',
+              border: `1px solid ${colors.gray[200]}`
+            }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Select
             placeholder="Filter by role"
             allowClear
-            style={{ width: 180 }}
+            style={{ width: 180, height: '40px' }}
             value={roleFilter}
             onChange={(val) => {
               setRoleFilter(val);
@@ -161,39 +185,38 @@ const AdminUsers = () => {
             <Select.Option value="COMPANY">Companies</Select.Option>
             <Select.Option value="ADMIN">Admins</Select.Option>
           </Select>
-          <Button
-            icon={<FilterOutlined />}
+          <CustomButton
+            variant="secondary"
             onClick={handleReset}
+            style={{ height: '40px' }}
           >
-            Reset
-          </Button>
+            <RefreshCcw size={14} /> Reset
+          </CustomButton>
         </Space>
       </div>
 
-      <Card className="admin-card admin-table">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px' }}>
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            dataSource={users}
-            columns={columns}
-            rowKey="id"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} users`,
-              pageSizeOptions: ['10', '20', '50'],
-              onChange: (page, pageSize) => {
-                setPagination({ current: page, pageSize, total: pagination.total });
-              }
-            }}
-          />
-        )}
-      </Card>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '48px' }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <CustomTable
+          dataSource={users}
+          columns={columns}
+          rowKey="id"
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} users`,
+            pageSizeOptions: ['10', '20', '50'],
+            onChange: (page, pageSize) => {
+              setPagination({ current: page, pageSize, total: pagination.total });
+            }
+          }}
+        />
+      )}
 
       <UserDetailModal
         userId={selectedUserId}

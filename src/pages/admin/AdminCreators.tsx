@@ -20,14 +20,14 @@ import {
   Typography,
   Spin
 } from 'antd';
-import {
-  EyeOutlined,
-  SearchOutlined,
-  FilterOutlined,
-} from '@ant-design/icons';
+import { Eye, Search, Filter, RefreshCcw } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import CreatorDetailModal from '../../components/admin/CreatorDetailModal';
-import '../../styles/AdminPanel.css';
+import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import CustomTable from '../../components/common/Table/CustomTable';
+import CustomCard from '../../components/common/Card/CustomCard';
+import CustomInput from '../../components/common/Form/CustomInput';
+import CustomButton from '../../components/common/Button/CustomButton';
 
 const { Text } = Typography;
 
@@ -170,15 +170,13 @@ const AdminCreators = () => {
       key: 'actions',
       render: (record: any) => (
         <Tooltip title="View Details">
-          <Button
-            type="primary"
-            ghost
-            icon={<EyeOutlined />}
+          <CustomButton
+            variant="ghost"
             size="small"
             onClick={() => handleViewCreator(record.id)}
           >
-            View
-          </Button>
+            <Eye size={16} /> View
+          </CustomButton>
         </Tooltip>
       )
     }
@@ -204,11 +202,19 @@ const AdminCreators = () => {
 
   return (
     <div className="admin-page">
-      <div className="admin-hero">
-        <div>
-          <h2 className="admin-hero-title">Creators</h2>
-          <p className="admin-hero-subtitle">Manage accounts, verify applications, and roles.</p>
-        </div>
+      <div style={{ marginBottom: spacing[6] }}>
+        <h1 style={{
+          fontSize: typography.fontSize['4xl'],
+          fontWeight: typography.fontWeight.bold,
+          color: colors.text.primary,
+          letterSpacing: '-0.02em',
+          marginBottom: spacing[1]
+        }}>
+          Creators
+        </h1>
+        <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
+          Manage accounts, verify applications, and roles.
+        </p>
       </div>
 
       <div className="admin-tabs-container" style={{ marginBottom: '18px' }}>
@@ -223,20 +229,34 @@ const AdminCreators = () => {
         />
       </div>
 
-      <div className="admin-toolbar">
-        <div className="admin-hero-subtitle">Showing {creators.length} creators</div>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: spacing[4],
+        gap: spacing[4],
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ color: colors.text.tertiary, fontWeight: 600 }}>
+          Showing {creators.length} creators
+        </div>
         <Space wrap>
           <Input
             placeholder="Search creators..."
-            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+            prefix={<Search size={16} style={{ color: colors.gray[400] }} />}
             allowClear
-            style={{ width: 220 }}
+            style={{
+              width: 240,
+              height: '40px',
+              borderRadius: '8px',
+              border: `1px solid ${colors.gray[200]}`
+            }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
           <Select
             placeholder="Category"
-            style={{ width: 140 }}
+            style={{ width: 140, height: '40px' }}
             allowClear
             value={filters.category}
             onChange={(val) => handleFilterChange('category', val)}
@@ -252,7 +272,7 @@ const AdminCreators = () => {
             <>
               <Select
                 placeholder="Verification"
-                style={{ width: 140 }}
+                style={{ width: 140, height: '40px' }}
                 allowClear
                 value={filters.verified}
                 onChange={(val) => handleFilterChange('verified', val)}
@@ -263,7 +283,7 @@ const AdminCreators = () => {
               />
               <Select
                 placeholder="Active Status"
-                style={{ width: 140 }}
+                style={{ width: 140, height: '40px' }}
                 allowClear
                 value={filters.active}
                 onChange={(val) => handleFilterChange('active', val)}
@@ -274,43 +294,42 @@ const AdminCreators = () => {
               />
             </>
           )}
-          <Button
-            icon={<FilterOutlined />}
+          <CustomButton
+            variant="secondary"
             onClick={() => {
               setSearchTerm('');
               setFilters({ search: '', verified: undefined, active: undefined, category: undefined });
               setPagination(prev => ({ ...prev, current: 1 }));
             }}
+            style={{ height: '40px' }}
           >
-            Reset
-          </Button>
+            <RefreshCcw size={14} /> Reset
+          </CustomButton>
         </Space>
       </div>
 
-      <Card className="admin-card admin-table">
-        {loading ? (
-          <div style={{ textAlign: 'center', padding: '48px' }}>
-            <Spin size="large" />
-          </div>
-        ) : (
-          <Table
-            dataSource={creators}
-            columns={columns}
-            rowKey="id"
-            pagination={{
-              current: pagination.current,
-              pageSize: pagination.pageSize,
-              total: pagination.total,
-              showSizeChanger: true,
-              showTotal: (total) => `Total ${total} creators`,
-              pageSizeOptions: ['10', '20', '50'],
-              onChange: (page, pageSize) => {
-                setPagination(prev => ({ ...prev, current: page, pageSize }));
-              }
-            }}
-          />
-        )}
-      </Card>
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '48px' }}>
+          <Spin size="large" />
+        </div>
+      ) : (
+        <CustomTable
+          dataSource={creators}
+          columns={columns}
+          rowKey="id"
+          pagination={{
+            current: pagination.current,
+            pageSize: pagination.pageSize,
+            total: pagination.total,
+            showSizeChanger: true,
+            showTotal: (total) => `Total ${total} creators`,
+            pageSizeOptions: ['10', '20', '50'],
+            onChange: (page, pageSize) => {
+              setPagination(prev => ({ ...prev, current: page, pageSize }));
+            }
+          }}
+        />
+      )}
 
       <CreatorDetailModal
         creatorId={selectedCreatorId}

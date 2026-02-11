@@ -23,18 +23,25 @@ import {
     InputNumber
 } from 'antd';
 import {
-    UserOutlined,
-    MailOutlined,
-    SafetyCertificateOutlined,
-    HistoryOutlined,
-    StopOutlined,
-    UnlockOutlined,
-    WarningOutlined,
-    CheckCircleOutlined,
-    ClockCircleOutlined,
-    EditOutlined
-} from '@ant-design/icons';
+    User,
+    Mail,
+    ShieldCheck,
+    History,
+    Ban,
+    Unlock,
+    AlertTriangle,
+    CheckCircle2,
+    Clock,
+    Pencil,
+    Shield,
+    StopCircle
+} from 'lucide-react';
 import { adminApi } from '../../services/api';
+import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import CustomModal from '../common/Modal/CustomModal';
+import CustomCard from '../common/Card/CustomCard';
+import CustomButton from '../common/Button/CustomButton';
+import CustomInput from '../common/Form/CustomInput';
 
 interface UserDetailModalProps {
     userId: string | null;
@@ -184,10 +191,10 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
         if (!user) return null;
         return (
             <Space>
-                {user.isBanned && <Tag color="error" icon={<StopOutlined />}>BANNED</Tag>}
-                {user.isSuspended && <Tag color="warning" icon={<ClockCircleOutlined />}>SUSPENDED</Tag>}
+                {user.isBanned && <Tag color="error" icon={<Ban size={12} />}>BANNED</Tag>}
+                {user.isSuspended && <Tag color="warning" icon={<Clock size={12} />}>SUSPENDED</Tag>}
                 {user.isVerified ? (
-                    <Tag color="success" icon={<CheckCircleOutlined />}>VERIFIED</Tag>
+                    <Tag color="success" icon={<CheckCircle2 size={12} />}>VERIFIED</Tag>
                 ) : (
                     <Tag color="default">UNVERIFIED</Tag>
                 )}
@@ -200,19 +207,19 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
         <div style={{ paddingTop: '16px' }}>
             <Row gutter={[16, 16]}>
                 <Col span={24}>
-                    <Card size="small" className="admin-card-light">
+                    <CustomCard style={{ background: colors.gray[50] }}>
                         <Row gutter={16}>
                             <Col span={8}>
-                                <Statistic title="Conversations" value={analytics?.conversationCount || 0} prefix={<HistoryOutlined />} />
+                                <Statistic title="Conversations" value={analytics?.conversationCount || 0} prefix={<History size={16} />} />
                             </Col>
                             <Col span={8}>
-                                <Statistic title="Total Messages" value={analytics?.messageCount || 0} prefix={<MailOutlined />} />
+                                <Statistic title="Total Messages" value={analytics?.messageCount || 0} prefix={<Mail size={16} />} />
                             </Col>
                             <Col span={8}>
-                                <Statistic title="Reports Made" value={analytics?.reportsMade || 0} prefix={<WarningOutlined />} />
+                                <Statistic title="Reports Made" value={analytics?.reportsMade || 0} prefix={<AlertTriangle size={16} />} />
                             </Col>
                         </Row>
-                    </Card>
+                    </CustomCard>
                 </Col>
 
                 <Col span={24}>
@@ -230,12 +237,12 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                         <Row gutter={16}>
                             <Col span={12}>
                                 <Form.Item name="name" label="Full Name" rules={[{ required: true }]}>
-                                    <Input prefix={<UserOutlined />} />
+                                    <Input prefix={<User size={16} style={{ color: colors.gray[400] }} />} style={{ height: '44px', borderRadius: '8px' }} />
                                 </Form.Item>
                             </Col>
                             <Col span={12}>
                                 <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}>
-                                    <Input prefix={<MailOutlined />} />
+                                    <Input prefix={<Mail size={16} style={{ color: colors.gray[400] }} />} style={{ height: '44px', borderRadius: '8px' }} />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -263,29 +270,33 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <Space>
                                 {!user?.isBanned ? (
-                                    <Button danger icon={<StopOutlined />} onClick={() => openActionModal('BAN')}>
-                                        Ban User
-                                    </Button>
+                                    <CustomButton variant="danger" onClick={() => openActionModal('BAN')}>
+                                        <Ban size={16} /> Ban User
+                                    </CustomButton>
                                 ) : (
-                                    <Button onClick={handleUnban} icon={<UnlockOutlined />}>Unban User</Button>
+                                    <CustomButton onClick={handleUnban} variant="secondary">
+                                        <Unlock size={16} /> Unban User
+                                    </CustomButton>
                                 )}
 
                                 {!user?.isSuspended ? (
-                                    <Button
-                                        style={{ borderColor: '#faad14', color: '#faad14' }}
+                                    <CustomButton
+                                        variant="secondary"
+                                        style={{ borderColor: colors.warning.solid, color: colors.warning.solid }}
                                         onClick={() => openActionModal('SUSPEND')}
-                                        icon={<ClockCircleOutlined />}
                                     >
-                                        Suspend User
-                                    </Button>
+                                        <Clock size={16} /> Suspend User
+                                    </CustomButton>
                                 ) : (
-                                    <Button onClick={handleUnsuspend} icon={<UnlockOutlined />}>Unsuspend</Button>
+                                    <CustomButton onClick={handleUnsuspend} variant="secondary">
+                                        <Unlock size={16} /> Unsuspend
+                                    </CustomButton>
                                 )}
                             </Space>
 
-                            <Button type="primary" htmlType="submit" icon={<EditOutlined />} loading={loading}>
-                                Update Profile
-                            </Button>
+                            <CustomButton variant="primary" htmlType="submit" loading={loading}>
+                                <Pencil size={16} /> Update Profile
+                            </CustomButton>
                         </div>
                     </Form>
                 </Col>
@@ -346,65 +357,68 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
 
     return (
         <>
-            <Modal
-                title={
-                    <Space>
-                        <UserOutlined />
-                        <span>User Details: {user?.name || 'Loading...'}</span>
-                        {getStatusTags()}
-                    </Space>
-                }
+            <CustomModal
+                title={`User Details: ${user?.name || 'Loading...'}`}
+                icon={<User size={20} />}
                 open={visible}
                 onCancel={onClose}
                 footer={null}
-                width={800}
-                className="admin-modal"
+                width={850}
             >
-                {loading && !user ? (
-                    <div style={{ textAlign: 'center', padding: '100px' }}>
-                        <Spin size="large" tip="Loading user data..." />
+                <div>
+                    <div style={{ marginBottom: spacing[4], display: 'flex', justifyContent: 'flex-end' }}>
+                        {getStatusTags()}
                     </div>
-                ) : (
-                    <Tabs
-                        activeKey={activeTab}
-                        onChange={setActiveTab}
-                        items={[
-                            {
-                                key: '1',
-                                label: (
-                                    <span>
-                                        <UserOutlined />
-                                        Overview
-                                    </span>
-                                ),
-                                children: renderOverview(),
-                            },
-                            {
-                                key: '2',
-                                label: (
-                                    <span>
-                                        <HistoryOutlined />
-                                        Moderation History
-                                    </span>
-                                ),
-                                children: renderHistory(),
-                            },
-                        ]}
-                    />
-                )}
-            </Modal>
+                    {loading && !user ? (
+                        <div style={{ textAlign: 'center', padding: '100px' }}>
+                            <Spin size="large" tip="Loading user data..." />
+                        </div>
+                    ) : (
+                        <Tabs
+                            activeKey={activeTab}
+                            onChange={setActiveTab}
+                            items={[
+                                {
+                                    key: '1',
+                                    label: (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <User size={16} />
+                                            Overview
+                                        </span>
+                                    ),
+                                    children: renderOverview(),
+                                },
+                                {
+                                    key: '2',
+                                    label: (
+                                        <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                            <History size={16} />
+                                            Moderation History
+                                        </span>
+                                    ),
+                                    children: renderHistory(),
+                                },
+                            ]}
+                        />
+                    )}
+                </div>
+            </CustomModal>
 
             {/* Nested Action Reason Modal */}
-            <Modal
+            <CustomModal
                 title={`${actionType === 'SUSPEND' ? 'Suspend' : 'Ban'} User: ${user?.name}`}
+                icon={<Ban size={20} />}
                 open={actionVisible}
                 onCancel={() => setActionVisible(false)}
-                onOk={() => actionForm.submit()}
-                confirmLoading={loading}
-                okText="Confirm Action"
-                okButtonProps={{ danger: true }}
-                maskClosable={false}
-                destroyOnClose
+                footer={[
+                    <CustomButton key="cancel" variant="secondary" onClick={() => setActionVisible(false)}>
+                        Cancel
+                    </CustomButton>,
+                    <CustomButton key="confirm" variant="danger" loading={loading} onClick={() => actionForm.submit()}>
+                        Confirm Action
+                    </CustomButton>
+                ]}
+                width={500}
             >
                 <Form
                     form={actionForm}
@@ -418,7 +432,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                             rules={[{ required: true }]}
                             initialValue={7}
                         >
-                            <InputNumber min={1} max={365} style={{ width: '100%' }} />
+                            <InputNumber min={1} max={365} style={{ width: '100%', height: '44px', borderRadius: '8px' }} />
                         </Form.Item>
                     )}
                     <Form.Item
@@ -429,10 +443,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                         <Input.TextArea
                             rows={4}
                             placeholder={`Explain why this user is being ${actionType.toLowerCase()}ed...`}
+                            style={{ borderRadius: '8px' }}
                         />
                     </Form.Item>
                 </Form>
-            </Modal>
+            </CustomModal>
         </>
     );
 };
