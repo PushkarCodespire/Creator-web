@@ -19,6 +19,7 @@ import {
   Clock,
   Percent,
   ChevronRight,
+  ArrowRight,
   TrendingUp as LineChart
 } from 'lucide-react';
 import { adminApi } from '../../services/api';
@@ -133,36 +134,43 @@ const AdminDeals = () => {
 
   return (
     <div className="admin-page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: spacing[6] }}>
-        <div>
-          <h1 style={{
-            fontSize: typography.fontSize['4xl'],
-            fontWeight: typography.fontWeight.bold,
-            color: colors.text.primary,
-            letterSpacing: '-0.02em',
-            marginBottom: spacing[1]
-          }}>
-            Deal Ecosystem
-          </h1>
-          <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
-            Visualizing platform collaborations, performance metrics, and growth.
-          </p>
+      <div className="admin-hero">
+        <h1 className="admin-hero-title">Deal Ecosystem</h1>
+        <p className="admin-hero-subtitle">Visualizing platform collaborations, performance metrics, and growth.</p>
+      </div>
+
+      <div className="admin-toolbar">
+        <div style={{ color: colors.text.tertiary, fontWeight: 600 }}>
+          Manage and track all brand collaborations
         </div>
-        <Select
-          placeholder="Filter Status"
-          value={statusFilter}
-          onChange={(val) => {
-            setStatusFilter(val);
-            setPagination(prev => ({ ...prev, current: 1 }));
-          }}
-          style={{ width: 180, height: '40px' }}
-          allowClear
-        >
-          <Select.Option value="IN_PROGRESS">In Progress</Select.Option>
-          <Select.Option value="COMPLETED">Completed</Select.Option>
-          <Select.Option value="CANCELLED">Cancelled</Select.Option>
-          <Select.Option value="DISPUTED">Disputed</Select.Option>
-        </Select>
+        <Space wrap>
+          <Select
+            placeholder="Filter Status"
+            value={statusFilter}
+            onChange={(val) => {
+              setStatusFilter(val);
+              setPagination(prev => ({ ...prev, current: 1 }));
+            }}
+            style={{ width: 180 }}
+            allowClear
+            options={[
+              { label: 'In Progress', value: 'IN_PROGRESS' },
+              { label: 'Completed', value: 'COMPLETED' },
+              { label: 'Cancelled', value: 'CANCELLED' },
+              { label: 'Disputed', value: 'DISPUTED' }
+            ]}
+          />
+          <CustomButton
+            variant="secondary"
+            onClick={() => {
+              setStatusFilter(undefined);
+              setPagination(prev => ({ ...prev, current: 1 }));
+            }}
+            style={{ height: '44px' }}
+          >
+            <RefreshCw size={16} /> Reset
+          </CustomButton>
+        </Space>
       </div>
 
       {/* Primary Metrics Layer */}
@@ -208,16 +216,16 @@ const AdminDeals = () => {
       {/* Engagement Analytics layer */}
       <Row gutter={[24, 24]} style={{ marginBottom: spacing[6] }} align="stretch">
         <Col xs={24} lg={16}>
-          <CustomCard title="Engagement Deep-Dive" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>Engagement Deep-Dive</span>} style={{ height: '100%' }}>
             <Row gutter={48}>
               <Col span={12}>
                 <Divider orientation="left"><Text strong style={{ color: colors.gray[500], fontSize: '11px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Participation</Text></Divider>
                 <Row gutter={16}>
                   <Col span={12}>
-                    <Statistic title="Active Companies" value={analytics.activeCompanies} prefix={<Building size={16} />} valueStyle={{ color: colors.text.primary, fontWeight: 800 }} />
+                    <Statistic title={<span style={{ color: colors.text.tertiary }}>Active Companies</span>} value={analytics.activeCompanies} prefix={<Building size={16} />} valueStyle={{ color: colors.text.primary, fontWeight: 800 }} />
                   </Col>
                   <Col span={12}>
-                    <Statistic title="Active Creators" value={analytics.activeCreators} prefix={<Users size={16} />} valueStyle={{ color: colors.text.primary, fontWeight: 800 }} />
+                    <Statistic title={<span style={{ color: colors.text.tertiary }}>Active Creators</span>} value={analytics.activeCreators} prefix={<Users size={16} />} valueStyle={{ color: colors.text.primary, fontWeight: 800 }} />
                   </Col>
                 </Row>
               </Col>
@@ -236,7 +244,7 @@ const AdminDeals = () => {
           </CustomCard>
         </Col>
         <Col xs={24} lg={8}>
-          <CustomCard title="Status Integrity" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>Status Integrity</span>} style={{ height: '100%' }}>
             <div style={{ padding: '4px 0' }}>
               <StatusRow label="COMPLETED" count={statusDist.COMPLETED?.count} pct={statusDist.COMPLETED?.percentage} color={colors.success.solid} />
               <StatusRow label="IN PROGRESS" count={statusDist.IN_PROGRESS?.count} pct={statusDist.IN_PROGRESS?.percentage} color={colors.primary.solid} />
@@ -348,14 +356,39 @@ const AdminDeals = () => {
 // --- Sub-components ---
 
 const MetricCard = ({ title, value, icon, color, subtitle }: any) => (
-  <CustomCard style={{ height: '100%', borderLeft: `4px solid ${color}` }}>
+  <CustomCard hoverable style={{ height: '100%', borderRadius: '16px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+      <div style={{
+        background: `${color}15`,
+        color: color,
+        padding: '10px',
+        borderRadius: '10px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {icon}
+      </div>
+      <div style={{ background: colors.success.subtle, color: colors.success.solid, fontSize: '11px', fontWeight: 800, padding: '4px 8px', borderRadius: '6px' }}>
+        ACTIVE
+      </div>
+    </div>
     <Statistic
-      title={<Text style={{ color: colors.gray[500], fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</Text>}
+      title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</Text>}
       value={value}
-      prefix={<span style={{ color, marginRight: spacing[2], display: 'inline-flex', alignItems: 'center' }}>{icon}</span>}
-      valueStyle={{ color: colors.text.primary, fontWeight: 800, fontSize: '28px' }}
+      valueStyle={{ color: colors.text.primary, fontWeight: 900, fontSize: '28px' }}
     />
-    <Text style={{ fontSize: '12px', color: colors.text.tertiary, fontWeight: 600 }}>{subtitle}</Text>
+    <div style={{
+      marginTop: spacing[4],
+      paddingTop: spacing[4],
+      borderTop: `1px solid ${colors.gray[50]}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
+    }}>
+      <Text style={{ fontSize: '12px', color: colors.text.tertiary, fontWeight: 600 }}>{subtitle || 'Deal Intelligence'}</Text>
+      <ArrowRight size={14} style={{ color: colors.primary.solid }} />
+    </div>
   </CustomCard>
 );
 

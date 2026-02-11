@@ -10,6 +10,7 @@ import { chatApi, getImageUrl } from '../../services/api';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
 import { motion } from 'framer-motion';
 import { debounce } from '../../utils/debounce';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -103,21 +104,22 @@ const UserChats = () => {
       style={{ padding: '32px' }}
     >
       <div style={{ marginBottom: '32px' }}>
-        <Title level={2} style={{ color: '#fff', marginBottom: '4px', fontWeight: 800 }}>
+        <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
           My Conversations
         </Title>
-        <Text style={{ color: '#94A3B8', fontSize: '16px' }}>
+        <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>
           Continue chatting with your favorite creators
         </Text>
       </div>
 
       {/* Search and Filters */}
       <Card
+        bordered={false}
         style={{
-          background: 'rgba(30, 41, 59, 0.4)',
-          backdropFilter: 'blur(20px)',
-          border: '1px solid rgba(255, 255, 255, 0.05)',
-          borderRadius: '20px',
+          background: '#ffffff',
+          borderRadius: '24px',
+          border: `1px solid ${colors.gray[100]}`,
+          boxShadow: shadows.md,
           marginBottom: '24px'
         }}
         bodyStyle={{ padding: '20px' }}
@@ -130,7 +132,7 @@ const UserChats = () => {
               size="large"
               value={search}
               onChange={(e) => handleSearchChange(e.target.value)}
-              prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+              prefix={<SearchOutlined style={{ color: colors.text.tertiary }} />}
               style={{ borderRadius: '12px' }}
             />
           </Col>
@@ -139,10 +141,11 @@ const UserChats = () => {
               icon={<FilterOutlined />}
               onClick={() => setShowFilters(!showFilters)}
               style={{
-                background: showFilters ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-                border: '1px solid rgba(255, 255, 255, 0.1)',
-                color: '#fff',
-                borderRadius: '12px'
+                background: showFilters ? colors.primary.subtle : 'transparent',
+                border: `1px solid ${colors.gray[200]}`,
+                color: colors.text.primary,
+                borderRadius: '12px',
+                fontWeight: 700
               }}
             >
               {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -199,10 +202,11 @@ const UserChats = () => {
                   onClick={handleResetFilters}
                   style={{
                     background: 'transparent',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    color: '#94A3B8',
+                    border: `1px solid ${colors.gray[200]}`,
+                    color: colors.text.tertiary,
                     borderRadius: '12px',
-                    width: '100%'
+                    width: '100%',
+                    fontWeight: 700
                   }}
                 >
                   Reset Filters
@@ -215,16 +219,18 @@ const UserChats = () => {
 
       {conversations.length === 0 && !loading ? (
         <Card
+          bordered={false}
           style={{
-            background: 'rgba(30, 41, 59, 0.4)',
-            backdropFilter: 'blur(20px)',
-            border: '1px solid rgba(255, 255, 255, 0.05)',
+            background: '#ffffff',
             borderRadius: '24px',
-            padding: '40px 0'
+            border: `1px solid ${colors.gray[100]}`,
+            boxShadow: shadows.md,
+            padding: '60px 0',
+            textAlign: 'center'
           }}
         >
           <Empty
-            description={<span style={{ color: '#94A3B8', fontSize: '16px' }}>No conversations found</span>}
+            description={<span style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>No conversations found</span>}
             image={Empty.PRESENTED_IMAGE_SIMPLE}
           />
         </Card>
@@ -235,41 +241,42 @@ const UserChats = () => {
               <Card
                 key={item.id}
                 hoverable
+                bordered={false}
                 style={{
-                  background: 'rgba(30, 41, 59, 0.4)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  borderRadius: '20px',
+                  background: '#ffffff',
+                  borderRadius: '24px',
+                  border: `1px solid ${colors.gray[100]}`,
+                  boxShadow: shadows.md,
                   cursor: 'pointer',
-                  transition: 'all 0.3s ease'
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                 }}
                 bodyStyle={{ padding: '20px' }}
-                onClick={() => navigate(`/chat/${item.creatorId}`)}
+                onClick={() => navigate(`/chat/${item.creator?.id || item.creatorId}`)}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
                   <Avatar
                     size={64}
                     src={item.creator?.profileImage ? getImageUrl(item.creator.profileImage) : undefined}
                     style={{
-                      background: !item.creator?.profileImage ? '#6366F1' : undefined,
+                      background: !item.creator?.profileImage ? colors.primary.solid : undefined,
                       color: '#fff',
-                      fontWeight: 600,
-                      border: '2px solid rgba(102, 126, 234, 0.3)'
+                      fontWeight: 700,
+                      border: `2px solid ${colors.primary.subtle}`
                     }}
                   >
                     {item.creator?.displayName?.[0]?.toUpperCase()}
                   </Avatar>
                   <div style={{ flex: 1, minWidth: '200px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                      <Text style={{ color: '#fff', fontWeight: 700, fontSize: '18px' }}>
+                      <Text style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>
                         {item.creator?.displayName}
                       </Text>
                       {item.creator?.isVerified && (
-                        <CheckCircleFilled style={{ color: '#3B82F6', fontSize: '16px' }} />
+                        <CheckCircleFilled style={{ color: colors.primary.solid, fontSize: '16px' }} />
                       )}
                     </div>
                     {item.creator?.tagline && (
-                      <Text style={{ color: '#94A3B8', fontSize: '13px', display: 'block', marginBottom: '8px' }}>
+                      <Text style={{ color: colors.text.secondary, fontSize: '13px', display: 'block', marginBottom: '8px', fontWeight: 500 }}>
                         {item.creator.tagline}
                       </Text>
                     )}
@@ -281,8 +288,8 @@ const UserChats = () => {
                       )}
                       {item.creator?.rating && (
                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <StarFilled style={{ color: '#FCD34D', fontSize: '14px' }} />
-                          <Text style={{ color: '#94A3B8', fontSize: '13px' }}>{item.creator.rating}</Text>
+                          <StarFilled style={{ color: colors.warning.solid, fontSize: '14px' }} />
+                          <Text style={{ color: colors.text.tertiary, fontSize: '13px', fontWeight: 700 }}>{item.creator.rating}</Text>
                         </div>
                       )}
                       <Tag icon={<MessageOutlined />} style={{ borderRadius: '8px' }}>
@@ -290,7 +297,7 @@ const UserChats = () => {
                       </Tag>
                     </div>
                     {item.lastMessage?.content && (
-                      <Text style={{ color: '#64748B', fontSize: '14px', display: 'block', marginTop: '12px' }}>
+                      <Text style={{ color: colors.text.tertiary, fontSize: '14px', display: 'block', marginTop: '12px', fontStyle: 'italic', fontWeight: 500 }}>
                         "{item.lastMessage.content.slice(0, 100)}..."
                       </Text>
                     )}
@@ -314,16 +321,17 @@ const UserChats = () => {
                 showSizeChanger
                 pageSizeOptions={['10', '20', '50']}
                 showTotal={(total) => (
-                  <Text style={{ color: '#94A3B8' }}>
+                  <Text style={{ color: colors.text.tertiary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', fontSize: '11px' }}>
                     Total {total} conversations
                   </Text>
                 )}
                 style={{
                   display: 'inline-flex',
-                  background: 'rgba(30, 41, 59, 0.4)',
-                  padding: '12px 20px',
-                  borderRadius: '16px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)'
+                  background: '#ffffff',
+                  padding: '12px 24px',
+                  borderRadius: '20px',
+                  border: `1px solid ${colors.gray[100]}`,
+                  boxShadow: shadows.sm
                 }}
               />
             </div>

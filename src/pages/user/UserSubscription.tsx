@@ -10,6 +10,10 @@ import { subscriptionApi, paymentApi } from '../../services/api';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { Typography } from 'antd';
+
+const { Title, Text } = Typography;
 
 const UserSubscription = () => {
   const navigate = useNavigate();
@@ -207,31 +211,42 @@ const UserSubscription = () => {
   const messagesToday = usage?.messagesToday ?? subscription?.messagesUsedToday ?? 0;
 
   return (
-    <div>
-      <h2>Subscription</h2>
-      <p style={{ color: '#888', marginBottom: '24px' }}>Manage your subscription plan</p>
+    <div style={{ padding: '32px' }}>
+      <div style={{ marginBottom: '32px' }}>
+        <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>Subscription</Title>
+        <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>Manage your subscription plan</Text>
+      </div>
 
       <Row gutter={24}>
         <Col xs={24} lg={12}>
-          <Card title="Current Plan">
+          <Card
+            title={<span style={{ color: colors.text.primary, fontWeight: 800 }}>Current Plan</span>}
+            bordered={false}
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              border: `1px solid ${colors.gray[100]}`,
+              boxShadow: shadows.md
+            }}
+          >
             <div style={{ textAlign: 'center', padding: '20px' }}>
               <CrownOutlined style={{ fontSize: '48px', color: isPremium ? '#faad14' : '#d9d9d9' }} />
-              <h2 style={{ marginTop: '16px' }}>{currentPlanLabel}</h2>
-              <Tag color={subscription?.status === 'ACTIVE' ? 'green' : 'red'}>
+              <Title level={2} style={{ marginTop: '16px', color: colors.text.primary, fontWeight: 900 }}>{currentPlanLabel}</Title>
+              <Tag color={subscription?.status === 'ACTIVE' ? 'success' : 'error'} style={{ borderRadius: '8px', padding: '4px 12px', fontWeight: 700 }}>
                 {subscription?.status || 'UNKNOWN'}
               </Tag>
               {isPremium && subscription?.currentPeriodEnd && (
-                <p style={{ marginTop: '16px', color: '#888' }}>
+                <Text style={{ marginTop: '16px', color: colors.text.tertiary, display: 'block', fontWeight: 500 }}>
                   Renews: {new Date(subscription.currentPeriodEnd).toLocaleDateString()}
-                </p>
+                </Text>
               )}
             </div>
-            <div style={{ marginTop: '24px' }}>
-              <h4>Usage Today</h4>
-              <p>
+            <div style={{ marginTop: '24px', padding: '20px', background: colors.gray[50], borderRadius: '16px', border: `1px solid ${colors.gray[100]}` }}>
+              <Title level={5} style={{ color: colors.text.primary, fontWeight: 800, marginBottom: '12px' }}>Usage Today</Title>
+              <Text style={{ color: colors.text.secondary, fontWeight: 600, display: 'block' }}>
                 Messages: {messagesToday}
                 {messageLimit ? ` / ${messageLimit}` : ''}
-              </p>
+              </Text>
               {isPremium && tokenBalance !== undefined && tokenGrant !== undefined && (
                 <div style={{ marginTop: '12px' }}>
                   <div style={{ fontWeight: 600, marginBottom: '4px' }}>Token Balance</div>
@@ -239,12 +254,12 @@ const UserSubscription = () => {
                     {Number(tokenBalance).toLocaleString()} / {Number(tokenGrant).toLocaleString()} tokens
                   </div>
                   {tokensPerMessage !== undefined && (
-                    <div style={{ color: '#6B7280', fontSize: '12px', marginTop: '4px' }}>
+                    <div style={{ color: colors.text.tertiary, fontSize: '12px', marginTop: '4px', fontWeight: 500 }}>
                       Burn per message: {Number(tokensPerMessage).toLocaleString()} tokens
                     </div>
                   )}
                   {tokenGrantedAt && (
-                    <div style={{ color: '#6B7280', fontSize: '12px', marginTop: '4px' }}>
+                    <div style={{ color: colors.text.tertiary, fontSize: '12px', marginTop: '2px', fontWeight: 500 }}>
                       Grant date: {new Date(tokenGrantedAt).toLocaleDateString()}
                     </div>
                   )}
@@ -263,14 +278,16 @@ const UserSubscription = () => {
               </div>
             )}
             {isPremium ? (
-              <Button danger block onClick={handleCancel}>Cancel Subscription</Button>
+              <Button danger block size="large" onClick={handleCancel} style={{ marginTop: '24px', borderRadius: '12px', fontWeight: 700 }}>Cancel Subscription</Button>
             ) : (
               <Button
                 type="primary"
                 block
+                size="large"
                 onClick={handleUpgrade}
                 loading={upgrading}
                 disabled={upgrading}
+                style={{ marginTop: '24px', borderRadius: '12px', fontWeight: 700, height: '48px' }}
               >
                 {upgrading ? 'Processing...' : upgradeLabel}
               </Button>
@@ -279,7 +296,16 @@ const UserSubscription = () => {
         </Col>
 
         <Col xs={24} lg={12}>
-          <Card title="Premium Benefits">
+          <Card
+            title={<span style={{ color: colors.text.primary, fontWeight: 800 }}>Premium Benefits</span>}
+            bordered={false}
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              border: `1px solid ${colors.gray[100]}`,
+              boxShadow: shadows.md
+            }}
+          >
             {plansLoading ? (
               <div style={{ textAlign: 'center', padding: '24px' }}>
                 <Spin />
@@ -288,9 +314,9 @@ const UserSubscription = () => {
               <List
                 dataSource={premiumFeatures}
                 renderItem={(item) => (
-                  <List.Item>
-                    <CheckOutlined style={{ color: '#52c41a', marginRight: '12px' }} />
-                    {item}
+                  <List.Item style={{ borderBottom: `1px solid ${colors.gray[50]}`, padding: '16px 0' }}>
+                    <CheckOutlined style={{ color: colors.primary.solid, marginRight: '12px', fontWeight: 900 }} />
+                    <Text style={{ color: colors.text.secondary, fontWeight: 600 }}>{item}</Text>
                   </List.Item>
                 )}
               />

@@ -18,21 +18,36 @@ import {
   Switch,
   Table,
   Popconfirm,
+  Timeline,
+  Typography
 } from 'antd';
 import {
-  UserOutlined,
-  MailOutlined,
-  SafetyCertificateOutlined,
-  CheckCircleOutlined,
-  StopOutlined,
-  ClockCircleOutlined,
-  EditOutlined,
-  PlayCircleOutlined,
-  DeleteOutlined,
-  HistoryOutlined,
-  WarningOutlined
-} from '@ant-design/icons';
+  User,
+  Mail,
+  ShieldCheck,
+  CheckCircle2,
+  Ban,
+  Clock,
+  Edit3,
+  PlayCircle,
+  Trash2,
+  History,
+  AlertTriangle,
+  ExternalLink,
+  Shield,
+  Info,
+  Youtube,
+  Instagram,
+  Twitter,
+  Globe,
+  MoreVertical
+} from 'lucide-react';
 import { adminApi } from '../../services/api';
+import { colors, spacing, shadows, borderRadius, typography } from '../../styles/tokens';
+import CustomModal from '../../components/common/Modal/CustomModal';
+import CustomCard from '../../components/common/Card/CustomCard';
+
+const { Text, Title, Paragraph } = Typography;
 
 interface CreatorDetailModalProps {
   creatorId: string | null;
@@ -270,50 +285,66 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
 
   const renderHistory = () => (
     <div style={{ paddingTop: '16px' }}>
-      <Row gutter={[16, 16]}>
+      <Row gutter={[24, 24]}>
         <Col span={12}>
-          <Card title="Moderation Logs" size="small">
+          <CustomCard
+            title={<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><History size={16} /> Audit Trail</div>}
+            size="small"
+            style={{ borderRadius: '12px', border: `1px solid ${colors.gray[100]}` }}
+            headStyle={{ background: colors.gray[50] }}
+          >
             {history?.moderationLogs?.length > 0 ? (
-              <div style={{ maxHeight: 400, overflowY: 'auto' }}>
-                <ul style={{ paddingLeft: 20 }}>
+              <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px' }}>
+                <Timeline style={{ marginTop: '16px' }}>
                   {history.moderationLogs.map((log: any) => (
-                    <li key={log.id} style={{ marginBottom: 12 }}>
-                      <div style={{ fontWeight: 600, color: log.action.includes('BAN') ? 'red' : 'blue' }}>
+                    <Timeline.Item key={log.id} color={log.action.includes('BAN') ? colors.error.solid : colors.primary.solid}>
+                      <div style={{ fontWeight: 700, color: colors.text.primary, fontSize: '13px' }}>
                         {log.action.replace('_', ' ')}
                       </div>
-                      <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                        {new Date(log.createdAt).toLocaleString()} by {log.moderator?.name || 'AI System'}
+                      <div style={{ fontSize: '11px', color: colors.text.tertiary, fontWeight: 600, marginTop: '2px' }}>
+                        {new Date(log.createdAt).toLocaleString()} • {log.moderator?.name || 'AI System'}
                       </div>
-                      {log.reason && <div style={{ fontSize: '13px', fontStyle: 'italic' }}>"{log.reason}"</div>}
-                    </li>
+                      {log.reason && <div style={{ fontSize: '12px', color: colors.text.secondary, marginTop: '6px', borderLeft: `2px solid ${colors.gray[100]}`, paddingLeft: '8px' }}>{log.reason}</div>}
+                    </Timeline.Item>
                   ))}
-                </ul>
+                </Timeline>
               </div>
             ) : (
-              <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>No moderation logs found</div>
+              <div style={{ textAlign: 'center', color: colors.text.tertiary, padding: 32 }}>
+                <Info size={32} style={{ opacity: 0.2, marginBottom: '8px' }} />
+                <br />No moderation logs found
+              </div>
             )}
-          </Card>
+          </CustomCard>
         </Col>
         <Col span={12}>
-          <Card title="Reports Against Creator" size="small">
+          <CustomCard
+            title={<div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><AlertTriangle size={16} /> Incident Reports</div>}
+            size="small"
+            style={{ borderRadius: '12px', border: `1px solid ${colors.gray[100]}` }}
+            headStyle={{ background: colors.gray[50] }}
+          >
             {history?.reportsAgainst?.length > 0 ? (
-              <div style={{ maxHeight: 400, overflowY: 'auto' }}>
+              <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px' }}>
                 {history.reportsAgainst.map((report: any) => (
-                  <div key={report.id} style={{ marginBottom: 12, borderBottom: '1px solid #eee', paddingBottom: 8 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ fontWeight: 600 }}>{report.reason}</span>
-                      <Tag color={report.status === 'RESOLVED' ? 'green' : 'gold'}>{report.status}</Tag>
+                  <div key={report.id} style={{ marginBottom: 16, borderBottom: `1px solid ${colors.gray[50]}`, paddingBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                      <Text strong style={{ color: colors.text.primary, fontSize: '13px' }}>{report.reason}</Text>
+                      <Tag color={report.status === 'RESOLVED' ? 'success' : 'warning'} style={{ borderRadius: '4px', fontWeight: 600, fontSize: '10px' }}>{report.status}</Tag>
                     </div>
-                    <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                      {new Date(report.createdAt).toLocaleString()}
+                    <div style={{ fontSize: '11px', color: colors.text.tertiary, fontWeight: 500 }}>
+                      <Clock size={10} style={{ marginRight: '4px' }} /> {new Date(report.createdAt).toLocaleString()}
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <div style={{ textAlign: 'center', color: '#999', padding: 20 }}>No reports found</div>
+              <div style={{ textAlign: 'center', color: colors.text.tertiary, padding: 32 }}>
+                <CheckCircle2 size={32} style={{ opacity: 0.2, marginBottom: '8px' }} />
+                <br />No reports found against this creator
+              </div>
             )}
-          </Card>
+          </CustomCard>
         </Col>
       </Row>
     </div>
@@ -323,31 +354,34 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
     <div style={{ paddingTop: 16 }}>
       <Row gutter={[16, 16]}>
         <Col span={24}>
-          <Card size="small" className="admin-card-light">
+          <CustomCard style={{ background: '#f8fafc', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
             <Row gutter={16}>
               <Col span={8}>
                 <Statistic
-                  title="Total Contents"
+                  title={<Text style={{ fontSize: '11px', fontWeight: 700, color: colors.text.tertiary }}>TOTAL CONTENTS</Text>}
                   value={analytics?.contentCount || 0}
-                  prefix={<PlayCircleOutlined />}
+                  prefix={<PlayCircle size={18} color={colors.primary.solid} style={{ marginRight: '8px' }} />}
+                  valueStyle={{ color: colors.text.primary, fontWeight: 800 }}
                 />
               </Col>
               <Col span={8}>
                 <Statistic
-                  title="Conversations"
+                  title={<Text style={{ fontSize: '11px', fontWeight: 700, color: colors.text.tertiary }}>CONVERSATIONS</Text>}
                   value={analytics?.conversationCount || 0}
-                  prefix={<MailOutlined />}
+                  prefix={<Mail size={18} color={colors.primary.solid} style={{ marginRight: '8px' }} />}
+                  valueStyle={{ color: colors.text.primary, fontWeight: 800 }}
                 />
               </Col>
               <Col span={8}>
                 <Statistic
-                  title="Messages"
+                  title={<Text style={{ fontSize: '11px', fontWeight: 700, color: colors.text.tertiary }}>TOTAL MESSAGES</Text>}
                   value={analytics?.messageCount || 0}
-                  prefix={<SafetyCertificateOutlined />}
+                  prefix={<ShieldCheck size={18} color={colors.success.solid} style={{ marginRight: '8px' }} />}
+                  valueStyle={{ color: colors.text.primary, fontWeight: 800 }}
                 />
               </Col>
             </Row>
-          </Card>
+          </CustomCard>
         </Col>
 
         <Col span={24}>
@@ -360,71 +394,71 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
               <Col span={12}>
                 <Form.Item
                   name="displayName"
-                  label="Display Name"
+                  label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Display Name</span>}
                   rules={[{ required: true }]}
                 >
-                  <Input prefix={<UserOutlined />} />
+                  <Input prefix={<User size={16} style={{ color: colors.primary.solid }} />} style={{ height: '44px', borderRadius: '10px', color: colors.text.primary, fontWeight: 600 }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
                 <Form.Item
                   name="category"
-                  label="Category"
+                  label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Category</span>}
                   rules={[{ required: true }]}
                 >
-                  <Input />
+                  <Input style={{ height: '44px', borderRadius: '10px', color: colors.text.primary, fontWeight: 600 }} />
                 </Form.Item>
               </Col>
             </Row>
 
             <Row gutter={16}>
               <Col span={24}>
-                <Form.Item name="tagline" label="Tagline">
-                  <Input />
+                <Form.Item name="tagline" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Tagline</span>}>
+                  <Input style={{ height: '44px', borderRadius: '10px', color: colors.text.primary, fontWeight: 600 }} />
                 </Form.Item>
               </Col>
             </Row>
 
             <Row gutter={16}>
               <Col span={24}>
-                <Form.Item name="bio" label="Bio">
-                  <TextArea rows={3} />
+                <Form.Item name="bio" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Biography</span>}>
+                  <TextArea rows={3} style={{ borderRadius: '12px', color: colors.text.primary, fontWeight: 500, padding: '12px' }} />
                 </Form.Item>
               </Col>
             </Row>
 
             <Row gutter={16}>
               <Col span={24}>
-                <Form.Item name="tags" label="Tags">
-                  <Select mode="tags" placeholder="Add tags" />
+                <Form.Item name="tags" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Search Tags</span>}>
+                  <Select mode="tags" placeholder="Add tags" style={{ borderRadius: '10px' }} />
                 </Form.Item>
               </Col>
             </Row>
 
-            <Divider />
+            <Divider style={{ margin: '24px 0' }} />
 
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item name="youtubeUrl" label="YouTube URL">
-                  <Input />
+                <Form.Item name="youtubeUrl" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>YouTube Channel URL</span>}>
+                  <Input prefix={<Youtube size={16} color="#FF0000" />} style={{ height: '44px', borderRadius: '10px', color: colors.text.primary }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="instagramUrl" label="Instagram URL">
-                  <Input />
+                <Form.Item name="instagramUrl" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Instagram Profile</span>}>
+                  <Input prefix={<Instagram size={16} color="#E4405F" />} style={{ height: '44px', borderRadius: '10px', color: colors.text.primary }} />
                 </Form.Item>
               </Col>
             </Row>
 
             <Row gutter={16}>
               <Col span={12}>
-                <Form.Item name="twitterUrl" label="Twitter URL">
-                  <Input />
+                <Form.Item name="twitterUrl" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>X / Twitter handle</span>}>
+                  <Input prefix={<Twitter size={16} color="#1DA1F2" />} style={{ height: '44px', borderRadius: '10px', color: colors.text.primary }} />
                 </Form.Item>
               </Col>
               <Col span={12}>
-                <Form.Item name="websiteUrl" label="Website URL">
-                  <Input />
+                <Form.Item name="websiteUrl" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Official Website</span>}>
+                  <Input prefix={<Globe size={16} color={colors.primary.solid} />} style={{ height: '44px', borderRadius: '10px', color: colors.text.primary }} />
                 </Form.Item>
               </Col>
             </Row>
@@ -433,7 +467,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
               <Col span={12}>
                 <Form.Item
                   name="isVerified"
-                  label="Verified"
+                  label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Identity Verified</span>}
                   valuePropName="checked"
                 >
                   <Switch checkedChildren="Verified" unCheckedChildren="Unverified" />
@@ -442,7 +476,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
               <Col span={12}>
                 <Form.Item
                   name="isActive"
-                  label="Active"
+                  label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Account Status</span>}
                   valuePropName="checked"
                 >
                   <Switch checkedChildren="Active" unCheckedChildren="Inactive" />
@@ -459,39 +493,52 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
                 alignItems: 'center',
               }}
             >
-              <Space>
+              <Space size="middle">
                 <Button
-                  icon={<CheckCircleOutlined />}
+                  icon={<CheckCircle2 size={16} />}
                   type="default"
                   onClick={handleVerify}
                   disabled={creator?.isVerified}
+                  style={{ borderRadius: '8px', height: '40px', fontWeight: 600 }}
                 >
                   Verify Creator
                 </Button>
                 <Button
-                  icon={creator?.isActive ? <StopOutlined /> : <ClockCircleOutlined />}
+                  icon={creator?.isActive ? <Ban size={16} /> : <Clock size={16} />}
                   onClick={handleToggleActive}
+                  style={{ borderRadius: '8px', height: '40px', fontWeight: 600 }}
                 >
                   {creator?.isActive ? 'Deactivate' : 'Activate'}
                 </Button>
-                <Button
-                  danger
-                  icon={<StopOutlined />}
-                  onClick={() => {
-                    rejectForm.resetFields();
-                    setRejectModalVisible(true);
-                  }}
-                  disabled={creator?.isVerified}
-                >
-                  Reject Application
-                </Button>
+                <Popconfirm title="Reject this application?" onConfirm={() => {
+                  rejectForm.resetFields();
+                  setRejectModalVisible(true);
+                }}>
+                  <Button
+                    danger
+                    icon={<Trash2 size={16} />}
+                    disabled={creator?.isVerified}
+                    style={{ borderRadius: '8px', height: '40px', fontWeight: 600 }}
+                  >
+                    Reject Application
+                  </Button>
+                </Popconfirm>
               </Space>
 
               <Button
                 type="primary"
                 htmlType="submit"
-                icon={<EditOutlined />}
+                icon={<Edit3 size={16} />}
                 loading={loading}
+                style={{
+                  height: '42px',
+                  padding: '0 24px',
+                  borderRadius: '8px',
+                  fontWeight: 800,
+                  background: colors.primary.gradient,
+                  border: 'none',
+                  boxShadow: shadows.md
+                }}
               >
                 Update Profile
               </Button>
@@ -549,17 +596,18 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       render: (record: any) => (
         <Space>
           <Button
-            size="small"
-            icon={<CheckCircleOutlined />}
+            size="middle"
+            icon={<Edit3 size={14} />}
             onClick={() => openStatusModal(record)}
+            style={{ borderRadius: '6px' }}
           >
-            Update Status
+            Update
           </Button>
           <Popconfirm
-            title="Delete this content?"
+            title="Delete this content material?"
             onConfirm={() => handleDeleteContent(record.id)}
           >
-            <Button size="small" danger icon={<DeleteOutlined />}>
+            <Button size="middle" danger icon={<Trash2 size={14} />} style={{ borderRadius: '6px' }}>
               Delete
             </Button>
           </Popconfirm>
@@ -612,32 +660,37 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
 
   return (
     <>
-      <Modal
+      <CustomModal
         title={
-          <Space>
-            <UserOutlined />
-            <span>
-              Creator Details: {creator?.displayName || creator?.user?.name || 'Loading...'}
-            </span>
-            {creator?.isVerified ? (
-              <Tag color="success" icon={<CheckCircleOutlined />}>
-                VERIFIED
-              </Tag>
-            ) : (
-              <Tag>UNVERIFIED</Tag>
-            )}
-            {creator?.isActive ? (
-              <Tag color="green">ACTIVE</Tag>
-            ) : (
-              <Tag color="red">INACTIVE</Tag>
-            )}
-          </Space>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', width: '100%' }}>
+            <div style={{ padding: '8px', background: colors.primary.subtle, borderRadius: '10px', display: 'flex' }}>
+              <User size={20} color={colors.primary.solid} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
+                {creator?.displayName || creator?.user?.name || 'Loading creator...'}
+              </div>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                {creator?.isVerified ? (
+                  <Tag color="success" icon={<CheckCircle2 size={10} />} style={{ margin: 0, borderRadius: '4px', fontWeight: 700, fontSize: '10px' }}>
+                    VERIFIED
+                  </Tag>
+                ) : (
+                  <Tag style={{ margin: 0, borderRadius: '4px', fontWeight: 700, fontSize: '10px' }}>UNVERIFIED</Tag>
+                )}
+                {creator?.isActive ? (
+                  <Tag color="success" style={{ margin: 0, borderRadius: '4px', fontWeight: 700, fontSize: '10px' }}>ACTIVE</Tag>
+                ) : (
+                  <Tag color="error" style={{ margin: 0, borderRadius: '4px', fontWeight: 700, fontSize: '10px' }}>INACTIVE</Tag>
+                )}
+              </div>
+            </div>
+          </div>
         }
         open={visible}
         onCancel={onClose}
         footer={null}
-        width={800}
-        className="admin-modal"
+        width={900}
       >
         {loading && !creator ? (
           <div style={{ textAlign: 'center', padding: 100 }}>
@@ -651,8 +704,8 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
               {
                 key: 'overview',
                 label: (
-                  <span>
-                    <UserOutlined />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <User size={16} />
                     Overview
                   </span>
                 ),
@@ -661,9 +714,9 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
               {
                 key: 'content',
                 label: (
-                  <span>
-                    <PlayCircleOutlined />
-                    Content
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <PlayCircle size={16} />
+                    Content Portfolio
                   </span>
                 ),
                 children: renderContentModeration(),
@@ -671,9 +724,9 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
               {
                 key: 'history',
                 label: (
-                  <span>
-                    <HistoryOutlined />
-                    Moderation Logs
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <History size={16} />
+                    Compliance Logs
                   </span>
                 ),
                 children: renderHistory(),
@@ -681,68 +734,79 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
             ]}
           />
         )}
-      </Modal>
+      </CustomModal>
 
       {/* Content status update modal */}
-      <Modal
-        title="Update Content Status"
+      <CustomModal
+        title="Update Pipeline Status"
+        icon={<Edit3 size={18} />}
         open={contentStatusModalVisible}
         onCancel={() => setContentStatusModalVisible(false)}
-        onOk={() => statusForm.submit()}
-        confirmLoading={loading}
-        destroyOnClose
+        footer={[
+          <Button key="cancel" onClick={() => setContentStatusModalVisible(false)} style={{ borderRadius: '8px' }}>Cancel</Button>,
+          <Button key="submit" type="primary" onClick={() => statusForm.submit()} loading={loading} style={{ borderRadius: '8px', background: colors.primary.gradient, border: 'none' }}>Update Status</Button>
+        ]}
+        width={500}
       >
-        <Form
-          form={statusForm}
-          layout="vertical"
-          onFinish={handleUpdateContentStatus}
-        >
-          <Form.Item
-            name="status"
-            label="Status"
-            rules={[{ required: true, message: 'Please select a status' }]}
+        <div style={{ padding: '8px' }}>
+          <Form
+            form={statusForm}
+            layout="vertical"
+            onFinish={handleUpdateContentStatus}
           >
-            <Select>
-              <Select.Option value="PENDING">Pending</Select.Option>
-              <Select.Option value="PROCESSING">Processing</Select.Option>
-              <Select.Option value="COMPLETED">Completed</Select.Option>
-              <Select.Option value="FAILED">Failed</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item
-            name="errorMessage"
-            label="Error Message (for failed status)"
-          >
-            <TextArea rows={3} placeholder="Reason if marking as FAILED (optional for other statuses)" />
-          </Form.Item>
-        </Form>
-      </Modal>
+            <Form.Item
+              name="status"
+              label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Pipeline Stage</span>}
+              rules={[{ required: true, message: 'Please select a status' }]}
+            >
+              <Select style={{ height: '40px', borderRadius: '8px' }}>
+                <Select.Option value="PENDING">Pending Approval</Select.Option>
+                <Select.Option value="PROCESSING">Currently Processing</Select.Option>
+                <Select.Option value="COMPLETED">Successfully Ingested</Select.Option>
+                <Select.Option value="FAILED">Processing Failed</Select.Option>
+              </Select>
+            </Form.Item>
+            <Form.Item
+              name="errorMessage"
+              label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Status Notes / Error Message</span>}
+            >
+              <TextArea rows={3} placeholder="Provide additional context or error details..." style={{ borderRadius: '10px' }} />
+            </Form.Item>
+          </Form>
+        </div>
+      </CustomModal>
 
       {/* Reject creator modal */}
-      <Modal
-        title={`Reject Creator: ${creator?.displayName || creator?.user?.name || ''}`}
+      <CustomModal
+        title="Application Rejection"
+        icon={<Ban size={18} color={colors.error.solid} />}
         open={rejectModalVisible}
         onCancel={() => setRejectModalVisible(false)}
-        onOk={() => rejectForm.submit()}
-        confirmLoading={loading}
-        okButtonProps={{ danger: true }}
-        okText="Reject Application"
-        destroyOnClose
+        footer={[
+          <Button key="back" onClick={() => setRejectModalVisible(false)} style={{ borderRadius: '8px' }}>Withdraw</Button>,
+          <Button key="submit" type="primary" danger onClick={() => rejectForm.submit()} loading={loading} style={{ borderRadius: '8px' }}>Confirm Rejection</Button>
+        ]}
+        width={500}
       >
-        <Form
-          form={rejectForm}
-          layout="vertical"
-          onFinish={handleReject}
-        >
-          <Form.Item
-            name="reason"
-            label="Rejection Reason"
-            rules={[{ required: true, message: 'Please provide a reason' }]}
+        <div style={{ padding: '8px' }}>
+          <div style={{ marginBottom: '20px', color: colors.text.secondary }}>
+            Rejecting application for <Text strong style={{ color: colors.text.primary }}>{creator?.displayName || creator?.user?.name}</Text>. This will notify the user.
+          </div>
+          <Form
+            form={rejectForm}
+            layout="vertical"
+            onFinish={handleReject}
           >
-            <TextArea rows={4} placeholder="Explain why this creator application is being rejected..." />
-          </Form.Item>
-        </Form>
-      </Modal>
+            <Form.Item
+              name="reason"
+              label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Rational for Rejection</span>}
+              rules={[{ required: true, message: 'Please provide a reason' }]}
+            >
+              <TextArea rows={4} placeholder="Explain why this creator application is being rejected..." style={{ borderRadius: '12px' }} />
+            </Form.Item>
+          </Form>
+        </div>
+      </CustomModal>
     </>
   );
 };

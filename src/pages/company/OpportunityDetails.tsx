@@ -1,13 +1,12 @@
-// ===========================================
-// OPPORTUNITY DETAILS PAGE
-// View applications and manage hiring
-// ===========================================
-
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Tag, Button, List, Avatar, Spin, Statistic, Row, Col, Modal, InputNumber, message, Descriptions } from 'antd';
-import { UserOutlined, ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined } from '@ant-design/icons';
+import { Card, Tag, Button, List, Avatar, Spin, Statistic, Row, Col, Modal, InputNumber, message, Descriptions, Typography } from 'antd';
+import { UserOutlined, ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { opportunityApi, getImageUrl } from '../../services/api';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { motion } from 'framer-motion';
+
+const { Title, Text, Paragraph } = Typography;
 
 const OpportunityDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -81,17 +80,22 @@ const OpportunityDetails = () => {
     const applications = opportunity.applications || [];
 
     return (
-        <div className="opportunity-details-page fade-in">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{ padding: '32px' }}
+        >
             <div style={{ marginBottom: 24, display: 'flex', alignItems: 'center', gap: 12 }}>
                 <Button
                     icon={<ArrowLeftOutlined />}
                     onClick={() => navigate('/company-dashboard/opportunities')}
-                    style={{ border: 'none', background: 'rgba(255,255,255,0.05)', color: '#94A3B8' }}
+                    style={{ border: `1px solid ${colors.gray[200]}`, background: '#fff', color: colors.text.primary, borderRadius: '8px', fontWeight: 600 }}
                 >
                     Back
                 </Button>
-                <div style={{ fontSize: '14px', color: '#64748B' }}>
-                    Opportunities / <span style={{ color: '#F8FAFC' }}>{opportunity.title}</span>
+                <div style={{ fontSize: '14px', color: colors.text.tertiary, fontWeight: 500 }}>
+                    Opportunities / <span style={{ color: colors.text.primary, fontWeight: 700 }}>{opportunity.title}</span>
                 </div>
             </div>
 
@@ -100,22 +104,23 @@ const OpportunityDetails = () => {
                 <Col xs={24} lg={16}>
                     <Card
                         bordered={false}
-                        style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '16px', marginBottom: '24px' }}
+                        style={{ background: '#ffffff', borderRadius: '24px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.md, marginBottom: '24px' }}
+                        bodyStyle={{ padding: '32px' }}
                     >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '24px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '32px' }}>
                             <div>
-                                <h1 style={{ color: '#F8FAFC', margin: 0, fontSize: '24px' }}>{opportunity.title}</h1>
-                                {opportunity.category && <Tag color="geekblue" style={{ marginTop: '8px', border: 'none' }}>{opportunity.category}</Tag>}
+                                <Title level={3} style={{ color: colors.text.primary, margin: 0, fontWeight: 800 }}>{opportunity.title}</Title>
+                                {opportunity.category && <Tag color="geekblue" style={{ marginTop: '12px', borderRadius: '6px', fontWeight: 700 }}>{opportunity.category}</Tag>}
                             </div>
-                            <Tag color={opportunity.status === 'OPEN' ? 'success' : 'default'} style={{ fontSize: '14px', padding: '4px 12px', borderRadius: '20px' }}>
+                            <Tag color={opportunity.status === 'OPEN' ? 'success' : 'default'} style={{ fontSize: '14px', padding: '4px 16px', borderRadius: '12px', fontWeight: 800 }}>
                                 {opportunity.status}
                             </Tag>
                         </div>
 
-                        <Descriptions column={{ xs: 1, sm: 2 }} labelStyle={{ color: '#94A3B8' }} contentStyle={{ color: '#F8FAFC', fontWeight: 500 }}>
+                        <Descriptions column={{ xs: 1, sm: 2 }} labelStyle={{ color: colors.text.tertiary, fontWeight: 700, fontSize: '13px', textTransform: 'uppercase' }} contentStyle={{ color: colors.text.primary, fontWeight: 600, fontSize: '15px' }}>
                             <Descriptions.Item label="Budget Type">{opportunity.budgetType}</Descriptions.Item>
                             <Descriptions.Item label="Budget">
-                                {opportunity.budget ? `₹${opportunity.budget.toLocaleString()}` : <span style={{ color: '#A5F3FC' }}>Negotiable</span>}
+                                {opportunity.budget ? <Text style={{ color: colors.primary.solid, fontWeight: 800 }}>₹{opportunity.budget.toLocaleString()}</Text> : <Text style={{ color: colors.secondary?.solid || colors.primary.solid, fontWeight: 800 }}>Negotiable</Text>}
                             </Descriptions.Item>
                             <Descriptions.Item label="Deadline">
                                 {opportunity.deadline ? new Date(opportunity.deadline).toLocaleDateString() : 'No Deadline'}
@@ -125,15 +130,15 @@ const OpportunityDetails = () => {
                             </Descriptions.Item>
                         </Descriptions>
 
-                        <div style={{ marginTop: 24, borderTop: '1px solid #334155', paddingTop: 24 }}>
-                            <h4 style={{ color: '#F8FAFC' }}>Description</h4>
-                            <p style={{ whiteSpace: 'pre-wrap', color: '#CBD5E1', lineHeight: 1.6 }}>{opportunity.description}</p>
+                        <div style={{ marginTop: 32, borderTop: `1px solid ${colors.gray[50]}`, paddingTop: 32 }}>
+                            <Title level={5} style={{ color: colors.text.primary, fontWeight: 800, marginBottom: '16px' }}>Description</Title>
+                            <Paragraph style={{ whiteSpace: 'pre-wrap', color: colors.text.secondary, lineHeight: 1.8, fontSize: '16px', fontWeight: 500 }}>{opportunity.description}</Paragraph>
                         </div>
                     </Card>
 
-                    <h3 style={{ color: '#F8FAFC', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        Applications <span style={{ fontSize: '14px', color: '#64748B', fontWeight: 400 }}>({applications.length})</span>
-                    </h3>
+                    <Title level={4} style={{ color: colors.text.primary, marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 800 }}>
+                        Applications <Tag style={{ borderRadius: '6px', fontWeight: 800, border: 'none', background: colors.gray[50], color: colors.text.tertiary }}>{applications.length}</Tag>
+                    </Title>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         {applications.length === 0 ? (
@@ -145,52 +150,49 @@ const OpportunityDetails = () => {
                                 <Card
                                     key={item.id}
                                     bordered={false}
-                                    style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '12px' }}
-                                    bodyStyle={{ padding: '20px' }}
+                                    style={{ background: '#ffffff', border: `1px solid ${colors.gray[100]}`, borderRadius: '24px', boxShadow: shadows.sm }}
+                                    bodyStyle={{ padding: '24px' }}
                                 >
                                     <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start' }}>
-                                        <Avatar
-                                            size={64}
-                                            src={item.creator?.profileImage ? getImageUrl(item.creator.profileImage) : undefined}
-                                            icon={<UserOutlined />}
-                                            style={{ border: '2px solid rgba(99,102,241,0.2)' }}
-                                        />
+                                        <div style={{ position: 'relative' }}>
+                                            <Avatar
+                                                size={72}
+                                                src={item.creator?.profileImage ? getImageUrl(item.creator.profileImage) : undefined}
+                                                icon={<UserOutlined />}
+                                                style={{ border: `3px solid ${colors.primary.subtle}`, background: colors.gray[50] }}
+                                            />
+                                            {item.creator?.isVerified && (
+                                                <CheckCircleFilled style={{ position: 'absolute', bottom: 0, right: 0, color: colors.primary.solid, fontSize: '18px', background: '#fff', borderRadius: '50%' }} />
+                                            )}
+                                        </div>
                                         <div style={{ flex: 1 }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
                                                 <div>
-                                                    <h4 style={{ color: '#F8FAFC', margin: 0, fontSize: '18px' }}>{item.creator?.displayName}</h4>
-                                                    <div style={{ color: '#64748B', fontSize: '12px' }}>Applied on {new Date(item.createdAt).toLocaleDateString()}</div>
+                                                    <Title level={5} style={{ color: colors.text.primary, margin: 0, fontWeight: 800 }}>{item.creator?.displayName}</Title>
+                                                    <Text style={{ color: colors.text.tertiary, fontSize: '12px', fontWeight: 700 }}>APPLIED {new Date(item.createdAt).toLocaleDateString().toUpperCase()}</Text>
                                                 </div>
                                                 {item.proposedBudget && (
                                                     <div style={{ textAlign: 'right' }}>
-                                                        <div style={{ color: '#94A3B8', fontSize: '12px' }}>Proposed</div>
-                                                        <div style={{ color: '#A5F3FC', fontWeight: 600, fontSize: '16px' }}>₹{item.proposedBudget.toLocaleString()}</div>
+                                                        <div style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase' }}>Proposed Budget</div>
+                                                        <div style={{ color: colors.primary.solid, fontWeight: 900, fontSize: '18px' }}>₹{item.proposedBudget.toLocaleString()}</div>
                                                     </div>
                                                 )}
                                             </div>
 
                                             {/* Contact Info Section */}
-                                            <div style={{ marginBottom: '12px', display: 'flex', gap: '16px', fontSize: '12px', flexWrap: 'wrap' }}>
+                                            <div style={{ marginBottom: '16px', display: 'flex', gap: '12px', fontSize: '12px', flexWrap: 'wrap' }}>
                                                 {item.creator?.user?.email && (
-                                                    <span style={{ color: '#CBD5E1' }}>
-                                                        <UserOutlined style={{ marginRight: 4 }} /> {item.creator.user.email}
-                                                    </span>
+                                                    <Tag icon={<UserOutlined />} style={{ color: colors.text.secondary, fontWeight: 600 }}>{item.creator.user.email}</Tag>
                                                 )}
                                                 {item.creator?.instagramUrl && (
-                                                    <a href={item.creator.instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#E1306C' }}>Instagram</a>
-                                                )}
-                                                {item.creator?.twitterUrl && (
-                                                    <a href={item.creator.twitterUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#1DA1F2' }}>Twitter</a>
-                                                )}
-                                                {item.creator?.youtubeUrl && (
-                                                    <a href={item.creator.youtubeUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#FF0000' }}>YouTube</a>
+                                                    <a href={item.creator.instagramUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#E1306C', fontWeight: 700 }}>Instagram</a>
                                                 )}
                                                 {item.creator?.websiteUrl && (
-                                                    <a href={item.creator.websiteUrl} target="_blank" rel="noopener noreferrer" style={{ color: '#38BDF8' }}>Website</a>
+                                                    <a href={item.creator.websiteUrl} target="_blank" rel="noopener noreferrer" style={{ color: colors.primary.solid, fontWeight: 700 }}>Website</a>
                                                 )}
                                             </div>
 
-                                            <div style={{ background: 'rgba(15, 23, 42, 0.5)', padding: '12px', borderRadius: '8px', color: '#E2E8F0', marginBottom: '16px', fontStyle: 'italic', borderLeft: '3px solid #6366F1' }}>
+                                            <div style={{ background: colors.gray[50], padding: '20px', borderRadius: '16px', color: colors.text.secondary, marginBottom: '20px', fontStyle: 'italic', borderLeft: `4px solid ${colors.primary.solid}`, fontWeight: 500, fontSize: '15px', lineHeight: 1.6 }}>
                                                 "{item.pitch}"
                                             </div>
 
@@ -202,6 +204,7 @@ const OpportunityDetails = () => {
                                                             type="text"
                                                             onClick={() => handleReject(item.id)}
                                                             loading={processingId === item.id}
+                                                            style={{ fontWeight: 700 }}
                                                         >
                                                             Reject
                                                         </Button>
@@ -209,13 +212,13 @@ const OpportunityDetails = () => {
                                                             type="primary"
                                                             onClick={() => openAcceptModal(item)}
                                                             loading={processingId === item.id}
-                                                            style={{ background: '#10B981', borderColor: '#10B981' }}
+                                                            style={{ background: '#10B981', borderColor: '#10B981', borderRadius: '10px', height: '40px', fontWeight: 700, padding: '0 24px' }}
                                                         >
                                                             Accept Proposal
                                                         </Button>
                                                     </>
                                                 ) : (
-                                                    <Tag color={item.status === 'ACCEPTED' ? 'success' : 'error'} style={{ fontSize: '14px', padding: '4px 12px' }}>
+                                                    <Tag color={item.status === 'ACCEPTED' ? 'success' : 'error'} style={{ fontSize: '14px', padding: '4px 16px', borderRadius: '8px', fontWeight: 800 }}>
                                                         {item.status}
                                                     </Tag>
                                                 )}
@@ -231,24 +234,23 @@ const OpportunityDetails = () => {
                 {/* Right Column: Stats or Tips */}
                 <Col xs={24} lg={8}>
                     <Card
-                        title={<span style={{ color: '#F8FAFC' }}>Quick Stats</span>}
+                        title={<span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>📊 Quick Stats</span>}
                         bordered={false}
-                        style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '16px' }}
-                        headStyle={{ borderBottom: '1px solid #334155' }}
+                        style={{ background: '#ffffff', borderRadius: '24px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.md }}
                     >
                         <Row gutter={[16, 16]}>
                             <Col span={12}>
                                 <Statistic
-                                    title={<span style={{ color: '#94A3B8' }}>Views</span>}
+                                    title={<Text style={{ color: colors.text.tertiary, fontWeight: 800, fontSize: '11px', textTransform: 'uppercase' }}>Views</Text>}
                                     value={opportunity.viewCount || 0}
-                                    valueStyle={{ color: '#F8FAFC' }}
+                                    valueStyle={{ color: colors.text.primary, fontWeight: 900, letterSpacing: '-0.02em' }}
                                 />
                             </Col>
                             <Col span={12}>
                                 <Statistic
-                                    title={<span style={{ color: '#94A3B8' }}>Applications</span>}
+                                    title={<Text style={{ color: colors.text.tertiary, fontWeight: 800, fontSize: '11px', textTransform: 'uppercase' }}>Applications</Text>}
                                     value={applications.length}
-                                    valueStyle={{ color: '#F8FAFC' }}
+                                    valueStyle={{ color: colors.text.primary, fontWeight: 900, letterSpacing: '-0.02em' }}
                                 />
                             </Col>
                         </Row>
@@ -263,24 +265,25 @@ const OpportunityDetails = () => {
                 onOk={handleAcceptConfirm}
                 onCancel={() => setAcceptModalOpen(false)}
                 confirmLoading={!!processingId}
-                okText="Create Deal"
+                okText="Create Contract"
                 width={500}
+                bodyStyle={{ padding: '24px 0 0 0' }}
             >
-                <div style={{ padding: '12px 0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '20px', padding: '16px', background: '#F8FAFC', borderRadius: '8px' }}>
-                        <Avatar src={selectedApplication?.creator?.profileImage} icon={<UserOutlined />} />
+                <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '24px', padding: '20px', background: colors.gray[50], borderRadius: '16px', border: `1px solid ${colors.gray[100]}` }}>
+                        <Avatar size={48} src={selectedApplication?.creator?.profileImage ? getImageUrl(selectedApplication.creator.profileImage) : undefined} icon={<UserOutlined />} style={{ border: `2px solid ${colors.primary.subtle}` }} />
                         <div>
-                            <div style={{ fontWeight: 600, color: '#64748B' }}>{selectedApplication?.creator?.displayName}</div>
-                            <div style={{ fontSize: '12px', color: '#64748B' }}>Waitlist Creator</div>
+                            <Text style={{ fontWeight: 800, color: colors.text.primary, fontSize: '16px', display: 'block' }}>{selectedApplication?.creator?.displayName}</Text>
+                            <Tag color="blue" style={{ borderRadius: '4px', fontWeight: 700, marginTop: '4px' }}>Waitlist Creator</Tag>
                         </div>
                     </div>
 
-                    <p style={{ marginBottom: '16px' }}>Please confirm the final agreed amount for this collaboration. This will be the contract value.</p>
+                    <Text style={{ display: 'block', marginBottom: '20px', color: colors.text.secondary, fontWeight: 500, lineHeight: 1.6 }}>Please confirm the final agreed amount for this collaboration. This will establish a legal contract between both parties.</Text>
 
-                    <div style={{ marginBottom: 16 }}>
-                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 500 }}>Final Deal Amount (₹)</label>
+                    <div style={{ marginBottom: 24 }}>
+                        <label style={{ display: 'block', marginBottom: 10, fontWeight: 800, color: colors.text.primary, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Final Deal Amount (INR)</label>
                         <InputNumber
-                            style={{ width: '100%' }}
+                            style={{ width: '100%', borderRadius: '12px' }}
                             value={dealAmount}
                             onChange={(val) => setDealAmount(val || 0)}
                             min={0}
@@ -288,12 +291,38 @@ const OpportunityDetails = () => {
                             size="large"
                         />
                     </div>
-                    <p style={{ fontSize: '12px', color: '#64748B', background: '#F1F5F9', padding: '8px', borderRadius: '4px' }}>
-                        <CheckCircleOutlined style={{ color: '#10B981' }} /> Funds will be held in escrow until you mark the deal as complete.
-                    </p>
+                    <div style={{ fontSize: '13px', color: colors.success?.solid || '#10B981', background: `${colors.success?.solid || '#10B981'}10`, padding: '12px 16px', borderRadius: '12px', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <CheckCircleOutlined /> Funds will be held securely in escrow until milestones are achieved.
+                    </div>
                 </div>
             </Modal>
-        </div>
+            <style>{`
+                .ant-modal-content {
+                    border-radius: 24px !important;
+                    padding: 32px !important;
+                }
+                .ant-modal-header {
+                    margin-bottom: 24px !important;
+                    border: none !important;
+                }
+                .ant-modal-title {
+                    font-size: 22px !important;
+                    font-weight: 800 !important;
+                    color: ${colors.text.primary} !important;
+                }
+                .ant-btn-primary {
+                    border-radius: 12px !important;
+                    height: 44px !important;
+                    font-weight: 700 !important;
+                    background: ${colors.primary.solid} !important;
+                }
+                .ant-btn-default {
+                    border-radius: 12px !important;
+                    height: 44px !important;
+                    font-weight: 700 !important;
+                }
+            `}</style>
+        </motion.div>
     );
 };
 

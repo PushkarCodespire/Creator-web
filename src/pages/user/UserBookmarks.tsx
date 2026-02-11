@@ -6,6 +6,7 @@ import { motion } from 'framer-motion';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
 import { useNavigate } from 'react-router-dom';
 import dayjs from 'dayjs';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -114,21 +115,22 @@ const UserBookmarks = () => {
             style={{ padding: '32px' }}
         >
             <div style={{ marginBottom: '32px' }}>
-                <Title level={2} style={{ color: '#fff', marginBottom: '4px', fontWeight: 800 }}>
+                <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
                     <BookOutlined /> Bookmarks
                 </Title>
-                <Text style={{ color: '#94A3B8', fontSize: '16px' }}>
+                <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>
                     Your saved messages and important notes
                 </Text>
             </div>
 
             {/* Search and Filters */}
             <Card
+                bordered={false}
                 style={{
-                    background: 'rgba(30, 41, 59, 0.4)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                    borderRadius: '20px',
+                    background: '#ffffff',
+                    borderRadius: '24px',
+                    border: `1px solid ${colors.gray[100]}`,
+                    boxShadow: shadows.md,
                     marginBottom: '24px'
                 }}
                 bodyStyle={{ padding: '20px' }}
@@ -141,7 +143,7 @@ const UserBookmarks = () => {
                             size="large"
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            prefix={<SearchOutlined style={{ color: '#94A3B8' }} />}
+                            prefix={<SearchOutlined style={{ color: colors.text.tertiary }} />}
                             style={{ borderRadius: '12px' }}
                         />
                     </Col>
@@ -150,10 +152,11 @@ const UserBookmarks = () => {
                             icon={<FilterOutlined />}
                             onClick={() => setShowFilters(!showFilters)}
                             style={{
-                                background: showFilters ? 'rgba(99, 102, 241, 0.2)' : 'transparent',
-                                border: '1px solid rgba(255, 255, 255, 0.1)',
-                                color: '#fff',
-                                borderRadius: '12px'
+                                background: showFilters ? colors.primary.subtle : 'transparent',
+                                border: `1px solid ${colors.gray[200]}`,
+                                color: colors.text.primary,
+                                borderRadius: '12px',
+                                fontWeight: 700
                             }}
                         >
                             {showFilters ? 'Hide Filters' : 'Show Filters'}
@@ -207,9 +210,10 @@ const UserBookmarks = () => {
                                     onClick={handleResetFilters}
                                     style={{
                                         background: 'transparent',
-                                        border: '1px solid rgba(255, 255, 255, 0.1)',
-                                        color: '#94A3B8',
-                                        borderRadius: '12px'
+                                        border: `1px solid ${colors.gray[200]}`,
+                                        color: colors.text.tertiary,
+                                        borderRadius: '12px',
+                                        fontWeight: 700
                                     }}
                                 >
                                     Reset Filters
@@ -223,23 +227,27 @@ const UserBookmarks = () => {
             {/* Bookmark Recommendations */}
             {recommendations.length > 0 && (
                 <Card
-                    title={<span style={{ color: '#fff', fontWeight: 700 }}>✨ Recommended to Bookmark</span>}
+                    title={<span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>✨ Recommended to Bookmark</span>}
+                    bordered={false}
                     style={{
-                        background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
-                        border: '1px solid rgba(99, 102, 241, 0.2)',
+                        background: 'linear-gradient(135deg, #eff6ff 0%, #faf5ff 100%)',
+                        border: `1px solid ${colors.primary.subtle}`,
                         borderRadius: '24px',
+                        boxShadow: shadows.sm,
                         marginBottom: '24px'
                     }}
-                    bodyStyle={{ padding: '20px' }}
+                    bodyStyle={{ padding: '24px' }}
                 >
                     <div style={{ display: 'grid', gap: '16px' }}>
                         {recommendations.map((rec: any) => (
                             <Card
                                 key={rec.messageId}
+                                bordered={false}
                                 style={{
-                                    background: 'rgba(30, 41, 59, 0.6)',
-                                    border: '1px solid rgba(255, 255, 255, 0.05)',
-                                    borderRadius: '16px'
+                                    background: '#ffffff',
+                                    border: `1px solid ${colors.gray[100]}`,
+                                    borderRadius: '16px',
+                                    boxShadow: '0 4px 12px rgba(16, 24, 40, 0.04)'
                                 }}
                                 bodyStyle={{ padding: '16px' }}
                             >
@@ -247,22 +255,22 @@ const UserBookmarks = () => {
                                     <Avatar
                                         size={40}
                                         src={rec.creator?.profileImage ? getImageUrl(rec.creator.profileImage) : undefined}
-                                        style={{ background: '#6366F1' }}
+                                        style={{ background: colors.primary.solid }}
                                     >
                                         {rec.creator?.displayName?.[0]?.toUpperCase()}
                                     </Avatar>
                                     <div style={{ flex: 1 }}>
-                                        <Text style={{ color: '#fff', fontWeight: 600 }}>
+                                        <Text style={{ color: colors.text.primary, fontWeight: 700 }}>
                                             {rec.creator?.displayName}
                                         </Text>
                                         <div>
-                                            <Text style={{ color: '#94A3B8', fontSize: '12px' }}>
+                                            <Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                                 {rec.reason}
                                             </Text>
                                         </div>
                                     </div>
                                 </div>
-                                <Text style={{ color: '#E2E8F0', fontSize: '14px', display: 'block', marginBottom: '12px' }}>
+                                <Text style={{ color: colors.text.secondary, fontSize: '14px', display: 'block', marginBottom: '12px', fontStyle: 'italic', fontWeight: 500 }}>
                                     "{rec.content || rec.fullContent}"
                                 </Text>
                                 <Button
@@ -270,7 +278,7 @@ const UserBookmarks = () => {
                                     size="small"
                                     icon={<BookOutlined />}
                                     onClick={() => handleAddBookmark(rec.messageId)}
-                                    style={{ borderRadius: '8px' }}
+                                    style={{ borderRadius: '8px', fontWeight: 700, height: '36px' }}
                                 >
                                     Bookmark This
                                 </Button>
@@ -286,17 +294,18 @@ const UserBookmarks = () => {
                     {bookmarks.map((bookmark) => (
                         <Card
                             key={bookmark.id}
+                            bordered={false}
                             style={{
-                                background: 'rgba(30, 41, 59, 0.4)',
-                                backdropFilter: 'blur(20px)',
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                background: '#ffffff',
+                                border: `1px solid ${colors.gray[100]}`,
                                 borderRadius: '24px',
+                                boxShadow: shadows.md,
                             }}
                             actions={[
                                 <Button
                                     type="text"
-                                    onClick={() => navigate(`/chat/${bookmark.message?.conversation?.creatorId}`)}
-                                    style={{ color: '#818CF8' }}
+                                    onClick={() => navigate(`/chat/${bookmark.message?.conversation?.creator?.id || bookmark.message?.conversation?.creatorId}`)}
+                                    style={{ color: colors.primary.solid, fontWeight: 700 }}
                                 >
                                     View Chat
                                 </Button>,
@@ -316,40 +325,40 @@ const UserBookmarks = () => {
                                     <Avatar
                                         size={48}
                                         src={getImageUrl(bookmark.message.conversation.creator.profileImage)}
-                                        style={{ background: '#6366F1' }}
+                                        style={{ background: colors.primary.solid, border: `2px solid ${colors.primary.subtle}` }}
                                     >
                                         {bookmark.message.conversation.creator.displayName?.[0]?.toUpperCase()}
                                     </Avatar>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                                            <Text style={{ color: '#fff', fontWeight: 600 }}>
+                                            <Text style={{ color: colors.text.primary, fontWeight: 800, fontSize: '15px' }}>
                                                 {bookmark.message.conversation.creator.displayName}
                                             </Text>
                                             {bookmark.message.conversation.creator.isVerified && (
-                                                <CheckCircleFilled style={{ color: '#3B82F6', fontSize: '14px' }} />
+                                                <CheckCircleFilled style={{ color: colors.primary.solid, fontSize: '14px' }} />
                                             )}
                                         </div>
-                                        <Text style={{ color: '#94A3B8', fontSize: '12px' }}>
+                                        <Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                             {bookmark.message.conversation.creator.category}
                                         </Text>
                                     </div>
                                 </div>
                             )}
 
-                            <Text style={{ color: '#fff', fontSize: '16px', display: 'block', marginBottom: '12px', lineHeight: '1.6' }}>
+                            <Text style={{ color: colors.text.primary, fontSize: '16px', display: 'block', marginBottom: '12px', lineHeight: '1.6', fontWeight: 500 }}>
                                 "{bookmark.message?.content || 'Message content unavailable'}"
                             </Text>
 
                             {bookmark.note && (
-                                <div style={{ background: 'rgba(99, 102, 241, 0.1)', padding: '12px', borderRadius: '12px', marginTop: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
-                                    <Text style={{ color: '#C7D2FE', fontSize: '13px' }}>
+                                <div style={{ background: colors.primary.subtle, padding: '12px', borderRadius: '12px', marginTop: '12px', border: `1px solid ${colors.primary.subtle}` }}>
+                                    <Text style={{ color: colors.primary.solid, fontSize: '13px', fontWeight: 600 }}>
                                         <strong>Note:</strong> {bookmark.note}
                                     </Text>
                                 </div>
                             )}
 
                             <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <Text style={{ color: '#64748B', fontSize: '12px' }}>
+                                <Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                                     Saved {new Date(bookmark.createdAt).toLocaleDateString()}
                                 </Text>
                             </div>
@@ -358,16 +367,17 @@ const UserBookmarks = () => {
                 </div>
             ) : (
                 <Card
+                    bordered={false}
                     style={{
-                        background: 'rgba(30, 41, 59, 0.4)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: '#ffffff',
+                        border: `1px solid ${colors.gray[100]}`,
                         borderRadius: '24px',
-                        padding: '40px 0'
+                        padding: '60px 0',
+                        textAlign: 'center'
                     }}
                 >
                     <Empty
-                        description={<span style={{ color: '#94A3B8', fontSize: '16px' }}>No bookmarked messages yet</span>}
+                        description={<span style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>No bookmarked messages yet</span>}
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                     />
                 </Card>

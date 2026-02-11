@@ -1,12 +1,11 @@
-// ===========================================
-// COMPANY DASHBOARD
-// ===========================================
-
 import { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, List, Tag, Spin, Button, Avatar } from 'antd';
-import { ShopOutlined, TeamOutlined, DollarOutlined, UserOutlined } from '@ant-design/icons';
+import { Row, Col, Card, Statistic, List, Tag, Spin, Button, Avatar, Typography } from 'antd';
+import { ShopOutlined, TeamOutlined, DollarOutlined, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { companyApi } from '../../services/api';
+import { companyApi, getImageUrl } from '../../services/api';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+
+const { Title, Text } = Typography;
 
 const CompanyDashboard = () => {
   const navigate = useNavigate();
@@ -33,117 +32,134 @@ const CompanyDashboard = () => {
   }
 
   return (
-    <div className="company-dashboard fade-in">
+    <div className="company-dashboard fade-in" style={{ padding: '32px' }}>
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px', background: 'linear-gradient(135deg, #FFF 0%, #A5F3FC 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+        <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
           Company Dashboard
-        </h1>
-        <p style={{ color: '#94A3B8', fontSize: '16px' }}>Welcome back, <span style={{ color: '#F8FAFC', fontWeight: 600 }}>{dashboard?.companyName || 'Partner'}</span></p>
+        </Title>
+        <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>
+          Welcome back, <span style={{ color: colors.primary.solid, fontWeight: 700 }}>{dashboard?.companyName || 'Partner'}</span>
+        </Text>
       </div>
 
       <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
-        <Col xs={24} sm={8}>
-          <Card
-            bordered={false}
-            style={{ background: 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)', border: '1px solid rgba(59, 130, 246, 0.2)' }}
-          >
-            <Statistic
-              title={<span style={{ color: '#94A3B8' }}>Active Opportunities</span>}
-              value={dashboard?.opportunities?.filter((o: any) => o.status === 'OPEN').length || 0}
-              prefix={<ShopOutlined style={{ color: '#60A5FA' }} />}
-              valueStyle={{ color: '#F8FAFC', fontWeight: 700 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card
-            bordered={false}
-            style={{ background: 'linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(124, 58, 237, 0.05) 100%)', border: '1px solid rgba(139, 92, 246, 0.2)' }}
-          >
-            <Statistic
-              title={<span style={{ color: '#94A3B8' }}>Total Applications</span>}
-              value={dashboard?.opportunities?.reduce((acc: number, o: any) => acc + (o._count?.applications || 0), 0) || 0}
-              prefix={<TeamOutlined style={{ color: '#A78BFA' }} />}
-              valueStyle={{ color: '#F8FAFC', fontWeight: 700 }}
-            />
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card
-            bordered={false}
-            style={{ background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)', border: '1px solid rgba(16, 185, 129, 0.2)' }}
-          >
-            <Statistic
-              title={<span style={{ color: '#94A3B8' }}>Active Deals</span>}
-              value={dashboard?.deals?.filter((d: any) => d.status === 'IN_PROGRESS').length || 0}
-              prefix={<DollarOutlined style={{ color: '#34D399' }} />}
-              valueStyle={{ color: '#F8FAFC', fontWeight: 700 }}
-            />
-          </Card>
-        </Col>
+        {[
+          { title: 'Active Opportunities', value: dashboard?.opportunities?.filter((o: any) => o.status === 'OPEN').length || 0, icon: <ShopOutlined />, color: colors.primary.solid },
+          { title: 'Total Applications', value: dashboard?.opportunities?.reduce((acc: number, o: any) => acc + (o._count?.applications || 0), 0) || 0, icon: <TeamOutlined />, color: colors.secondary?.solid || '#8B5CF6' },
+          { title: 'Active Deals', value: dashboard?.deals?.filter((d: any) => d.status === 'IN_PROGRESS').length || 0, icon: <DollarOutlined />, color: colors.success?.solid || '#10B981' }
+        ].map((stat, idx) => (
+          <Col xs={24} sm={8} key={idx}>
+            <Card
+              bordered={false}
+              style={{
+                background: '#ffffff',
+                borderRadius: '24px',
+                border: `1px solid ${colors.gray[100]}`,
+                boxShadow: shadows.md
+              }}
+              bodyStyle={{ padding: '24px' }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                <div style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '12px',
+                  background: `${stat.color}15`,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: stat.color,
+                  fontSize: '20px'
+                }}>
+                  {stat.icon}
+                </div>
+                <div>
+                  <Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    {stat.title}
+                  </Text>
+                  <div style={{ color: colors.text.primary, fontSize: '24px', fontWeight: 900, letterSpacing: '-0.02em' }}>
+                    {stat.value}
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </Col>
+        ))}
       </Row>
 
       <Row gutter={[24, 24]}>
         <Col xs={24} lg={12}>
           <Card
-            title={<span style={{ color: '#F8FAFC' }}>Recent Opportunities</span>}
+            title={<span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>📢 Recent Opportunities</span>}
             bordered={false}
-            style={{ background: '#1E293B', border: '1px solid #334155' }}
-            extra={<Button type="link" onClick={() => navigate('/company-dashboard/opportunities')} style={{ color: '#60A5FA' }}>View All</Button>}
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              border: `1px solid ${colors.gray[100]}`,
+              boxShadow: shadows.md
+            }}
+            extra={<Button type="link" onClick={() => navigate('/company-dashboard/opportunities')} style={{ color: colors.primary.solid, fontWeight: 700 }}>View All <ArrowRightOutlined style={{ fontSize: '12px', marginLeft: '4px' }} /></Button>}
+            bodyStyle={{ padding: '0 24px' }}
           >
             <List
               dataSource={dashboard?.opportunities?.slice(0, 5) || []}
-              renderItem={(item: any) => (
-                <List.Item style={{ borderBottom: '1px solid #334155', padding: '12px 0' }}>
+              renderItem={(item: any, index: number) => (
+                <List.Item style={{ borderBottom: index === (dashboard?.opportunities?.slice(0, 5).length - 1) ? 'none' : `1px solid ${colors.gray[50]}`, padding: '20px 0' }}>
                   <List.Item.Meta
-                    title={<span style={{ color: '#F8FAFC' }}>{item.title}</span>}
+                    title={<Text style={{ color: colors.text.primary, fontWeight: 700, fontSize: '16px' }}>{item.title}</Text>}
                     description={
-                      <div style={{ marginTop: '4px' }}>
-                        <Tag color={item.status === 'OPEN' ? 'success' : 'default'} style={{ border: 'none' }}>{item.status}</Tag>
-                        <span style={{ color: '#64748B', fontSize: '12px', marginLeft: '8px' }}>
-                          Created {new Date(item.createdAt).toLocaleDateString()}
-                        </span>
+                      <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Tag color={item.status === 'OPEN' ? 'success' : 'default'} style={{ borderRadius: '6px', fontWeight: 700, margin: 0 }}>{item.status}</Tag>
+                        <Text style={{ color: colors.text.tertiary, fontSize: '12px', fontWeight: 500 }}>
+                          Posted {new Date(item.createdAt).toLocaleDateString()}
+                        </Text>
                       </div>
                     }
                   />
                   <div style={{ textAlign: 'right' }}>
-                    <div style={{ color: '#94A3B8', fontSize: '12px' }}>Applications</div>
-                    <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '16px' }}>{item._count?.applications || 0}</div>
+                    <div style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '2px' }}>Applications</div>
+                    <div style={{ color: colors.text.primary, fontWeight: 900, fontSize: '18px' }}>{item._count?.applications || 0}</div>
                   </div>
                 </List.Item>
               )}
-              locale={{ emptyText: <div style={{ color: '#64748B', padding: '20px', textAlign: 'center' }}>No opportunities posted yet.</div> }}
+              locale={{ emptyText: <div style={{ color: colors.text.tertiary, padding: '40px', textAlign: 'center', fontWeight: 500 }}>No opportunities posted yet.</div> }}
             />
           </Card>
         </Col>
         <Col xs={24} lg={12}>
           <Card
-            title={<span style={{ color: '#F8FAFC' }}>Active Deals</span>}
+            title={<span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>🤝 Active Deals</span>}
             bordered={false}
-            style={{ background: '#1E293B', border: '1px solid #334155' }}
-            extra={<Button type="link" onClick={() => navigate('/company-dashboard/deals')} style={{ color: '#60A5FA' }}>Manage</Button>}
+            style={{
+              background: '#ffffff',
+              borderRadius: '24px',
+              border: `1px solid ${colors.gray[100]}`,
+              boxShadow: shadows.md
+            }}
+            extra={<Button type="link" onClick={() => navigate('/company-dashboard/deals')} style={{ color: colors.primary.solid, fontWeight: 700 }}>Manage <ArrowRightOutlined style={{ fontSize: '12px', marginLeft: '4px' }} /></Button>}
+            bodyStyle={{ padding: '0 24px' }}
           >
             <List
               dataSource={dashboard?.deals?.slice(0, 5) || []}
-              renderItem={(item: any) => (
-                <List.Item style={{ borderBottom: '1px solid #334155', padding: '12px 0' }}>
+              renderItem={(item: any, index: number) => (
+                <List.Item style={{ borderBottom: index === (dashboard?.deals?.slice(0, 5).length - 1) ? 'none' : `1px solid ${colors.gray[50]}`, padding: '20px 0' }}>
                   <List.Item.Meta
-                    avatar={<Avatar src={item.creator?.profileImage} icon={<UserOutlined />} style={{ background: '#334155' }} />}
-                    title={<span style={{ color: '#F8FAFC' }}>{item.creator?.displayName}</span>}
-                    description={<span style={{ color: '#64748B' }}>{item.application?.opportunity?.title}</span>}
+                    avatar={<Avatar src={item.creator?.profileImage ? getImageUrl(item.creator.profileImage) : undefined} icon={<UserOutlined />} style={{ background: colors.gray[100], border: `1px solid ${colors.gray[200]}` }} />}
+                    title={<Text style={{ color: colors.text.primary, fontWeight: 700, fontSize: '16px' }}>{item.creator?.displayName}</Text>}
+                    description={<Text style={{ color: colors.text.tertiary, fontSize: '13px', fontWeight: 500 }}>{item.application?.opportunity?.title}</Text>}
                   />
                   <div style={{ textAlign: 'right' }}>
-                    <Tag color="geekblue" style={{ marginRight: 0, marginBottom: '4px' }}>{item.status}</Tag>
-                    <div style={{ color: '#A5F3FC', fontWeight: 600 }}>₹{item.amount.toLocaleString()}</div>
+                    <Tag color="geekblue" style={{ borderRadius: '6px', fontWeight: 700, marginBottom: '4px', marginRight: 0 }}>{item.status.replace('_', ' ')}</Tag>
+                    <div style={{ color: colors.primary.solid, fontWeight: 800, fontSize: '16px' }}>₹{item.amount.toLocaleString()}</div>
                   </div>
                 </List.Item>
               )}
-              locale={{ emptyText: <div style={{ color: '#64748B', padding: '20px', textAlign: 'center' }}>No active deals.</div> }}
+              locale={{ emptyText: <div style={{ color: colors.text.tertiary, padding: '40px', textAlign: 'center', fontWeight: 500 }}>No active deals.</div> }}
             />
           </Card>
         </Col>
       </Row>
-    </div>
+    </div >
   );
 };
 

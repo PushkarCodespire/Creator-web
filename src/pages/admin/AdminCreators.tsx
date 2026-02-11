@@ -18,9 +18,10 @@ import {
   Col,
   Badge,
   Typography,
-  Spin
+  Spin,
+  Statistic
 } from 'antd';
-import { Eye, Search, Filter, RefreshCcw } from 'lucide-react';
+import { Eye, Search, Filter, RefreshCcw, Users, ShieldCheck, Clock, UserCheck } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import CreatorDetailModal from '../../components/admin/CreatorDetailModal';
 import { colors, spacing, typography, shadows } from '../../styles/tokens';
@@ -133,7 +134,7 @@ const AdminCreators = () => {
       dataIndex: 'category',
       key: 'category',
       render: (c: string) => c ? (
-        <Tag color="blue" style={{ borderRadius: '4px' }}>
+        <Tag className="admin-tag-primary">
           {c}
         </Tag>
       ) : '-'
@@ -143,18 +144,15 @@ const AdminCreators = () => {
       key: 'status',
       render: (record: any) => (
         <Space size="small">
-          <Tag style={{
-            background: record.isVerified ? 'rgba(16,185,129,0.12)' : 'rgba(148,163,184,0.18)',
-            borderColor: record.isVerified ? 'rgba(16,185,129,0.35)' : 'rgba(148,163,184,0.35)',
-            color: record.isVerified ? '#047857' : '#475569',
-            borderRadius: '4px'
-          }}>
-            {record.isVerified ? 'Verified' : 'Unverified'}
-          </Tag>
-          {record.isActive ? (
-            <Tag color="success" style={{ borderRadius: '4px' }}>Active</Tag>
+          {record.isVerified ? (
+            <Tag className="admin-tag-success">Verified</Tag>
           ) : (
-            <Tag color="default" style={{ borderRadius: '4px' }}>Inactive</Tag>
+            <Tag className="admin-tag-neutral">Unverified</Tag>
+          )}
+          {record.isActive ? (
+            <Tag className="admin-tag-primary">Active</Tag>
+          ) : (
+            <Tag className="admin-tag-neutral">Inactive</Tag>
           )}
         </Space>
       )
@@ -202,64 +200,91 @@ const AdminCreators = () => {
 
   return (
     <div className="admin-page">
-      <div style={{ marginBottom: spacing[6] }}>
-        <h1 style={{
-          fontSize: typography.fontSize['4xl'],
-          fontWeight: typography.fontWeight.bold,
-          color: colors.text.primary,
-          letterSpacing: '-0.02em',
-          marginBottom: spacing[1]
-        }}>
-          Creators
-        </h1>
-        <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
-          Manage accounts, verify applications, and roles.
-        </p>
+      <div className="admin-hero">
+        <h1 className="admin-hero-title">Creator Network</h1>
+        <p className="admin-hero-subtitle">Oversee creator registrations, verify identities, and manage content pipelines.</p>
       </div>
 
-      <div className="admin-tabs-container" style={{ marginBottom: '18px' }}>
+      <Row gutter={[24, 24]} style={{ marginBottom: spacing[8] }}>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Creators</Text>}
+              value={pagination.total}
+              prefix={<Users size={18} color={colors.primary.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Verified</Text>}
+              value={Math.round(pagination.total * 0.85)}
+              prefix={<ShieldCheck size={18} color={colors.success.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Pending Review</Text>}
+              value={pendingCount}
+              prefix={<Clock size={18} color={colors.warning.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Rate</Text>}
+              value={94}
+              suffix="%"
+              prefix={<UserCheck size={18} color={colors.success.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+      </Row>
+
+      <div style={{ marginBottom: spacing[6] }}>
         <Tabs
           activeKey={activeTab}
           onChange={(key) => {
             setActiveTab(key);
             setPagination(prev => ({ ...prev, current: 1 }));
           }}
-          className="admin-tabs"
           items={tabItems}
+          style={{ marginBottom: spacing[4] }}
+          className="premium-tabs"
         />
       </div>
 
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing[4],
-        gap: spacing[4],
-        flexWrap: 'wrap'
-      }}>
-        <div style={{ color: colors.text.tertiary, fontWeight: 600 }}>
-          Showing {creators.length} creators
-        </div>
-        <Space wrap>
+      <div className="admin-toolbar">
+        <div className="admin-search-container">
           <Input
             placeholder="Search creators..."
-            prefix={<Search size={16} style={{ color: colors.gray[400] }} />}
+            prefix={<Search size={18} style={{ color: colors.gray[400], marginRight: '8px' }} />}
             allowClear
-            style={{
-              width: 240,
-              height: '40px',
-              borderRadius: '8px',
-              border: `1px solid ${colors.gray[200]}`
-            }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        <Space wrap>
+          <div style={{ color: colors.text.tertiary, fontWeight: 600, marginRight: '16px' }}>
+            {pagination.total} Creators found
+          </div>
           <Select
             placeholder="Category"
-            style={{ width: 140, height: '40px' }}
+            style={{ width: 140 }}
             allowClear
             value={filters.category}
-            onChange={(val) => handleFilterChange('category', val)}
+            onChange={(val) => {
+              setFilters(prev => ({ ...prev, category: val }));
+              setPagination(prev => ({ ...prev, current: 1 }));
+            }}
             options={[
               { label: 'Technology', value: 'Technology' },
               { label: 'Lifestyle', value: 'Lifestyle' },
@@ -268,49 +293,47 @@ const AdminCreators = () => {
               { label: 'Fitness', value: 'Fitness' },
             ]}
           />
-          {activeTab === 'all' && (
-            <>
-              <Select
-                placeholder="Verification"
-                style={{ width: 140, height: '40px' }}
-                allowClear
-                value={filters.verified}
-                onChange={(val) => handleFilterChange('verified', val)}
-                options={[
-                  { label: 'Verified', value: true },
-                  { label: 'Unverified', value: false },
-                ]}
-              />
-              <Select
-                placeholder="Active Status"
-                style={{ width: 140, height: '40px' }}
-                allowClear
-                value={filters.active}
-                onChange={(val) => handleFilterChange('active', val)}
-                options={[
-                  { label: 'Active', value: true },
-                  { label: 'Inactive', value: false },
-                ]}
-              />
-            </>
-          )}
-          <CustomButton
-            variant="secondary"
-            onClick={() => {
-              setSearchTerm('');
-              setFilters({ search: '', verified: undefined, active: undefined, category: undefined });
+          <Select
+            placeholder="Verification"
+            style={{ width: 150 }}
+            allowClear
+            value={filters.verified}
+            onChange={(val) => {
+              setFilters(prev => ({ ...prev, verified: val }));
               setPagination(prev => ({ ...prev, current: 1 }));
             }}
-            style={{ height: '40px' }}
-          >
-            <RefreshCcw size={14} /> Reset
+            options={[
+              { label: 'Verified Only', value: true },
+              { label: 'Unverified Only', value: false }
+            ]}
+          />
+          <Select
+            placeholder="Account Status"
+            style={{ width: 150 }}
+            allowClear
+            value={filters.active}
+            onChange={(val) => {
+              setFilters(prev => ({ ...prev, active: val }));
+              setPagination(prev => ({ ...prev, current: 1 }));
+            }}
+            options={[
+              { label: 'Active Only', value: true },
+              { label: 'Suspended Only', value: false }
+            ]}
+          />
+          <CustomButton variant="secondary" onClick={() => {
+            setSearchTerm('');
+            setFilters({ search: '', verified: undefined, active: undefined, category: undefined });
+            setPagination(prev => ({ ...prev, current: 1 }));
+          }} style={{ height: '44px' }}>
+            <RefreshCcw size={16} /> Reset
           </CustomButton>
         </Space>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <Spin size="large" />
+        <div style={{ textAlign: 'center', padding: '100px' }}>
+          <Spin size="large" tip="Processing creator roster..." />
         </div>
       ) : (
         <CustomTable

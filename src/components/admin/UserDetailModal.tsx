@@ -20,7 +20,8 @@ import {
     Card,
     Popconfirm,
     Empty,
-    InputNumber
+    InputNumber,
+    Typography
 } from 'antd';
 import {
     User,
@@ -42,6 +43,8 @@ import CustomModal from '../common/Modal/CustomModal';
 import CustomCard from '../common/Card/CustomCard';
 import CustomButton from '../common/Button/CustomButton';
 import CustomInput from '../common/Form/CustomInput';
+
+const { Title, Text, Paragraph } = Typography;
 
 interface UserDetailModalProps {
     userId: string | null;
@@ -207,16 +210,31 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
         <div style={{ paddingTop: '16px' }}>
             <Row gutter={[16, 16]}>
                 <Col span={24}>
-                    <CustomCard style={{ background: colors.gray[50] }}>
+                    <CustomCard style={{ background: '#f8fafc', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
                         <Row gutter={16}>
                             <Col span={8}>
-                                <Statistic title="Conversations" value={analytics?.conversationCount || 0} prefix={<History size={16} />} />
+                                <Statistic
+                                    title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 700 }}>CONVERSATIONS</Text>}
+                                    value={analytics?.conversationCount || 0}
+                                    prefix={<History size={18} color={colors.primary.solid} style={{ marginRight: '8px' }} />}
+                                    valueStyle={{ color: colors.text.primary, fontWeight: 800 }}
+                                />
                             </Col>
                             <Col span={8}>
-                                <Statistic title="Total Messages" value={analytics?.messageCount || 0} prefix={<Mail size={16} />} />
+                                <Statistic
+                                    title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 700 }}>MESSAGES</Text>}
+                                    value={analytics?.messageCount || 0}
+                                    prefix={<Mail size={18} color={colors.primary.solid} style={{ marginRight: '8px' }} />}
+                                    valueStyle={{ color: colors.text.primary, fontWeight: 800 }}
+                                />
                             </Col>
                             <Col span={8}>
-                                <Statistic title="Reports Made" value={analytics?.reportsMade || 0} prefix={<AlertTriangle size={16} />} />
+                                <Statistic
+                                    title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 700 }}>REPORTS</Text>}
+                                    value={analytics?.reportsMade || 0}
+                                    prefix={<AlertTriangle size={18} color={colors.warning.solid} style={{ marginRight: '8px' }} />}
+                                    valueStyle={{ color: colors.text.primary, fontWeight: 800 }}
+                                />
                             </Col>
                         </Row>
                     </CustomCard>
@@ -236,13 +254,19 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                     >
                         <Row gutter={16}>
                             <Col span={12}>
-                                <Form.Item name="name" label="Full Name" rules={[{ required: true }]}>
-                                    <Input prefix={<User size={16} style={{ color: colors.gray[400] }} />} style={{ height: '44px', borderRadius: '8px' }} />
+                                <Form.Item name="name" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Full Name</span>} rules={[{ required: true }]}>
+                                    <Input
+                                        prefix={<User size={16} style={{ color: colors.primary.solid }} />}
+                                        style={{ height: '44px', borderRadius: '10px', background: '#ffffff', color: colors.text.primary, fontWeight: 600 }}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={12}>
-                                <Form.Item name="email" label="Email Address" rules={[{ required: true, type: 'email' }]}>
-                                    <Input prefix={<Mail size={16} style={{ color: colors.gray[400] }} />} style={{ height: '44px', borderRadius: '8px' }} />
+                                <Form.Item name="email" label={<span style={{ fontWeight: 600, color: colors.text.secondary }}>Email Address</span>} rules={[{ required: true, type: 'email' }]}>
+                                    <Input
+                                        prefix={<Mail size={16} style={{ color: colors.primary.solid }} />}
+                                        style={{ height: '44px', borderRadius: '10px', background: '#ffffff', color: colors.text.primary, fontWeight: 600 }}
+                                    />
                                 </Form.Item>
                             </Col>
                         </Row>
@@ -316,11 +340,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                                     color: log.action.includes('BAN') ? 'red' : log.action.includes('SUSPEND') ? 'orange' : 'blue',
                                     children: (
                                         <>
-                                            <div style={{ fontWeight: 600 }}>{log.action.replace('_', ' ')}</div>
-                                            <div style={{ fontSize: '12px', color: '#6b7280' }}>
-                                                {new Date(log.createdAt).toLocaleString()} by {log.moderator?.name || 'AI System'}
+                                            <div style={{ fontWeight: 700, color: colors.text.primary }}>{log.action.replace('_', ' ')}</div>
+                                            <div style={{ fontSize: '11px', color: colors.text.tertiary, fontWeight: 600, textTransform: 'uppercase', marginTop: '2px' }}>
+                                                {new Date(log.createdAt).toLocaleString()} • {log.moderator?.name || 'AI System'}
                                             </div>
-                                            {log.reason && <div style={{ fontSize: '13px', fontStyle: 'italic', marginTop: '4px' }}>"{log.reason}"</div>}
+                                            {log.reason && <div style={{ fontSize: '13px', color: colors.text.secondary, marginTop: '6px', paddingLeft: '8px', borderLeft: `2px solid ${colors.gray[200]}` }}>{log.reason}</div>}
                                         </>
                                     ),
                                 }))}

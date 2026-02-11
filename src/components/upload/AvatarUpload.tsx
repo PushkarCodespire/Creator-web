@@ -7,6 +7,7 @@ import { Avatar, Spin, message } from 'antd';
 import { UserOutlined, CameraOutlined } from '@ant-design/icons';
 import { ImageUpload } from './ImageUpload';
 import api, { getImageUrl } from '../../services/api';
+import { colors } from '../../styles/tokens';
 
 export interface AvatarUploadProps {
   currentAvatar?: string;
@@ -83,8 +84,8 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
             src={avatarUrl}
             icon={!avatarUrl && <UserOutlined />}
             style={{
-              backgroundColor: !avatarUrl ? '#1890ff' : undefined,
-              border: '2px solid #d9d9d9'
+              backgroundColor: !avatarUrl ? colors.primary.solid : colors.gray[100],
+              border: `2px solid ${colors.gray[100]}`
             }}
           />
         </Spin>
@@ -98,12 +99,12 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
               width: '36px',
               height: '36px',
               borderRadius: '50%',
-              backgroundColor: '#1890ff',
+              backgroundColor: colors.primary.solid,
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+              border: `2px solid #ffffff`,
+              boxShadow: '0 4px 12px rgba(18, 104, 255, 0.2)'
             }}
           >
             <ImageUpload
@@ -136,7 +137,7 @@ export const AvatarUpload: React.FC<AvatarUploadProps> = ({
         )}
       </div>
 
-      <div style={{ marginTop: '8px', fontSize: '12px', color: '#666' }}>
+      <div style={{ marginTop: '12px', fontSize: '13px', color: colors.text.tertiary, fontWeight: 500 }}>
         {disabled ? 'Avatar' : 'Click camera icon to change'}
       </div>
     </div>

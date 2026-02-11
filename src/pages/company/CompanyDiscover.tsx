@@ -1,12 +1,12 @@
-// ===========================================
-// COMPANY DISCOVER CREATORS PAGE
-// ===========================================
-
-import { useEffect, useState } from 'react';
-import { Row, Col, Card, Avatar, Select, Spin, Empty, Pagination, Tag, Button } from 'antd';
-import { MessageOutlined, CheckCircleFilled, UserOutlined } from '@ant-design/icons';
+import React, { useEffect, useState } from 'react';
+import { Row, Col, Card, Avatar, Select, Spin, Empty, Pagination, Tag, Button, Typography } from 'antd';
+import { MessageOutlined, CheckCircleFilled, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
-import { companyApi } from '../../services/api';
+import { companyApi, getImageUrl } from '../../services/api';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { motion } from 'framer-motion';
+
+const { Title, Text } = Typography;
 
 const CompanyDiscover = () => {
   const [creators, setCreators] = useState<any[]>([]);
@@ -40,17 +40,23 @@ const CompanyDiscover = () => {
   };
 
   return (
-    <div className="company-discover fade-in">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      style={{ padding: '32px' }}
+    >
       <div style={{ marginBottom: '32px' }}>
-        <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px', color: '#F8FAFC' }}>
+        <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
           Discover Creators
-        </h1>
+        </Title>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <p style={{ color: '#94A3B8', fontSize: '16px', margin: 0 }}>Find the perfect talent for your next campaign</p>
+          <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>Find the perfect talent for your next campaign</Text>
           <Select
             placeholder="Filter by category"
             allowClear
-            style={{ width: 220, height: 40 }}
+            style={{ width: 220, borderRadius: '12px' }}
+            size="large"
             onChange={(value) => {
               setCategory(value);
               setCurrentPage(1);
@@ -68,9 +74,9 @@ const CompanyDiscover = () => {
       {loading ? (
         <div style={{ textAlign: 'center', padding: '100px' }}><Spin size="large" /></div>
       ) : creators.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px', background: '#1E293B', borderRadius: '16px', border: '1px solid #334155' }}>
-          <Empty description={<span style={{ color: '#94A3B8' }}>No creators found matching your criteria</span>} />
-        </div>
+        <Card style={{ textAlign: 'center', padding: '60px', background: '#ffffff', borderRadius: '24px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.md }}>
+          <Empty description={<Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>No creators found matching your criteria</Text>} />
+        </Card>
       ) : (
         <>
           <Row gutter={[24, 24]}>
@@ -80,11 +86,12 @@ const CompanyDiscover = () => {
                   hoverable
                   bordered={false}
                   style={{
-                    background: '#1E293B',
-                    border: '1px solid #334155',
-                    borderRadius: '16px',
+                    background: '#ffffff',
+                    border: `1px solid ${colors.gray[100]}`,
+                    borderRadius: '24px',
                     overflow: 'hidden',
-                    transition: 'transform 0.2s, box-shadow 0.2s'
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    boxShadow: shadows.md
                   }}
                   bodyStyle={{ padding: '24px', textAlign: 'center' }}
                   onClick={() => navigate(`/creator/${creator.id}`)}
@@ -92,10 +99,11 @@ const CompanyDiscover = () => {
                   <div style={{ position: 'relative', display: 'inline-block', marginBottom: '16px' }}>
                     <Avatar
                       size={100}
-                      src={creator.profileImage}
+                      src={creator.profileImage ? getImageUrl(creator.profileImage) : undefined}
                       style={{
-                        border: '4px solid #334155',
-                        boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+                        border: `3px solid ${colors.primary.subtle}`,
+                        boxShadow: shadows.sm,
+                        background: colors.gray[50]
                       }}
                     >
                       {creator.displayName?.[0] || <UserOutlined />}
@@ -111,40 +119,41 @@ const CompanyDiscover = () => {
                         height: '24px',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'center'
+                        justifyContent: 'center',
+                        boxShadow: shadows.sm
                       }}>
-                        <CheckCircleFilled style={{ color: '#3B82F6', fontSize: '16px' }} />
+                        <CheckCircleFilled style={{ color: colors.primary.solid, fontSize: '16px' }} />
                       </div>
                     )}
                   </div>
 
-                  <h3 style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 600, color: '#F8FAFC' }}>
+                  <Title level={4} style={{ margin: '0 0 4px 0', fontSize: '18px', fontWeight: 800, color: colors.text.primary }}>
                     {creator.displayName}
-                  </h3>
+                  </Title>
 
                   <div style={{ marginBottom: '16px', height: '24px' }}>
                     {creator.category && (
-                      <Tag color="blue" style={{ border: 'none', background: 'rgba(59, 130, 246, 0.15)', color: '#60A5FA' }}>
+                      <Tag color="blue" style={{ borderRadius: '6px', fontWeight: 700 }}>
                         {creator.category}
                       </Tag>
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', color: '#94A3B8', fontSize: '13px', borderTop: '1px solid #334155', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: '16px', color: colors.text.tertiary, fontSize: '12px', borderTop: `1px solid ${colors.gray[50]}`, paddingTop: '16px', fontWeight: 700 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <MessageOutlined /> <span>{creator.totalChats || 0}</span>
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                      <span style={{ color: '#FCD34D' }}>⭐</span> <span>{creator.rating || 'New'}</span>
+                      <span style={{ color: '#F59E0B' }}>⭐</span> <span>{creator.rating || 'New'}</span>
                     </div>
                   </div>
 
                   <Button
                     block
-                    style={{ marginTop: '20px', background: 'transparent', borderColor: '#475569', color: '#F8FAFC' }}
+                    type="primary"
+                    style={{ marginTop: '20px', borderRadius: '12px', fontWeight: 700, height: '40px', background: colors.primary.solid }}
                     onClick={(e: React.MouseEvent) => {
                       e.stopPropagation();
-                      // Handle invite logic or navigation
                       navigate(`/creator/${creator.id}`);
                     }}
                   >
@@ -175,22 +184,27 @@ const CompanyDiscover = () => {
       )}
 
       <style>{`
+        .ant-select-selector {
+          border-radius: 12px !important;
+          border: 1px solid ${colors.gray[200]} !important;
+        }
         .ant-pagination-item {
-          background: transparent !important;
-          border-color: #334155 !important;
+          border-radius: 8px !important;
+          border-color: ${colors.gray[200]} !important;
         }
         .ant-pagination-item a {
-          color: #94A3B8 !important;
+          color: ${colors.text.tertiary} !important;
+          font-weight: 700 !important;
         }
         .ant-pagination-item-active {
-          border-color: #6366F1 !important;
-          background: rgba(99, 102, 241, 0.1) !important;
+          border-color: ${colors.primary.solid} !important;
+          background: ${colors.primary.subtle} !important;
         }
         .ant-pagination-item-active a {
-          color: #6366F1 !important;
+          color: ${colors.primary.solid} !important;
         }
       `}</style>
-    </div>
+    </motion.div>
   );
 };
 

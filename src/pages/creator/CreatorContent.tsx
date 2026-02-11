@@ -827,9 +827,35 @@ const CreatorContent = () => {
           .flagship-table .ant-table-tbody > tr:hover > td { background: ${colors.gray[50]} !important; }
           .flagship-table .ant-table-placeholder .ant-table-cell { background: #ffffff !important; border-bottom: none !important; }
           
-          .premium-modal .ant-modal-content { border-radius: 12px !important; padding: 24px !important; border: 1px solid ${colors.gray[200]} !important; background: #FFFFFF !important; box-shadow: ${shadows.xl} !important; }
-          .premium-modal .ant-modal-header { border-bottom: none !important; margin-bottom: 24px !important; background: transparent !important; }
+          .premium-modal .ant-modal-content { border-radius: 28px !important; padding: 0 !important; border: none !important; background: #FFFFFF !important; box-shadow: ${shadows.xl} !important; overflow: hidden !important; }
+          .premium-modal .ant-modal-header { border-bottom: none !important; margin-bottom: 0 !important; padding: 40px 40px 0 40px !important; background: #ffffff !important; }
+          .premium-modal .ant-modal-body { padding: 40px !important; }
           .premium-modal .ant-modal-title { color: ${colors.text.primary} !important; }
+          
+          .premium-modal .ant-input, 
+          .premium-modal .ant-input-affix-wrapper, 
+          .premium-modal .ant-input-number-input,
+          .premium-modal .ant-select-selection-item,
+          .premium-modal .ant-input-data-count {
+            color: ${colors.text.primary} !important;
+            font-weight: 600 !important;
+          }
+          
+          .premium-modal .ant-input::placeholder,
+          .premium-modal .ant-input-affix-wrapper input::placeholder {
+            color: ${colors.text.tertiary} !important;
+            font-weight: 500 !important;
+          }
+
+          .premium-modal .ant-input-affix-wrapper {
+            background: ${colors.gray[50]} !important;
+            border: 1px solid ${colors.gray[200]} !important;
+            padding-left: 16px !important;
+          }
+
+          .premium-modal .ant-form-item-label label {
+            color: ${colors.text.primary} !important;
+          }
           
           .ant-pagination-item-active { border-color: ${colors.primary.solid} !important; background: ${colors.primary.solid} !important; }
           .ant-pagination-item-active a { color: #FFFFFF !important; }

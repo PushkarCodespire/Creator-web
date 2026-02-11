@@ -16,6 +16,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { userDashboardApi, subscriptionApi, getImageUrl } from '../../services/api';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 
@@ -94,13 +95,13 @@ const UserDashboard = () => {
 
         // Transform activities with appropriate icons
         const formattedActivities = activityList.map((item: any) => {
-          let icon = <Bell size={18} style={{ color: '#60A5FA' }} />;
+          let icon = <Bell size={18} style={{ color: colors.primary.solid }} />;
           if (item.type === 'notification' && item.message?.includes('message')) {
-            icon = <MessageSquare size={18} style={{ color: '#10B981' }} />;
+            icon = <MessageSquare size={18} style={{ color: colors.primary.solid }} />;
           } else if (item.type === 'follow') {
-            icon = <UserPlus size={18} style={{ color: '#F59E0B' }} />;
+            icon = <UserPlus size={18} style={{ color: colors.primary.solid }} />;
           } else if (item.type === 'ACHIEVEMENT') {
-            icon = <Trophy size={18} style={{ color: '#FCD34D' }} />;
+            icon = <Trophy size={18} style={{ color: colors.warning.solid }} />;
           }
 
           return {
@@ -158,6 +159,7 @@ const UserDashboard = () => {
           inset: 0,
           zIndex: 100,
           cursor: 'not-allowed',
+          background: 'rgba(255, 255, 255, 0.1)'
         }} onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
@@ -167,16 +169,16 @@ const UserDashboard = () => {
       {user?.isSuspended && (
         <div style={{ marginBottom: '24px' }}>
           <Alert
-            message={<span style={{ fontWeight: 700, color: '#EF4444' }}>Account Suspended</span>}
+            message={<span style={{ fontWeight: 800, color: colors.error.solid }}>Account Suspended</span>}
             description={
-              <div style={{ color: '#F8FAFC' }}>
-                <p style={{ marginBottom: '8px' }}>
+              <div style={{ color: colors.text.secondary }}>
+                <p style={{ marginBottom: '8px', fontWeight: 500 }}>
                   Your account has been suspended until <strong>{user.suspendedUntil ? new Date(user.suspendedUntil).toLocaleDateString() : 'TBD'}</strong>.
                 </p>
-                <p style={{ marginBottom: '8px' }}>
+                <p style={{ marginBottom: '8px', fontWeight: 500 }}>
                   <strong>Reason:</strong> {user.suspensionReason || 'No reason provided'}
                 </p>
-                <p style={{ fontSize: '13px', opacity: 0.8 }}>
+                <p style={{ fontSize: '13px', color: colors.text.tertiary, fontWeight: 500 }}>
                   During suspension, you can view your dashboard but interactions are restricted. If you believe this is a mistake, please contact support.
                 </p>
               </div>
@@ -184,19 +186,19 @@ const UserDashboard = () => {
             type="error"
             showIcon
             style={{
-              borderRadius: '20px',
-              background: 'rgba(239, 68, 68, 0.1)',
-              border: '1px solid rgba(239, 68, 68, 0.2)',
-              backdropFilter: 'blur(10px)'
+              borderRadius: '24px',
+              background: colors.error.subtle,
+              border: `1px solid ${colors.error.subtle}`,
+              boxShadow: shadows.sm
             }}
           />
         </div>
       )}
       <div style={{ marginBottom: '32px' }}>
-        <Title level={2} style={{ color: '#fff', marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+        <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
           Overview
         </Title>
-        <Text style={{ color: '#94A3B8', fontSize: '16px' }}>
+        <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>
           Welcome back, {user?.name}! Here's what's happening today.
         </Text>
       </div>
@@ -204,16 +206,16 @@ const UserDashboard = () => {
       {/* Stats Row */}
       <Row gutter={[20, 20]} style={{ marginBottom: '32px' }}>
         {[
-          { title: 'Total Chats', value: stats.totalChats, icon: <MessageSquare size={20} />, color: '#6366F1' },
-          { title: 'Messages Used (Today)', value: stats.messagesSent, icon: <Send size={20} />, color: '#10B981' },
-          { title: 'Following', value: stats.following, icon: <UserPlus size={20} />, color: '#F59E0B' },
-          { title: 'Unread Alerts', value: stats.unreadNotifications, icon: <Bell size={20} />, color: '#EC4899' },
+          { title: 'Total Chats', value: stats.totalChats, icon: <MessageSquare size={20} />, color: colors.primary.solid },
+          { title: 'Messages Used', value: stats.messagesSent, icon: <Send size={20} />, color: colors.primary.solid },
+          { title: 'Following', value: stats.following, icon: <UserPlus size={20} />, color: colors.primary.solid },
+          { title: 'Unread Alerts', value: stats.unreadNotifications, icon: <Bell size={20} />, color: colors.primary.solid },
           ...(isPremium && tokenBalance !== undefined && tokenGrant !== undefined
             ? [{
               title: 'Tokens Remaining',
               value: tokenBalance,
               icon: <Flame size={20} />,
-              color: '#22C55E',
+              color: colors.primary.solid,
               subtitle: tokensPerMessage ? `Burn ${tokensPerMessage}/msg` : undefined,
               footnote: `${tokenUsagePercentage}% used`
             }]
@@ -222,11 +224,12 @@ const UserDashboard = () => {
           <Col xs={24} sm={12} lg={6} key={index}>
             <motion.div variants={itemVariants}>
               <Card
+                bordered={false}
                 style={{
-                  background: 'rgba(30, 41, 59, 0.4)',
-                  backdropFilter: 'blur(20px)',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  borderRadius: '20px',
+                  background: '#ffffff',
+                  borderRadius: '24px',
+                  border: `1px solid ${colors.gray[100]}`,
+                  boxShadow: shadows.md,
                 }}
                 bodyStyle={{ padding: '24px' }}
               >
@@ -245,19 +248,19 @@ const UserDashboard = () => {
                     {stat.icon}
                   </div>
                   <div>
-                    <Text style={{ color: '#94A3B8', fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                       {stat.title}
                     </Text>
-                    <div style={{ color: '#fff', fontSize: '24px', fontWeight: 800 }}>
+                    <div style={{ color: colors.text.primary, fontSize: '24px', fontWeight: 900, letterSpacing: '-0.02em' }}>
                       {typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
                     </div>
                     {stat.subtitle && (
-                      <div style={{ color: '#94A3B8', fontSize: '11px', marginTop: '4px' }}>
+                      <div style={{ color: colors.text.tertiary, fontSize: '11px', marginTop: '4px', fontWeight: 600 }}>
                         {stat.subtitle}
                       </div>
                     )}
                     {stat.footnote && (
-                      <div style={{ color: '#64748B', fontSize: '11px', marginTop: '2px' }}>
+                      <div style={{ color: colors.primary.solid, fontSize: '11px', marginTop: '2px', fontWeight: 700 }}>
                         {stat.footnote}
                       </div>
                     )}
@@ -275,13 +278,14 @@ const UserDashboard = () => {
           {/* Recent Conversations */}
           <motion.div variants={itemVariants} style={{ marginBottom: '24px' }}>
             <Card
-              title={<span style={{ color: '#fff', fontWeight: 700 }}>💬 Recent Conversations</span>}
-              extra={<Button type="link" onClick={() => navigate('/dashboard/chats')} style={{ color: '#818CF8', display: 'flex', alignItems: 'center', gap: '8px' }}>View All Chats <ArrowRight size={16} /></Button>}
+              title={<span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>💬 Recent Conversations</span>}
+              extra={<Button type="link" onClick={() => navigate('/dashboard/chats')} style={{ color: colors.primary.solid, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>View All Chats <ArrowRight size={16} /></Button>}
+              bordered={false}
               style={{
-                background: 'rgba(30, 41, 59, 0.4)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                background: '#ffffff',
                 borderRadius: '24px',
+                border: `1px solid ${colors.gray[100]}`,
+                boxShadow: shadows.md,
               }}
               bodyStyle={{ padding: '0' }}
             >
@@ -292,42 +296,42 @@ const UserDashboard = () => {
                       key={conv.id}
                       style={{
                         padding: '20px 24px',
-                        borderBottom: index === conversations.length - 1 ? 'none' : '1px solid rgba(255, 255, 255, 0.05)',
+                        borderBottom: index === conversations.length - 1 ? 'none' : `1px solid ${colors.gray[50]}`,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'space-between',
                         cursor: 'pointer',
-                        transition: 'background 0.2s'
+                        transition: 'all 0.2s'
                       }}
                       className="chat-item-hover"
-                      onClick={() => navigate(`/chat/${conv.creatorId}`)}
+                      onClick={() => navigate(`/chat/${conv.creator?.id || conv.creatorId}`)}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                         <Avatar
                           size={54}
                           src={conv.creator?.profileImage ? getImageUrl(conv.creator.profileImage) : undefined}
                           style={{
-                            border: '2px solid rgba(102, 126, 234, 0.3)',
-                            background: !conv.creator?.profileImage ? '#6366F1' : undefined,
+                            border: `2px solid ${colors.primary.subtle}`,
+                            background: !conv.creator?.profileImage ? colors.primary.solid : undefined,
                             color: '#fff',
-                            fontWeight: 600
+                            fontWeight: 800
                           }}
                         >
                           {conv.creator?.displayName?.[0]?.toUpperCase()}
                         </Avatar>
                         <div>
-                          <div style={{ color: '#fff', fontWeight: 700, fontSize: '16px' }}>{conv.creator?.displayName}</div>
-                          <div style={{ color: '#94A3B8', fontSize: '14px', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '16px' }}>{conv.creator?.displayName}</div>
+                          <div style={{ color: colors.text.secondary, fontSize: '14px', maxWidth: '250px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 500 }}>
                             "{conv.messages?.[0]?.content || 'Start a conversation...'}"
                           </div>
-                          <div style={{ marginTop: '4px', fontSize: '12px', color: '#64748B' }}>
+                          <div style={{ marginTop: '4px', fontSize: '11px', color: colors.text.tertiary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             {conv._count?.messages || 0} messages
                           </div>
                         </div>
                       </div>
                       <Button
                         type="text"
-                        style={{ color: '#818CF8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
+                        style={{ color: colors.primary.solid, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}
                       >
                         Continue Chat <ArrowRight size={16} />
                       </Button>
@@ -335,8 +339,8 @@ const UserDashboard = () => {
                   ))}
                 </div>
               ) : (
-                <div style={{ padding: '40px', textAlign: 'center' }}>
-                  <Text style={{ color: '#94A3B8' }}>No recent conversations. Start chatting with creators!</Text>
+                <div style={{ padding: '60px 40px', textAlign: 'center' }}>
+                  <Text style={{ color: colors.text.tertiary, fontSize: '15px', fontWeight: 500 }}>No recent conversations. Start chatting with creators!</Text>
                 </div>
               )}
             </Card>
@@ -346,15 +350,16 @@ const UserDashboard = () => {
           <motion.div variants={itemVariants}>
             <Card
               title={<div style={{ display: 'flex', flexDirection: 'column' }}>
-                <span style={{ color: '#fff', fontWeight: 700 }}>✨ Recommended For You</span>
-                <span style={{ color: '#94A3B8', fontSize: '12px', fontWeight: 400 }}>Based on your usage</span>
+                <span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>✨ Recommended For You</span>
+                <span style={{ color: colors.text.tertiary, fontSize: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '4px' }}>Based on your usage</span>
               </div>}
-              extra={<Button type="link" onClick={() => navigate('/creators')} style={{ color: '#818CF8', display: 'flex', alignItems: 'center', gap: '8px' }}>See All <ArrowRight size={16} /></Button>}
+              extra={<Button type="link" onClick={() => navigate('/creators')} style={{ color: colors.primary.solid, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>See All <ArrowRight size={16} /></Button>}
+              bordered={false}
               style={{
-                background: 'rgba(30, 41, 59, 0.4)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                background: '#ffffff',
                 borderRadius: '24px',
+                border: `1px solid ${colors.gray[100]}`,
+                boxShadow: shadows.md,
               }}
               bodyStyle={{ padding: '24px' }}
             >
@@ -372,13 +377,14 @@ const UserDashboard = () => {
                   <div
                     key={creator.id}
                     style={{
-                      minWidth: '200px',
-                      background: 'rgba(255, 255, 255, 0.03)',
+                      minWidth: '220px',
+                      background: colors.gray[50],
                       borderRadius: '20px',
-                      padding: '16px',
+                      padding: '24px 16px',
                       textAlign: 'center',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
-                      scrollSnapAlign: 'start'
+                      border: `1px solid ${colors.gray[100]}`,
+                      scrollSnapAlign: 'start',
+                      transition: 'all 0.3s ease'
                     }}
                   >
                     <Avatar
@@ -386,16 +392,16 @@ const UserDashboard = () => {
                       src={creator.profileImage ? getImageUrl(creator.profileImage) : undefined}
                       style={{
                         marginBottom: '12px',
-                        border: '2px solid rgba(102, 126, 234, 0.3)',
-                        background: !creator.profileImage ? '#6366F1' : undefined,
+                        border: `2px solid ${colors.primary.subtle}`,
+                        background: !creator.profileImage ? colors.primary.solid : undefined,
                         color: '#fff',
-                        fontWeight: 600
+                        fontWeight: 800
                       }}
                     >
                       {creator.displayName?.[0]?.toUpperCase()}
                     </Avatar>
-                    <div style={{ color: '#fff', fontWeight: 700, marginBottom: '4px' }}>{creator.displayName}</div>
-                    <div style={{ color: '#94A3B8', fontSize: '12px', marginBottom: '12px' }}>{creator.category}</div>
+                    <div style={{ color: colors.text.primary, fontWeight: 800, marginBottom: '4px', fontSize: '16px' }}>{creator.displayName}</div>
+                    <div style={{ color: colors.text.tertiary, fontSize: '12px', marginBottom: '16px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{creator.category}</div>
                     <Button
                       type="primary"
                       size="small"
@@ -407,7 +413,7 @@ const UserDashboard = () => {
                     </Button>
                   </div>
                 )) : (
-                  <div style={{ width: '100%', textAlign: 'center', color: '#94A3B8' }}>
+                  <div style={{ width: '100%', textAlign: 'center', color: colors.text.tertiary, padding: '40px 0' }}>
                     No recommendations available at the moment.
                   </div>
                 )}
@@ -420,12 +426,13 @@ const UserDashboard = () => {
         <Col xs={24} lg={9}>
           <motion.div variants={itemVariants}>
             <Card
-              title={<span style={{ color: '#fff', fontWeight: 700 }}>📰 Activity Feed</span>}
+              title={<span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>📰 Activity Feed</span>}
+              bordered={false}
               style={{
-                background: 'rgba(30, 41, 59, 0.4)',
-                backdropFilter: 'blur(20px)',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                background: '#ffffff',
                 borderRadius: '24px',
+                border: `1px solid ${colors.gray[100]}`,
+                boxShadow: shadows.md,
                 height: '100%'
               }}
             >
@@ -433,29 +440,31 @@ const UserDashboard = () => {
                 {activities.length > 0 ? activities.map((activity) => (
                   <div key={activity.id} style={{ display: 'flex', gap: '16px' }}>
                     <div style={{
-                      width: '36px',
-                      height: '36px',
-                      borderRadius: '10px',
-                      background: 'rgba(255, 255, 255, 0.03)',
+                      width: '40px',
+                      height: '40px',
+                      borderRadius: '12px',
+                      background: colors.gray[50],
+                      border: `1px solid ${colors.gray[100]}`,
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '18px',
-                      flexShrink: 0
+                      flexShrink: 0,
+                      color: colors.primary.solid
                     }}>
                       {activity.icon}
                     </div>
                     <div>
-                      <div style={{ color: '#F8FAFC', fontWeight: 600, fontSize: '14px', lineHeight: '1.4' }}>
+                      <div style={{ color: colors.text.primary, fontWeight: 700, fontSize: '14px', lineHeight: '1.4' }}>
                         {activity.title}
                       </div>
-                      <div style={{ color: '#64748B', fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <div style={{ color: colors.text.tertiary, fontSize: '12px', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 600 }}>
                         {activity.time}
                       </div>
                     </div>
                   </div>
                 )) : (
-                  <Text style={{ color: '#94A3B8' }}>No recent activity to show.</Text>
+                  <Text style={{ color: colors.text.tertiary, fontSize: '14px', fontWeight: 500 }}>No recent activity to show.</Text>
                 )}
               </div>
 
@@ -465,22 +474,24 @@ const UserDashboard = () => {
           {/* Quick Actions / Tips */}
           <motion.div variants={itemVariants} style={{ marginTop: '24px' }}>
             <Card
+              bordered={false}
               style={{
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)',
-                border: '1px solid rgba(99, 102, 241, 0.2)',
+                background: 'linear-gradient(135deg, #eef2ff 0%, #f5f3ff 100%)',
+                border: `1px solid ${colors.primary.subtle}`,
                 borderRadius: '24px',
+                boxShadow: shadows.sm
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{ color: '#FCD34D', fontSize: '20px' }}><Star size={20} fill="#FCD34D" /></div>
-                <Text style={{ color: '#fff', fontWeight: 700 }}>Premium Tip</Text>
+                <div style={{ color: colors.warning.solid, fontSize: '20px' }}><Star size={20} fill={colors.warning.solid} /></div>
+                <Text style={{ color: colors.text.primary, fontWeight: 800, fontSize: '16px' }}>Premium Tip</Text>
               </div>
-              <Text style={{ color: '#CBD5E1', fontSize: '14px', lineHeight: '1.6', display: 'block' }}>
+              <Text style={{ color: colors.text.secondary, fontSize: '14px', lineHeight: '1.6', display: 'block', fontWeight: 500 }}>
                 Did you know? Premium members get 80% direct support to creators and early access to new AI models.
               </Text>
               <Button
                 type="link"
-                style={{ padding: 0, marginTop: '12px', color: '#818CF8', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}
+                style={{ padding: 0, marginTop: '12px', color: colors.primary.solid, fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}
                 onClick={() => navigate('/dashboard/subscription')}
               >
                 Learn More <ArrowRight size={16} />
@@ -499,7 +510,7 @@ const UserDashboard = () => {
           scrollbar-width: none;
         }
         .chat-item-hover:hover {
-          background: rgba(255, 255, 255, 0.02);
+          background: ${colors.gray[50]};
         }
       `}</style>
     </motion.div>

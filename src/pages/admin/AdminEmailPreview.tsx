@@ -8,6 +8,7 @@ import { Card, Select, Input, Button, Row, Col, Space, message, Divider, Tag } f
 import { MailOutlined, CopyOutlined, ReloadOutlined } from '@ant-design/icons';
 import { adminApi } from '../../services/api';
 import '../../styles/AdminPanel.css';
+import { colors } from '../../styles/tokens';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -77,8 +78,8 @@ const AdminEmailPreview = () => {
   // Email template generators (matching backend templates)
   const generateTemplate = (template: string): EmailTemplate => {
     const { name, email, role, amount, transactionId, plan, creatorName, userName,
-            messagePreview, conversationId, opportunityTitle, companyName, opportunityId,
-            status, verifyUrl, resetUrl, verified } = sampleData;
+      messagePreview, conversationId, opportunityTitle, companyName, opportunityId,
+      status, verifyUrl, resetUrl, verified } = sampleData;
 
     const templates: Record<string, EmailTemplate> = {
       welcome: {
@@ -567,7 +568,7 @@ const AdminEmailPreview = () => {
       <Row gutter={[24, 24]}>
         {/* Left Panel: Controls */}
         <Col xs={24} lg={10}>
-          <Card className="admin-card" title={<><MailOutlined /> Template Selector</>}>
+          <Card className="admin-card" title={<span style={{ color: colors.text.primary }}><MailOutlined /> Template Selector</span>}>
 
             <Space direction="vertical" style={{ width: '100%' }} size="large">
               {/* Template Selector */}
@@ -604,7 +605,7 @@ const AdminEmailPreview = () => {
                     <label style={labelStyle}>Name</label>
                     <Input
                       value={sampleData.name}
-                      onChange={(e) => setSampleData({...sampleData, name: e.target.value})}
+                      onChange={(e) => setSampleData({ ...sampleData, name: e.target.value })}
                       placeholder="John Doe"
                     />
                   </div>
@@ -613,7 +614,7 @@ const AdminEmailPreview = () => {
                     <label style={labelStyle}>Email</label>
                     <Input
                       value={sampleData.email}
-                      onChange={(e) => setSampleData({...sampleData, email: e.target.value})}
+                      onChange={(e) => setSampleData({ ...sampleData, email: e.target.value })}
                       placeholder="john@example.com"
                     />
                   </div>
@@ -623,7 +624,7 @@ const AdminEmailPreview = () => {
                       <label style={labelStyle}>Role</label>
                       <Select
                         value={sampleData.role}
-                        onChange={(value) => setSampleData({...sampleData, role: value})}
+                        onChange={(value) => setSampleData({ ...sampleData, role: value })}
                         style={{ width: '100%' }}
                       >
                         <Option value="USER">User</Option>
@@ -640,14 +641,14 @@ const AdminEmailPreview = () => {
                         <Input
                           type="number"
                           value={sampleData.amount}
-                          onChange={(e) => setSampleData({...sampleData, amount: parseInt(e.target.value)})}
+                          onChange={(e) => setSampleData({ ...sampleData, amount: parseInt(e.target.value) })}
                         />
                       </div>
                       <div>
                         <label style={labelStyle}>Transaction ID</label>
                         <Input
                           value={sampleData.transactionId}
-                          onChange={(e) => setSampleData({...sampleData, transactionId: e.target.value})}
+                          onChange={(e) => setSampleData({ ...sampleData, transactionId: e.target.value })}
                         />
                       </div>
                     </>
@@ -655,21 +656,21 @@ const AdminEmailPreview = () => {
 
                   {(selectedTemplate === 'newMessage' || selectedTemplate === 'opportunityNotification' ||
                     selectedTemplate === 'applicationStatus' || selectedTemplate === 'creatorVerification') && (
-                    <div>
-                      <label style={labelStyle}>Creator Name</label>
-                      <Input
-                        value={sampleData.creatorName}
-                        onChange={(e) => setSampleData({...sampleData, creatorName: e.target.value})}
-                      />
-                    </div>
-                  )}
+                      <div>
+                        <label style={labelStyle}>Creator Name</label>
+                        <Input
+                          value={sampleData.creatorName}
+                          onChange={(e) => setSampleData({ ...sampleData, creatorName: e.target.value })}
+                        />
+                      </div>
+                    )}
 
                   {selectedTemplate === 'applicationStatus' && (
                     <div>
                       <label style={labelStyle}>Status</label>
                       <Select
                         value={sampleData.status}
-                        onChange={(value) => setSampleData({...sampleData, status: value})}
+                        onChange={(value) => setSampleData({ ...sampleData, status: value })}
                         style={{ width: '100%' }}
                       >
                         <Option value="ACCEPTED">Accepted</Option>
@@ -683,7 +684,7 @@ const AdminEmailPreview = () => {
                       <label style={labelStyle}>Verification Status</label>
                       <Select
                         value={sampleData.verified}
-                        onChange={(value) => setSampleData({...sampleData, verified: value})}
+                        onChange={(value) => setSampleData({ ...sampleData, verified: value })}
                         style={{ width: '100%' }}
                       >
                         <Option value={true}>Verified</Option>
@@ -715,7 +716,7 @@ const AdminEmailPreview = () => {
             className="admin-card"
             title={
               <Space>
-                <span>Preview</span>
+                <span style={{ color: colors.text.primary }}>Preview</span>
                 <span style={{ color: '#888', fontWeight: 'normal', fontSize: '14px' }}>
                   Subject: {previewSubject}
                 </span>

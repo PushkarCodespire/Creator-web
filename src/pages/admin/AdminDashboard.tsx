@@ -59,19 +59,9 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-page">
-      <div style={{ marginBottom: spacing[6] }}>
-        <h1 style={{
-          fontSize: typography.fontSize['4xl'],
-          fontWeight: typography.fontWeight.bold,
-          color: colors.text.primary,
-          letterSpacing: '-0.02em',
-          marginBottom: spacing[1]
-        }}>
-          Platform Intelligence
-        </h1>
-        <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
-          Analytics, engagement, and operational oversight in real-time.
-        </p>
+      <div className="admin-hero">
+        <h1 className="admin-hero-title">Platform Intelligence</h1>
+        <p className="admin-hero-subtitle">Real-time analytics, engagement metrics, and operational oversight.</p>
       </div>
 
       <Row gutter={[24, 24]} style={{ marginBottom: spacing[6] }}>
@@ -170,7 +160,7 @@ const AdminDashboard = () => {
 
       <Row gutter={[24, 24]} style={{ marginBottom: spacing[6] }} align="stretch">
         <Col xs={24} md={8}>
-          <CustomCard title="Top Creators" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>Top Creators</span>} style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.creators || []}
               renderItem={(item: any) => (
@@ -187,7 +177,7 @@ const AdminDashboard = () => {
           </CustomCard>
         </Col>
         <Col xs={24} md={8}>
-          <CustomCard title="Market Leaders" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>Market Leaders</span>} style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.companies || []}
               renderItem={(item: any) => (
@@ -204,7 +194,7 @@ const AdminDashboard = () => {
           </CustomCard>
         </Col>
         <Col xs={24} md={8}>
-          <CustomCard title="Top Engaged Users" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>Top Engaged Users</span>} style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.activeUsers || []}
               renderItem={(item: any) => (
@@ -224,7 +214,7 @@ const AdminDashboard = () => {
 
       <Row gutter={[24, 24]} style={{ marginBottom: spacing[6] }} align="stretch">
         <Col xs={24} lg={12}>
-          <CustomCard title="Platform Growth Velocity" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>Platform Growth Velocity</span>} style={{ height: '100%' }}>
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
               <List
                 itemLayout="horizontal"
@@ -243,7 +233,7 @@ const AdminDashboard = () => {
           </CustomCard>
         </Col>
         <Col xs={24} lg={12}>
-          <CustomCard title="System Activity Audit" style={{ height: '100%' }}>
+          <CustomCard title={<span style={{ color: colors.text.primary }}>System Activity Audit</span>} style={{ height: '100%' }}>
             <Tabs defaultActiveKey="1" items={[
               {
                 key: '1',
@@ -316,26 +306,61 @@ const MetricCard = ({ title, value, icon, color, onClick }: any) => (
   <CustomCard
     onClick={onClick}
     hoverable
-    style={{ height: '100%' }}
+    style={{
+      height: '100%',
+      overflow: 'hidden',
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.sm
+    }}
   >
+    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: spacing[4] }}>
+      <div style={{
+        background: `${color}15`,
+        color: color,
+        padding: '10px',
+        borderRadius: '12px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        {icon}
+      </div>
+      <div style={{
+        background: colors.success.subtle,
+        color: colors.success.solid,
+        fontSize: '11px',
+        fontWeight: 800,
+        padding: '4px 8px',
+        borderRadius: '6px'
+      }}>
+        +12.5%
+      </div>
+    </div>
+
     <Statistic
-      title={<Text style={{ color: colors.gray[500], fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</Text>}
+      title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{title}</Text>}
       value={value}
-      prefix={<span style={{ color, marginRight: spacing[2], display: 'inline-flex', alignItems: 'center' }}>{icon}</span>}
-      valueStyle={{ color: colors.text.primary, fontWeight: 800, fontSize: '28px' }}
+      valueStyle={{ color: colors.text.primary, fontWeight: 900, fontSize: '28px' }}
     />
-    <div style={{ marginTop: spacing[3], display: 'flex', alignItems: 'center', color: colors.primary.solid, fontSize: '13px', fontWeight: 600 }}>
-      View Detailed Report <ArrowRight size={14} style={{ marginLeft: spacing[1] }} />
+
+    <div style={{
+      marginTop: spacing[4],
+      paddingTop: spacing[4],
+      borderTop: `1px solid ${colors.gray[50]}`,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'space-between'
+    }}>
+      <Text style={{ fontSize: '12px', color: colors.text.tertiary, fontWeight: 600 }}>Overview Stats</Text>
+      <ArrowRight size={14} style={{ color: colors.primary.solid }} />
     </div>
   </CustomCard>
 );
 
-const Badge = ({ count, color }: any) => (
-  <span style={{
-    backgroundColor: color,
+const Badge = ({ count }: any) => (
+  <span className="admin-tag-primary" style={{
     borderRadius: '10px',
     padding: '2px 8px',
-    color: '#fff',
     fontSize: '11px',
     fontWeight: 700
   }}>{count} MSGS</span>

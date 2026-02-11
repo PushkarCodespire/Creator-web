@@ -6,6 +6,7 @@ import { RootState } from '../../store';
 import { followApi, getImageUrl } from '../../services/api';
 import { motion } from 'framer-motion';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 
@@ -52,8 +53,8 @@ const UserFollowing = () => {
             style={{ padding: '32px' }}
         >
             <div style={{ marginBottom: '32px' }}>
-                <Title level={2} style={{ color: '#fff', marginBottom: '4px', fontWeight: 800 }}>Following</Title>
-                <Text style={{ color: '#94A3B8', fontSize: '16px' }}>Creators you follow and support.</Text>
+                <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>Following</Title>
+                <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>Creators you follow and support.</Text>
             </div>
 
             {following.length > 0 ? (
@@ -61,22 +62,28 @@ const UserFollowing = () => {
                     {following.map((creator) => (
                         <Card
                             key={creator.id}
+                            bordered={false}
                             style={{
-                                background: 'rgba(30, 41, 59, 0.4)',
-                                backdropFilter: 'blur(20px)',
-                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                background: '#ffffff',
                                 borderRadius: '24px',
-                                overflow: 'hidden'
+                                border: `1px solid ${colors.gray[100]}`,
+                                boxShadow: shadows.md,
+                                overflow: 'hidden',
+                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
                             }}
                             bodyStyle={{ padding: '24px', textAlign: 'center' }}
                         >
                             <Avatar
                                 size={80}
                                 src={getImageUrl(creator.profileImage)}
-                                style={{ marginBottom: '16px', border: '2px solid rgba(102, 126, 234, 0.5)' }}
+                                style={{
+                                    marginBottom: '16px',
+                                    border: `2px solid ${colors.primary.subtle}`,
+                                    background: colors.gray[50]
+                                }}
                             />
-                            <Title level={4} style={{ color: '#fff', marginBottom: '4px', fontSize: '18px' }}>{creator.displayName}</Title>
-                            <Text style={{ color: '#94A3B8', fontSize: '12px', display: 'block', marginBottom: '16px' }}>{creator.bio?.slice(0, 60)}...</Text>
+                            <Title level={4} style={{ color: colors.text.primary, marginBottom: '4px', fontSize: '18px', fontWeight: 800 }}>{creator.displayName}</Title>
+                            <Text style={{ color: colors.text.tertiary, fontSize: '12px', display: 'block', marginBottom: '16px', fontWeight: 600 }}>{creator.bio?.slice(0, 60)}...</Text>
 
                             <Space direction="vertical" style={{ width: '100%' }}>
                                 <Button type="primary" block onClick={() => navigate(`/creator/${creator.id}`)}>
@@ -91,16 +98,18 @@ const UserFollowing = () => {
                 </div>
             ) : (
                 <Card
+                    bordered={false}
                     style={{
-                        background: 'rgba(30, 41, 59, 0.4)',
-                        backdropFilter: 'blur(20px)',
-                        border: '1px solid rgba(255, 255, 255, 0.05)',
+                        background: '#ffffff',
+                        border: `1px solid ${colors.gray[100]}`,
                         borderRadius: '24px',
-                        padding: '40px 0'
+                        padding: '60px 0',
+                        textAlign: 'center',
+                        boxShadow: shadows.md
                     }}
                 >
                     <Empty
-                        description={<span style={{ color: '#94A3B8', fontSize: '16px' }}>You are not following any creators yet</span>}
+                        description={<span style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>You are not following any creators yet</span>}
                         image={Empty.PRESENTED_IMAGE_SIMPLE}
                     />
                 </Card>

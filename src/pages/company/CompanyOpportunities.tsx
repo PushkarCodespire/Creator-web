@@ -1,12 +1,11 @@
-// ===========================================
-// COMPANY OPPORTUNITIES PAGE
-// ===========================================
-
 import { useEffect, useState } from 'react';
-import { Card, Button, Table, Tag, Modal, Form, Input, InputNumber, Select, message } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Card, Button, Table, Tag, Modal, Form, Input, InputNumber, Select, message, Typography, Row, Col } from 'antd';
+import { PlusOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { opportunityApi, companyApi } from '../../services/api';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { motion } from 'framer-motion';
 
+const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 const CompanyOpportunities = () => {
@@ -51,19 +50,19 @@ const CompanyOpportunities = () => {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
-      render: (text: string) => <span style={{ fontWeight: 600, color: '#F8FAFC' }}>{text}</span>
+      render: (text: string) => <Text style={{ fontWeight: 700, color: colors.text.primary, fontSize: '15px' }}>{text}</Text>
     },
     {
       title: 'Budget',
       dataIndex: 'budget',
       key: 'budget',
-      render: (b: number) => b ? <span style={{ fontFamily: 'monospace', color: '#A5F3FC' }}>₹{b.toLocaleString()}</span> : <span style={{ color: '#94A3B8' }}>Negotiable</span>
+      render: (b: number) => b ? <Text style={{ fontWeight: 700, color: colors.primary.solid, fontSize: '15px' }}>₹{b.toLocaleString()}</Text> : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>Negotiable</Text>
     },
     {
       title: 'Applications',
       key: 'apps',
       render: (r: any) => (
-        <Tag color="purple" style={{ border: 'none', background: 'rgba(139, 92, 246, 0.15)', color: '#A78BFA' }}>
+        <Tag color="purple" style={{ borderRadius: '6px', fontWeight: 800, padding: '2px 10px' }}>
           {r._count?.applications || 0}
         </Tag>
       )
@@ -73,7 +72,7 @@ const CompanyOpportunities = () => {
       dataIndex: 'status',
       key: 'status',
       render: (s: string) => (
-        <Tag color={s === 'OPEN' ? 'success' : 'default'} style={{ border: 'none' }}>
+        <Tag color={s === 'OPEN' ? 'success' : 'default'} style={{ borderRadius: '6px', fontWeight: 700 }}>
           {s}
         </Tag>
       )
@@ -82,21 +81,26 @@ const CompanyOpportunities = () => {
       title: 'Action',
       key: 'action',
       render: (_: any, record: any) => (
-        <Button size="small" type="link" style={{ color: '#6366F1' }} onClick={() => window.location.href = `/company-dashboard/opportunities/${record.id}`}>
-          View
+        <Button size="small" type="link" style={{ color: colors.primary.solid, fontWeight: 700 }} onClick={() => window.location.href = `/company-dashboard/opportunities/${record.id}`}>
+          View Details <ArrowRightOutlined style={{ fontSize: '10px' }} />
         </Button>
       )
     }
   ];
 
   return (
-    <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px', alignItems: 'center' }}>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      style={{ padding: '32px' }}
+    >
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '32px', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px', color: '#F8FAFC' }}>
+          <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
             My Opportunities
-          </h1>
-          <p style={{ color: '#94A3B8', fontSize: '16px', margin: 0 }}>Manage your creator collaboration opportunities</p>
+          </Title>
+          <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>Manage your creator collaboration opportunities</Text>
         </div>
         <Button
           type="primary"
@@ -104,9 +108,13 @@ const CompanyOpportunities = () => {
           onClick={() => setModalOpen(true)}
           size="large"
           style={{
-            background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+            background: colors.primary.solid,
             border: 'none',
-            boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+            borderRadius: '12px',
+            height: '48px',
+            padding: '0 24px',
+            fontWeight: 700,
+            boxShadow: '0 4px 12px rgba(18, 104, 255, 0.2)'
           }}
         >
           Create Opportunity
@@ -115,7 +123,13 @@ const CompanyOpportunities = () => {
 
       <Card
         bordered={false}
-        style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '16px' }}
+        style={{
+          background: '#ffffff',
+          borderRadius: '24px',
+          border: `1px solid ${colors.gray[100]}`,
+          boxShadow: shadows.md,
+          overflow: 'hidden'
+        }}
         bodyStyle={{ padding: '0' }}
       >
         <Table
@@ -125,76 +139,204 @@ const CompanyOpportunities = () => {
           loading={loading}
           pagination={{ pageSize: 10, showSizeChanger: false }}
           rowClassName="premium-table-row"
-          style={{ background: 'transparent' }}
         />
       </Card>
 
       <style>{`
         .ant-table {
-          background: transparent !important;
-          color: #F8FAFC !important;
+          background: #ffffff !important;
         }
         .ant-table-thead > tr > th {
-          background: rgba(30, 41, 59, 1) !important;
-          color: #94A3B8 !important;
-          border-bottom: 1px solid #334155 !important;
-        }
-        .premium-table-row:hover > td {
-          background: rgba(51, 65, 85, 0.5) !important;
-        }
-        .ant-table-tbody > tr > td {
-          border-bottom: 1px solid #334155 !important;
-          color: #F8FAFC !important;
+          background: ${colors.gray[50]} !important;
+          color: ${colors.text.tertiary} !important;
+          border-bottom: 2px solid ${colors.gray[100]} !important;
+          font-weight: 800 !important;
+          text-transform: uppercase !important;
+          font-size: 11px !important;
+          letter-spacing: 0.05em !important;
           padding: 16px 24px !important;
         }
-        .ant-table-wrapper .ant-pagination-item {
-            background-color: transparent !important;
-            border-color: #334155 !important;
+        .premium-table-row:hover > td {
+          background: ${colors.gray[50]} !important;
         }
-        .ant-table-wrapper .ant-pagination-item-active {
-            border-color: #6366F1 !important;
-            background: rgba(99, 102, 241, 0.1) !important;
+        .ant-table-tbody > tr > td {
+          border-bottom: 1px solid ${colors.gray[50]} !important;
+          color: ${colors.text.primary} !important;
+          padding: 20px 24px !important;
+          font-weight: 500 !important;
         }
-        .ant-table-wrapper .ant-pagination-item a {
-            color: #94A3B8 !important;
+        .ant-pagination-item {
+            border-radius: 8px !important;
+            border-color: ${colors.gray[200]} !important;
         }
-        .ant-table-wrapper .ant-pagination-item-active a {
-             color: #6366F1 !important;
+        .ant-pagination-item-active {
+            border-color: ${colors.primary.solid} !important;
+            background: ${colors.primary.subtle} !important;
+        }
+        .ant-pagination-item a {
+            color: ${colors.text.tertiary} !important;
+            font-weight: 700 !important;
+        }
+        .ant-pagination-item-active a {
+             color: ${colors.primary.solid} !important;
+        }
+        .ant-modal-content {
+          border-radius: 24px !important;
+          padding: 0 !important;
+          background: #ffffff !important;
+          overflow: hidden !important;
+          box-shadow: ${shadows.xl} !important;
+        }
+        .ant-modal-header {
+          margin-bottom: 0 !important;
+          padding: 32px 32px 16px 32px !important;
+          background: #ffffff !important;
+          border-bottom: none !important;
+        }
+        .ant-modal-footer {
+            padding: 0 32px 32px 32px !important;
+            border-top: none !important;
+        }
+        .ant-modal-title {
+          font-size: 24px !important;
+          font-weight: 800 !important;
+          color: ${colors.text.primary} !important;
+          letter-spacing: -0.02em !important;
+        }
+        .ant-modal-close {
+            top: 24px !important;
+            right: 24px !important;
+            color: ${colors.text.tertiary} !important;
+        }
+        .ant-form-item-label label {
+          font-weight: 700 !important;
+          color: ${colors.text.primary} !important;
+          font-size: 13px !important;
+          text-transform: uppercase !important;
+          letter-spacing: 0.05em !important;
+          display: flex !important;
+          align-items: center !important;
+          gap: 8px !important;
+        }
+        .ant-input, .ant-input-number, .ant-select-selector, .ant-input-number-input {
+          border-radius: 12px !important;
+          border: 1px solid ${colors.gray[200]} !important;
+          font-weight: 500 !important;
+          transition: all 0.2s ease !important;
+          background: #ffffff !important;
+          color: ${colors.text.primary} !important;
+        }
+        .ant-input, .ant-select-selector {
+            padding: 8px 12px !important;
+        }
+        .ant-input:hover, .ant-input-number:hover, .ant-select-selector:hover {
+            border-color: ${colors.primary.solid} !important;
+        }
+        .ant-input:focus, .ant-input-number:focus, .ant-select-selector:focus {
+            border-color: ${colors.primary.solid} !important;
+            box-shadow: 0 0 0 4px ${colors.primary.subtle} !important;
         }
       `}</style>
 
-      <Modal title="Create Opportunity" open={modalOpen} onCancel={() => setModalOpen(false)} footer={null} width={600}>
-        <Form form={form} layout="vertical" onFinish={handleCreate}>
-          <Form.Item name="title" label="Title" rules={[{ required: true }]}>
-            <Input placeholder="E.g., Brand Ambassador for Product Launch" />
-          </Form.Item>
-          <Form.Item name="description" label="Description" rules={[{ required: true }]}>
-            <TextArea rows={4} placeholder="Describe what you're looking for..." />
-          </Form.Item>
-          <Form.Item name="type" label="Type" rules={[{ required: true }]}>
-            <Select>
-              <Select.Option value="SPONSORED_POST">Sponsored Post</Select.Option>
-              <Select.Option value="BRAND_AMBASSADOR">Brand Ambassador</Select.Option>
-              <Select.Option value="PRODUCT_REVIEW">Product Review</Select.Option>
-              <Select.Option value="AFFILIATE">Affiliate</Select.Option>
-              <Select.Option value="COLLABORATION">Collaboration</Select.Option>
-            </Select>
-          </Form.Item>
-          <Form.Item name="budget" label="Budget (₹)">
-            <InputNumber style={{ width: '100%' }} min={0} />
-          </Form.Item>
-          <Form.Item name="category" label="Category">
-            <Select placeholder="Target creator category">
-              <Select.Option value="Fitness">Fitness</Select.Option>
-              <Select.Option value="Business">Business</Select.Option>
-              <Select.Option value="Technology">Technology</Select.Option>
-              <Select.Option value="Lifestyle">Lifestyle</Select.Option>
-            </Select>
-          </Form.Item>
-          <Button type="primary" htmlType="submit" loading={submitting} block>Create</Button>
-        </Form>
+      <Modal
+        title={<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><PlusOutlined style={{ color: colors.primary.solid }} /> Create Opportunity</div>}
+        open={modalOpen}
+        onCancel={() => setModalOpen(false)}
+        footer={null}
+        width={600}
+        centered
+      >
+        <div style={{ padding: '0 32px 32px 32px' }}>
+          <Text style={{ display: 'block', color: colors.text.tertiary, marginBottom: '32px', fontSize: '15px', fontWeight: 500 }}>
+            Define your campaign requirements and find the perfect creator to collaborate with.
+          </Text>
+          <Form form={form} layout="vertical" onFinish={handleCreate} requiredMark={false}>
+            <Form.Item
+              name="title"
+              label={<span>📝 Opportunity Title</span>}
+              rules={[{ required: true, message: 'Please enter a title' }]}
+            >
+              <Input size="large" placeholder="E.g., Brand Ambassador for Product Launch" />
+            </Form.Item>
+
+            <Form.Item
+              name="description"
+              label={<span>📖 Campaign Description</span>}
+              rules={[{ required: true, message: 'Please enter a description' }]}
+            >
+              <TextArea rows={4} placeholder="Describe your campaign goals, requirements, and what you expect from the creator..." />
+            </Form.Item>
+
+            <Row gutter={16}>
+              <Col span={12}>
+                <Form.Item
+                  name="type"
+                  label={<span>🏷️ Type</span>}
+                  rules={[{ required: true, message: 'Select collaboration type' }]}
+                >
+                  <Select size="large" placeholder="Select type">
+                    <Select.Option value="SPONSORED_POST">Sponsored Post</Select.Option>
+                    <Select.Option value="BRAND_AMBASSADOR">Brand Ambassador</Select.Option>
+                    <Select.Option value="PRODUCT_REVIEW">Product Review</Select.Option>
+                    <Select.Option value="AFFILIATE">Affiliate</Select.Option>
+                    <Select.Option value="COLLABORATION">Collaboration</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={12}>
+                <Form.Item
+                  name="category"
+                  label={<span>🎯 Category</span>}
+                  rules={[{ required: true, message: 'Select a category' }]}
+                >
+                  <Select size="large" placeholder="Select category">
+                    <Select.Option value="Fitness">Fitness</Select.Option>
+                    <Select.Option value="Business">Business</Select.Option>
+                    <Select.Option value="Technology">Technology</Select.Option>
+                    <Select.Option value="Lifestyle">Lifestyle</Select.Option>
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+
+            <Form.Item
+              name="budget"
+              label={<span>💰 Budget (INR)</span>}
+              extra={<Text style={{ fontSize: '12px', color: colors.text.tertiary }}>Leave blank for negotiable budget</Text>}
+            >
+              <InputNumber
+                style={{ width: '100%' }}
+                min={0}
+                size="large"
+                placeholder="Enter amount"
+                formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                parser={value => value ? value.replace(/₹\s?|(,*)/g, '') as any : ''}
+              />
+            </Form.Item>
+
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitting}
+              block
+              size="large"
+              style={{
+                borderRadius: '14px',
+                fontWeight: 800,
+                height: '56px',
+                marginTop: '24px',
+                background: colors.primary.gradient,
+                border: 'none',
+                fontSize: '16px',
+                boxShadow: '0 8px 24px rgba(18, 104, 255, 0.25)'
+              }}
+            >
+              Post Opportunity
+            </Button>
+          </Form>
+        </div>
       </Modal>
-    </div>
+    </motion.div>
   );
 };
 

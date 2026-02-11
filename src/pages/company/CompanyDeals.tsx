@@ -1,12 +1,11 @@
-// ===========================================
-// COMPANY DEALS PAGE
-// Manage active and completed deals
-// ===========================================
-
 import { useEffect, useState } from 'react';
-import { Card, Table, Tag, Button, message, Avatar, Popconfirm } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import { Card, Table, Tag, Button, message, Avatar, Popconfirm, Typography } from 'antd';
+import { UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { companyApi, getImageUrl } from '../../services/api';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { motion } from 'framer-motion';
+
+const { Title, Text } = Typography;
 
 const CompanyDeals = () => {
     const [deals, setDeals] = useState<any[]>([]);
@@ -44,17 +43,28 @@ const CompanyDeals = () => {
     };
 
     return (
-        <div className="company-deals fade-in">
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            style={{ padding: '32px' }}
+        >
             <div style={{ marginBottom: '32px' }}>
-                <h1 style={{ fontSize: '28px', fontWeight: 700, marginBottom: '8px', color: '#F8FAFC' }}>
+                <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>
                     Manage Deals
-                </h1>
-                <p style={{ color: '#94A3B8', fontSize: '16px', margin: 0 }}>Track and manage your active creator contracts</p>
+                </Title>
+                <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>Track and manage your active creator contracts</Text>
             </div>
 
             <Card
                 bordered={false}
-                style={{ background: '#1E293B', border: '1px solid #334155', borderRadius: '16px' }}
+                style={{
+                    background: '#ffffff',
+                    borderRadius: '24px',
+                    border: `1px solid ${colors.gray[100]}`,
+                    boxShadow: shadows.md,
+                    overflow: 'hidden'
+                }}
                 bodyStyle={{ padding: '0' }}
             >
                 <Table
@@ -62,22 +72,21 @@ const CompanyDeals = () => {
                     rowKey="id"
                     loading={loading}
                     pagination={{ pageSize: 10, showSizeChanger: false }}
-                    style={{ background: 'transparent' }}
                     rowClassName="premium-table-row"
                     columns={[
                         {
                             title: 'Deal ID',
                             dataIndex: 'id',
                             key: 'id',
-                            render: (id: string) => <span style={{ fontFamily: 'monospace', color: '#64748B' }}>#{id.slice(-6)}</span>
+                            render: (id: string) => <Text style={{ fontWeight: 800, color: colors.text.tertiary, fontSize: '12px' }}>#{id.slice(-6).toUpperCase()}</Text>
                         },
                         {
                             title: 'Creator',
                             key: 'creator',
                             render: (row: any) => (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <Avatar src={row.creator?.profileImage ? getImageUrl(row.creator.profileImage) : undefined} icon={<UserOutlined />} style={{ background: '#334155' }} />
-                                    <span style={{ fontWeight: 600, color: '#F8FAFC' }}>{row.creator?.displayName}</span>
+                                    <Avatar src={row.creator?.profileImage ? getImageUrl(row.creator.profileImage) : undefined} icon={<UserOutlined />} style={{ background: colors.gray[100], border: `1px solid ${colors.gray[200]}` }} />
+                                    <Text style={{ fontWeight: 700, color: colors.text.primary, fontSize: '15px' }}>{row.creator?.displayName}</Text>
                                 </div>
                             )
                         },
@@ -85,13 +94,13 @@ const CompanyDeals = () => {
                             title: 'Opportunity',
                             dataIndex: ['application', 'opportunity', 'title'],
                             key: 'opportunity',
-                            render: (t: string) => <span style={{ color: '#CBD5E1' }}>{t}</span>
+                            render: (t: string) => <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>{t}</Text>
                         },
                         {
                             title: 'Amount',
                             dataIndex: 'amount',
                             key: 'amount',
-                            render: (a: number) => <span style={{ color: '#A5F3FC', fontWeight: 600, fontFamily: 'monospace' }}>₹{a.toLocaleString()}</span>
+                            render: (a: number) => <Text style={{ color: colors.primary.solid, fontWeight: 800, fontSize: '16px' }}>₹{a.toLocaleString()}</Text>
                         },
                         {
                             title: 'Status',
@@ -103,7 +112,7 @@ const CompanyDeals = () => {
                                 if (s === 'COMPLETED') color = 'success';
                                 if (s === 'CANCELLED') color = 'error';
                                 return (
-                                    <Tag color={color} style={{ border: 'none', padding: '2px 10px' }}>
+                                    <Tag color={color} style={{ borderRadius: '6px', fontWeight: 700, padding: '2px 10px' }}>
                                         {s?.replace('_', ' ')}
                                     </Tag>
                                 );
@@ -125,7 +134,13 @@ const CompanyDeals = () => {
                                         <Button
                                             type="primary"
                                             size="small"
-                                            style={{ background: '#10B981', borderColor: '#10B981', boxShadow: 'none' }}
+                                            style={{
+                                                background: colors.success?.solid || '#10B981',
+                                                borderColor: colors.success?.solid || '#10B981',
+                                                borderRadius: '8px',
+                                                fontWeight: 700,
+                                                fontSize: '12px'
+                                            }}
                                         >
                                             Mark Complete
                                         </Button>
@@ -139,38 +154,56 @@ const CompanyDeals = () => {
 
             <style>{`
                 .ant-table {
-                  background: transparent !important;
-                  color: #F8FAFC !important;
+                  background: #ffffff !important;
                 }
                 .ant-table-thead > tr > th {
-                  background: rgba(30, 41, 59, 1) !important;
-                  color: #94A3B8 !important;
-                  border-bottom: 1px solid #334155 !important;
-                }
-                .premium-table-row:hover > td {
-                  background: rgba(51, 65, 85, 0.5) !important;
-                }
-                .ant-table-tbody > tr > td {
-                  border-bottom: 1px solid #334155 !important;
-                  color: #F8FAFC !important;
+                  background: ${colors.gray[50]} !important;
+                  color: ${colors.text.tertiary} !important;
+                  border-bottom: 2px solid ${colors.gray[100]} !important;
+                  font-weight: 800 !important;
+                  text-transform: uppercase !important;
+                  font-size: 11px !important;
+                  letter-spacing: 0.05em !important;
                   padding: 16px 24px !important;
                 }
-                .ant-table-wrapper .ant-pagination-item {
-                    background-color: transparent !important;
-                    border-color: #334155 !important;
+                .premium-table-row:hover > td {
+                  background: ${colors.gray[50]} !important;
                 }
-                .ant-table-wrapper .ant-pagination-item-active {
-                    border-color: #6366F1 !important;
-                    background: rgba(99, 102, 241, 0.1) !important;
+                .ant-table-tbody > tr > td {
+                  border-bottom: 1px solid ${colors.gray[50]} !important;
+                  color: ${colors.text.primary} !important;
+                  padding: 20px 24px !important;
+                  font-weight: 500 !important;
                 }
-                .ant-table-wrapper .ant-pagination-item a {
-                    color: #94A3B8 !important;
+                .ant-pagination-item {
+                    border-radius: 8px !important;
+                    border-color: ${colors.gray[200]} !important;
                 }
-                .ant-table-wrapper .ant-pagination-item-active a {
-                     color: #6366F1 !important;
+                .ant-pagination-item-active {
+                    border-color: ${colors.primary.solid} !important;
+                    background: ${colors.primary.subtle} !important;
+                }
+                .ant-pagination-item a {
+                    color: ${colors.text.tertiary} !important;
+                    font-weight: 700 !important;
+                }
+                .ant-pagination-item-active a {
+                     color: ${colors.primary.solid} !important;
+                }
+                .ant-popover-inner {
+                  border-radius: 16px !important;
+                  padding: 12px !important;
+                }
+                .ant-popover-message-title {
+                  font-weight: 700 !important;
+                  color: ${colors.text.primary} !important;
+                }
+                .ant-popover-buttons .ant-btn {
+                  border-radius: 8px !important;
+                  font-weight: 600 !important;
                 }
             `}</style>
-        </div>
+        </motion.div>
     );
 };
 

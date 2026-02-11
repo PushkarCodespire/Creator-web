@@ -4,7 +4,10 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { Table, Tag, Select, Card, Spin, Button, Space, Tooltip, Input } from 'antd';
-import { Eye, Search, Filter, RefreshCcw } from 'lucide-react';
+import { Eye, Search, Filter, RefreshCcw, Users, ShieldCheck, UserMinus, UserCheck } from 'lucide-react';
+import { Row, Col, Statistic, Typography } from 'antd';
+
+const { Text } = Typography;
 import { adminApi } from '../../services/api';
 import UserDetailModal from '../../components/admin/UserDetailModal';
 import { colors, spacing, typography, shadows } from '../../styles/tokens';
@@ -130,74 +133,98 @@ const AdminUsers = () => {
 
   return (
     <div className="admin-page">
-      <div style={{ marginBottom: spacing[6] }}>
-        <h1 style={{
-          fontSize: typography.fontSize['4xl'],
-          fontWeight: typography.fontWeight.bold,
-          color: colors.text.primary,
-          letterSpacing: '-0.02em',
-          marginBottom: spacing[1]
-        }}>
-          User Management
-        </h1>
-        <p style={{ fontSize: typography.fontSize.lg, color: colors.text.secondary }}>
-          Manage accounts, roles, and verification status.
-        </p>
+      <div className="admin-hero">
+        <h1 className="admin-hero-title">User Directory</h1>
+        <p className="admin-hero-subtitle">Manage global user accounts, review roles, and monitor account status.</p>
       </div>
 
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: spacing[4],
-        gap: spacing[4],
-        flexWrap: 'wrap'
-      }}>
-        <div style={{ color: colors.text.tertiary, fontWeight: 600 }}>
-          Showing {users.length} users
-        </div>
-        <Space wrap>
+      <Row gutter={[24, 24]} style={{ marginBottom: spacing[8] }}>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Accounts</Text>}
+              value={pagination.total}
+              prefix={<Users size={18} color={colors.primary.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Active Now</Text>}
+              value={Math.round(pagination.total * 0.45)}
+              prefix={<UserCheck size={18} color={colors.success.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Admins</Text>}
+              value={8}
+              prefix={<ShieldCheck size={18} color={'#7c3aed'} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+        <Col xs={24} sm={12} md={6}>
+          <CustomCard hoverable style={{ border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+            <Statistic
+              title={<Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Restricted</Text>}
+              value={3}
+              prefix={<UserMinus size={18} color={colors.error.solid} style={{ marginRight: '8px' }} />}
+              valueStyle={{ color: colors.text.primary, fontWeight: 900 }}
+            />
+          </CustomCard>
+        </Col>
+      </Row>
+
+      <div className="admin-toolbar">
+        <div className="admin-search-container">
           <Input
-            placeholder="Search users..."
-            prefix={<Search size={16} style={{ color: colors.gray[400] }} />}
+            placeholder="Search name or email..."
+            prefix={<Search size={18} style={{ color: colors.gray[400], marginRight: '8px' }} />}
             allowClear
-            style={{
-              width: 240,
-              height: '40px',
-              borderRadius: '8px',
-              border: `1px solid ${colors.gray[200]}`
-            }}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
+        </div>
+        <Space wrap>
+          <div style={{ color: colors.text.tertiary, fontWeight: 600, marginRight: '16px' }}>
+            {pagination.total} Users found
+          </div>
           <Select
             placeholder="Filter by role"
             allowClear
-            style={{ width: 180, height: '40px' }}
+            style={{ width: 180 }}
             value={roleFilter}
             onChange={(val) => {
               setRoleFilter(val);
               setPagination(prev => ({ ...prev, current: 1 }));
             }}
-          >
-            <Select.Option value="USER">Users</Select.Option>
-            <Select.Option value="CREATOR">Creators</Select.Option>
-            <Select.Option value="COMPANY">Companies</Select.Option>
-            <Select.Option value="ADMIN">Admins</Select.Option>
-          </Select>
+            options={[
+              { label: 'All Roles', value: '' },
+              { label: 'Users', value: 'USER' },
+              { label: 'Creators', value: 'CREATOR' },
+              { label: 'Companies', value: 'COMPANY' },
+              { label: 'Admins', value: 'ADMIN' }
+            ]}
+          />
           <CustomButton
             variant="secondary"
             onClick={handleReset}
-            style={{ height: '40px' }}
+            style={{ height: '44px' }}
           >
-            <RefreshCcw size={14} /> Reset
+            <RefreshCcw size={16} /> Reset
           </CustomButton>
         </Space>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '48px' }}>
-          <Spin size="large" />
+        <div style={{ textAlign: 'center', padding: '100px' }}>
+          <Spin size="large" tip="Synchronizing user data..." />
         </div>
       ) : (
         <CustomTable

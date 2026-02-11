@@ -7,6 +7,7 @@ import { userApi, authApi, notificationApi, getImageUrl } from '../../services/a
 import AvatarUpload from '../../components/upload/AvatarUpload';
 import { motion } from 'framer-motion';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
+import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 
@@ -209,11 +210,11 @@ const UserSettings = () => {
                                 disabled={loading}
                             />
                         </div>
-                        <Form.Item label={<span style={{ color: '#fff' }}>Display Name</span>} name="name">
-                            <Input size="large" />
+                        <Form.Item label={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Display Name</span>} name="name">
+                            <Input size="large" placeholder="Enter your display name" />
                         </Form.Item>
-                        <Form.Item label={<span style={{ color: '#fff' }}>Email</span>}>
-                            <Input size="large" value={profile?.email || user?.email} disabled style={{ color: '#94A3B8' }} />
+                        <Form.Item label={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Email Address</span>}>
+                            <Input size="large" value={profile?.email || user?.email} disabled style={{ color: colors.text.tertiary, fontWeight: 500 }} />
                         </Form.Item>
                         <Button type="primary" htmlType="submit" loading={loading} size="large">
                             Save Changes
@@ -227,7 +228,7 @@ const UserSettings = () => {
             label: 'Interests',
             children: (
                 <div>
-                    <Text style={{ color: '#94A3B8', display: 'block', marginBottom: '24px' }}>
+                    <Text style={{ color: colors.text.tertiary, display: 'block', marginBottom: '24px', fontSize: '15px', fontWeight: 500 }}>
                         Select topics you are interested in to get better recommendations.
                     </Text>
                     {interestsLoading ? <Spin /> : (
@@ -242,10 +243,12 @@ const UserSettings = () => {
                                             else setInterests(interests.filter(i => i !== cat.value));
                                         }}
                                         style={{
-                                            padding: '8px 16px',
+                                            padding: '8px 20px',
                                             fontSize: '14px',
-                                            borderRadius: '20px',
-                                            border: interests.includes(cat.value) ? 'none' : '1px solid rgba(255,255,255,0.2)'
+                                            borderRadius: '24px',
+                                            border: interests.includes(cat.value) ? 'none' : `1px solid ${colors.gray[200]}`,
+                                            fontWeight: 600,
+                                            margin: '4px'
                                         }}
                                     >
                                         {cat.label}
@@ -268,44 +271,44 @@ const UserSettings = () => {
                     <List itemLayout="horizontal">
                         <List.Item extra={<Switch checked={notifSettings.emailEnabled} onChange={v => handleNotifUpdate('emailEnabled', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Email Notifications</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Receive daily summaries and important updates</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Email Notifications</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Receive daily summaries and important updates</span>}
                             />
                         </List.Item>
                         <List.Item extra={<Switch checked={notifSettings.emailChat} onChange={v => handleNotifUpdate('emailChat', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Chat Messages</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Get notified when creators reply</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Chat Messages</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Get notified when creators reply</span>}
                             />
                         </List.Item>
                         <List.Item extra={<Switch checked={notifSettings.emailDeals} onChange={v => handleNotifUpdate('emailDeals', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Promotions & Deals</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Updates on discounts and new features</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Promotions & Deals</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Updates on discounts and new features</span>}
                             />
                         </List.Item>
                         <List.Item extra={<Switch checked={notifSettings.emailPayments} onChange={v => handleNotifUpdate('emailPayments', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Payments & Billing</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Receipts, renewals, and billing alerts</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Payments & Billing</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Receipts, renewals, and billing alerts</span>}
                             />
                         </List.Item>
                         <List.Item extra={<Switch checked={notifSettings.emailModeration} onChange={v => handleNotifUpdate('emailModeration', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Safety & Moderation</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Reports and account safety updates</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Safety & Moderation</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Reports and account safety updates</span>}
                             />
                         </List.Item>
                         <List.Item extra={<Switch checked={notifSettings.pushEnabled} onChange={v => handleNotifUpdate('pushEnabled', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Push Notifications</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Instant alerts on your device</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Push Notifications</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Instant alerts on your device</span>}
                             />
                         </List.Item>
                         <List.Item extra={<Switch checked={notifSettings.soundEnabled} onChange={v => handleNotifUpdate('soundEnabled', v)} />}>
                             <List.Item.Meta
-                                title={<span style={{ color: '#fff' }}>Sound Alerts</span>}
-                                description={<span style={{ color: '#94A3B8' }}>Play a sound for important events</span>}
+                                title={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Sound Alerts</span>}
+                                description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>Play a sound for important events</span>}
                             />
                         </List.Item>
                     </List>
@@ -319,14 +322,14 @@ const UserSettings = () => {
                 <div style={{ maxWidth: 600 }}>
                     <Form form={passwordForm} layout="vertical" onFinish={handlePasswordChange}>
                         <Form.Item
-                            label={<span style={{ color: '#fff' }}>Current Password</span>}
+                            label={<span style={{ color: colors.text.primary, fontWeight: 700 }}>Current Password</span>}
                             name="currentPassword"
                             rules={[{ required: true, message: 'Required' }]}
                         >
                             <Input.Password size="large" />
                         </Form.Item>
                         <Form.Item
-                            label={<span style={{ color: '#fff' }}>New Password</span>}
+                            label={<span style={{ color: colors.text.primary, fontWeight: 700 }}>New Password</span>}
                             name="newPassword"
                             rules={[{ required: true, message: 'Required' }, { min: 6, message: 'Min 6 chars' }]}
                         >
@@ -353,16 +356,17 @@ const UserSettings = () => {
             style={{ padding: '32px' }}
         >
             <div style={{ marginBottom: '32px' }}>
-                <Title level={2} style={{ color: '#fff', marginBottom: '4px', fontWeight: 800 }}>Settings</Title>
-                <Text style={{ color: '#94A3B8', fontSize: '16px' }}>Manage your account preferences and security.</Text>
+                <Title level={2} style={{ color: colors.text.primary, marginBottom: '4px', fontWeight: 800, letterSpacing: '-0.02em' }}>Settings</Title>
+                <Text style={{ color: colors.text.tertiary, fontSize: '16px', fontWeight: 500 }}>Manage your account preferences and security.</Text>
             </div>
 
             <Card
+                bordered={false}
                 style={{
-                    background: 'rgba(30, 41, 59, 0.4)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255, 255, 255, 0.05)',
+                    background: '#ffffff',
                     borderRadius: '24px',
+                    border: `1px solid ${colors.gray[100]}`,
+                    boxShadow: shadows.md,
                     padding: '24px'
                 }}
             >
@@ -370,9 +374,55 @@ const UserSettings = () => {
                     activeKey={activeTab}
                     onChange={setActiveTab}
                     items={items}
-                    tabBarStyle={{ color: '#94A3B8' }}
+                    tabBarStyle={{ color: colors.text.tertiary, fontWeight: 700 }}
                 />
             </Card>
+
+            <style>{`
+                .ant-tabs-tab {
+                    padding: 12px 16px !important;
+                }
+                .ant-tabs-tab-btn {
+                    color: ${colors.text.tertiary} !important;
+                    font-weight: 700 !important;
+                    font-size: 15px !important;
+                    transition: all 0.3s ease !important;
+                }
+                .ant-tabs-tab-active .ant-tabs-tab-btn {
+                    color: ${colors.primary.solid} !important;
+                }
+                .ant-tabs-ink-bar {
+                    background: ${colors.primary.solid} !important;
+                    height: 3px !important;
+                    border-radius: 3px 3px 0 0 !important;
+                }
+                .ant-input, .ant-input-password, .ant-input-affix-wrapper {
+                    background-color: #ffffff !important;
+                    color: ${colors.text.primary} !important;
+                    border: 1px solid ${colors.gray[200]} !important;
+                    border-radius: 12px !important;
+                }
+                .ant-input:focus, .ant-input-focused, .ant-input-affix-wrapper-focused {
+                    border-color: ${colors.primary.solid} !important;
+                    box-shadow: 0 0 0 2px ${colors.primary.subtle} !important;
+                }
+                .ant-input::placeholder {
+                    color: ${colors.text.tertiary} !important;
+                    opacity: 0.7;
+                }
+                .ant-input-disabled {
+                    background-color: ${colors.gray[50]} !important;
+                    color: ${colors.text.tertiary} !important;
+                    border-color: ${colors.gray[100]} !important;
+                }
+                .ant-input-password input {
+                    background-color: transparent !important;
+                    color: ${colors.text.primary} !important;
+                }
+                .ant-form-item-label label {
+                    color: ${colors.text.primary} !important;
+                }
+            `}</style>
         </motion.div>
     );
 };
