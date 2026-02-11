@@ -1,29 +1,35 @@
 // ===========================================
-// POST CREATOR COMPONENT
-// Rich text editor for creating posts with media
+// POST CREATOR COMPONENT - Premium Light Theme
 // ===========================================
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  PictureOutlined,
-  VideoCameraOutlined,
-  CloseCircleFilled,
-  LoadingOutlined,
-  SmileOutlined,
-} from '@ant-design/icons';
-import { Input, message, Upload } from 'antd';
+  Camera,
+  Video,
+  X,
+  Loader2,
+  Smile,
+  Send,
+  Image as ImageIcon,
+  Film,
+  Zap,
+  Sparkles,
+  Search,
+  ChevronRight,
+  MoreVertical,
+  Paperclip,
+  Check
+} from 'lucide-react';
+import { Input, message, Upload, Avatar, Button, Space, Typography, Tag, Divider } from 'antd';
 import type { UploadFile } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { postApi } from '../../services/api';
-import CustomCard from '../common/Card/CustomCard';
-import CustomButton from '../common/Button/CustomButton';
-import CustomAvatar from '../common/Avatar/Avatar';
-import { fadeIn, slideUp } from '../../styles/animations';
-import { colors, typography, spacing, shadows } from '../../styles/tokens';
+import { postApi, getImageUrl } from '../../services/api';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
 
 const { TextArea } = Input;
+const { Text } = Typography;
 
 export interface PostCreatorProps {
   onPostCreated?: (post: any) => void;
@@ -36,49 +42,39 @@ export interface PostCreatorProps {
 const PostCreator: React.FC<PostCreatorProps> = ({
   onPostCreated,
   onCancel,
-  placeholder = "What's on your mind?",
+  placeholder = "Commence neural transmission...",
   maxLength = 5000,
   allowMedia = true,
 }) => {
   const { user } = useSelector((state: RootState) => state.auth);
 
   const [content, setContent] = useState('');
-  const [mediaFiles, setMediaFiles] = useState<UploadFile[]>([]);
   const [mediaUrls, setMediaUrls] = useState<Array<{ type: 'image' | 'video'; url: string }>>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
   const textAreaRef = useRef<any>(null);
 
-  const handleContentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setContent(e.target.value);
-  };
-
   const handleMediaUpload = async (file: File) => {
-    // Validate file type
     const isImage = file.type.startsWith('image/');
     const isVideo = file.type.startsWith('video/');
 
     if (!isImage && !isVideo) {
-      message.error('Please upload only images or videos');
+      message.error('Neural mismatch: Only images or videos supported');
       return false;
     }
 
-    // Validate file size (10MB for images, 50MB for videos)
     const maxSize = isVideo ? 50 * 1024 * 1024 : 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      message.error(`File size must be less than ${isVideo ? '50MB' : '10MB'}`);
+      message.error(`Neural overflow: File size limit ${isVideo ? '50MB' : '10MB'}`);
       return false;
     }
 
     setIsUploading(true);
-
     try {
-      // Create FormData for upload
       const formData = new FormData();
       formData.append('file', file);
 
-      // Upload file to server
       const response = await fetch('/api/upload/image', {
         method: 'POST',
         body: formData,
@@ -87,90 +83,57 @@ const PostCreator: React.FC<PostCreatorProps> = ({
         },
       });
 
-      if (!response.ok) {
-        throw new Error('Upload failed');
-      }
+      if (!response.ok) throw new Error('Upload failed');
 
       const data = await response.json();
       const uploadedUrl = data.data.url;
 
-      // Add to media URLs
       setMediaUrls((prev) => [
         ...prev,
-        {
-          type: isVideo ? 'video' : 'image',
-          url: uploadedUrl,
-        },
+        { type: isVideo ? 'video' : 'image', url: uploadedUrl },
       ]);
-
-      message.success('Media uploaded successfully');
+      message.success('Vector uploaded to matrix');
     } catch (error) {
       console.error('Upload error:', error);
-      message.error('Failed to upload media');
+      message.error('Matrix connection unstable: Upload failed');
     } finally {
       setIsUploading(false);
     }
-
-    return false; // Prevent default upload behavior
+    return false;
   };
 
   const handleRemoveMedia = (index: number) => {
     setMediaUrls((prev) => prev.filter((_, i) => i !== index));
-    setMediaFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async () => {
-    // Validate content
     if (!content.trim() && mediaUrls.length === 0) {
-      message.warning('Please write something or add media');
+      message.warning('Neural transmission requires payload');
       return;
     }
 
     setIsSubmitting(true);
-
     try {
-      // Determine post type
       let postType = 'TEXT';
       if (mediaUrls.length > 0) {
         postType = mediaUrls[0].type === 'video' ? 'VIDEO' : 'IMAGE';
-        if (mediaUrls.length > 1) {
-          postType = 'CAROUSEL';
-        }
+        if (mediaUrls.length > 1) postType = 'CAROUSEL';
       }
 
-      // Create post
       const response = await postApi.createPost({
         content: content.trim(),
         media: mediaUrls.length > 0 ? mediaUrls : undefined,
         type: postType,
       });
 
-      message.success('Post created successfully!');
-
-      // Reset form
+      message.success('Transmission synthesized!');
       setContent('');
-      setMediaFiles([]);
       setMediaUrls([]);
-
-      // Notify parent
-      if (onPostCreated) {
-        onPostCreated(response.data.data);
-      }
+      if (onPostCreated) onPostCreated(response.data.data);
     } catch (error: any) {
-      const errorMessage = error.response?.data?.error || 'Failed to create post';
-      message.error(errorMessage);
-      console.error('Error creating post:', error);
+      message.error(error.response?.data?.error || 'Synthesis error');
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  const handleClear = () => {
-    setContent('');
-    setMediaFiles([]);
-    setMediaUrls([]);
-    if (onCancel) {
-      onCancel();
     }
   };
 
@@ -178,216 +141,196 @@ const PostCreator: React.FC<PostCreatorProps> = ({
   const isOverLimit = characterCount > maxLength;
 
   return (
-    <motion.div variants={fadeIn} initial="initial" animate="enter">
-      <CustomCard depth={1} gradient={false}>
-        {/* Header with avatar */}
-        <div style={{ display: 'flex', gap: spacing[3], marginBottom: spacing[3] }}>
-          <CustomAvatar
-            src={user?.avatar}
-            alt={user?.name}
-            size={48}
-            status="online"
-          />
-          <div style={{ flex: 1 }}>
-            <TextArea
-              ref={textAreaRef}
-              value={content}
-              onChange={handleContentChange}
-              placeholder={placeholder}
-              autoSize={{ minRows: 3, maxRows: 10 }}
-              maxLength={maxLength}
-              style={{
-                fontSize: typography.fontSize.base,
-                border: 'none',
-                boxShadow: 'none',
-                resize: 'none',
-                padding: spacing[2],
-              }}
-            />
-
-            {/* Character count */}
-            <div
-              style={{
-                textAlign: 'right',
-                fontSize: typography.fontSize.xs,
-                color: isOverLimit ? colors.error.solid : colors.gray[500],
-                marginTop: spacing[1],
-              }}
-            >
-              {characterCount} / {maxLength}
-            </div>
-          </div>
-        </div>
-
-        {/* Media Preview */}
-        <AnimatePresence>
-          {mediaUrls.length > 0 && (
-            <motion.div
-              variants={slideUp}
-              initial="initial"
-              animate="enter"
-              exit="exit"
-              style={{
-                display: 'grid',
-                gridTemplateColumns: mediaUrls.length === 1 ? '1fr' : 'repeat(2, 1fr)',
-                gap: spacing[2],
-                marginBottom: spacing[3],
-              }}
-            >
-              {mediaUrls.map((media, index) => (
-                <div
-                  key={index}
-                  style={{
-                    position: 'relative',
-                    borderRadius: '12px',
-                    overflow: 'hidden',
-                    boxShadow: shadows.md,
-                  }}
-                >
-                  {media.type === 'image' ? (
-                    <img
-                      src={media.url}
-                      alt={`Upload ${index + 1}`}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        objectFit: 'cover',
-                        display: 'block',
-                      }}
-                    />
-                  ) : (
-                    <video
-                      src={media.url}
-                      style={{
-                        width: '100%',
-                        height: '200px',
-                        objectFit: 'cover',
-                        display: 'block',
-                      }}
-                    />
-                  )}
-                  <CloseCircleFilled
-                    onClick={() => handleRemoveMedia(index)}
-                    style={{
-                      position: 'absolute',
-                      top: spacing[2],
-                      right: spacing[2],
-                      fontSize: '24px',
-                      color: 'white',
-                      cursor: 'pointer',
-                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))',
-                    }}
-                  />
-                </div>
-              ))}
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Action buttons */}
-        <div
+    <div style={{
+      background: '#ffffff',
+      borderRadius: '24px',
+      padding: '24px',
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.md
+    }}>
+      {/* Input Nexus */}
+      <div style={{ display: 'flex', gap: '20px', marginBottom: '24px' }}>
+        <Avatar
+          size={52}
+          src={user?.avatar ? getImageUrl(user.avatar) : undefined}
           style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            paddingTop: spacing[3],
-            borderTop: `1px solid ${colors.gray[200]}`,
+            border: `2px solid ${colors.gray[50]}`,
+            boxShadow: shadows.sm,
+            flexShrink: 0,
+            background: colors.gray[50]
           }}
         >
-          {/* Media upload buttons */}
-          <div style={{ display: 'flex', gap: spacing[2] }}>
-            {allowMedia && (
-              <>
-                <Upload
-                  accept="image/*"
-                  beforeUpload={handleMediaUpload}
-                  showUploadList={false}
-                  disabled={isUploading || isSubmitting}
-                >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing[2],
-                        padding: `${spacing[2]} ${spacing[3]}`,
-                        cursor: 'pointer',
-                        borderRadius: '8px',
-                        color: colors.success.solid,
-                        transition: 'background 0.2s ease',
-                      }}
-                      onMouseEnter={(e) =>
-                        (e.currentTarget.style.background = colors.success.light)
-                      }
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <PictureOutlined style={{ fontSize: '20px' }} />
-                      <span style={{ fontSize: typography.fontSize.sm, fontWeight: 600 }}>
-                        Photo
-                      </span>
-                    </div>
-                  </motion.div>
-                </Upload>
+          {user?.name?.[0]?.toUpperCase()}
+        </Avatar>
+        <div style={{ flex: 1 }}>
+          <TextArea
+            ref={textAreaRef}
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            placeholder={placeholder}
+            autoSize={{ minRows: 4, maxRows: 12 }}
+            maxLength={maxLength}
+            style={{
+              fontSize: '17px',
+              border: 'none',
+              boxShadow: 'none',
+              resize: 'none',
+              padding: '8px 0',
+              color: colors.text.primary,
+              fontWeight: 500,
+              background: 'transparent'
+            }}
+          />
 
-                <Upload
-                  accept="video/*"
-                  beforeUpload={handleMediaUpload}
-                  showUploadList={false}
-                  disabled={isUploading || isSubmitting}
-                >
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <div
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: spacing[2],
-                        padding: `${spacing[2]} ${spacing[3]}`,
-                        cursor: 'pointer',
-                        borderRadius: '8px',
-                        color: colors.error.solid,
-                        transition: 'background 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = colors.error.light)}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
-                    >
-                      <VideoCameraOutlined style={{ fontSize: '20px' }} />
-                      <span style={{ fontSize: typography.fontSize.sm, fontWeight: 600 }}>
-                        Video
-                      </span>
-                    </div>
-                  </motion.div>
-                </Upload>
-              </>
-            )}
-
-            {isUploading && (
-              <div style={{ display: 'flex', alignItems: 'center', gap: spacing[2] }}>
-                <LoadingOutlined spin />
-                <span style={{ fontSize: typography.fontSize.sm, color: colors.gray[500] }}>
-                  Uploading...
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Submit and cancel buttons */}
-          <div style={{ display: 'flex', gap: spacing[2] }}>
-            <CustomButton variant="ghost" onClick={handleClear} disabled={isSubmitting}>
-              Cancel
-            </CustomButton>
-            <CustomButton
-              variant="primary"
-              gradient
-              onClick={handleSubmit}
-              loading={isSubmitting}
-              disabled={isOverLimit || isUploading || (!content.trim() && mediaUrls.length === 0)}
-            >
-              {isSubmitting ? 'Posting...' : 'Post'}
-            </CustomButton>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+            <Tag bordered={false} style={{
+              background: isOverLimit ? colors.error.subtle : 'transparent',
+              color: isOverLimit ? colors.error.solid : colors.text.tertiary,
+              fontWeight: 700,
+              fontSize: '11px',
+              borderRadius: '6px'
+            }}>
+              {characterCount.toLocaleString()} / {maxLength.toLocaleString()}
+            </Tag>
           </div>
         </div>
-      </CustomCard>
-    </motion.div>
+      </div>
+
+      {/* Vector Preview Grid */}
+      <AnimatePresence>
+        {mediaUrls.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            style={{
+              display: 'grid',
+              gridTemplateColumns: mediaUrls.length === 1 ? '1fr' : 'repeat(2, 1fr)',
+              gap: '12px',
+              marginBottom: '24px',
+              padding: '12px',
+              background: colors.gray[50],
+              borderRadius: '20px',
+              border: `1px solid ${colors.gray[100]}`
+            }}
+          >
+            {mediaUrls.map((media, index) => (
+              <div key={index} style={{ position: 'relative', borderRadius: '14px', overflow: 'hidden', height: '200px', border: `1px solid ${colors.gray[100]}` }}>
+                {media.type === 'image' ? (
+                  <img src={media.url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <video src={media.url} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                )}
+                <Button
+                  type="primary"
+                  danger
+                  shape="circle"
+                  size="small"
+                  icon={<X size={14} />}
+                  onClick={() => handleRemoveMedia(index)}
+                  style={{ position: 'absolute', top: '12px', right: '12px', backdropFilter: 'blur(10px)', background: 'rgba(239, 68, 68, 0.9)', border: 'none' }}
+                />
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <Divider style={{ margin: '0 0 20px 0', borderColor: colors.gray[50] }} />
+
+      {/* Protocol Actions */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Space size="middle">
+          {allowMedia && (
+            <>
+              <Upload accept="image/*" beforeUpload={handleMediaUpload} showUploadList={false} disabled={isUploading || isSubmitting}>
+                <Button
+                  type="text"
+                  icon={<ImageIcon size={18} color={colors.primary.solid} />}
+                  style={{
+                    borderRadius: '8px',
+                    height: '40px',
+                    padding: '0 16px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: colors.primary.subtle,
+                    color: colors.primary.solid
+                  }}
+                >
+                  Visual
+                </Button>
+              </Upload>
+              <Upload accept="video/*" beforeUpload={handleMediaUpload} showUploadList={false} disabled={isUploading || isSubmitting}>
+                <Button
+                  type="text"
+                  icon={<Film size={18} color="#8b5cf6" />}
+                  style={{
+                    borderRadius: '8px',
+                    height: '40px',
+                    padding: '0 16px',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: '#f5f3ff',
+                    color: '#8b5cf6'
+                  }}
+                >
+                  Stream
+                </Button>
+              </Upload>
+            </>
+          )}
+
+          {isUploading && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: colors.text.tertiary, fontWeight: 700, fontSize: '13px' }}>
+              <Loader2 size={16} className="spin-anim" /> SYNCHRONIZING...
+            </div>
+          )}
+        </Space>
+
+        <Space size="middle">
+          {onCancel && (
+            <Button
+              type="text"
+              onClick={onCancel}
+              disabled={isSubmitting}
+              style={{ borderRadius: '8px', fontWeight: 600, color: colors.text.tertiary }}
+            >
+              Abort
+            </Button>
+          )}
+          <Button
+            type="primary"
+            onClick={handleSubmit}
+            loading={isSubmitting}
+            disabled={isOverLimit || isUploading || (!content.trim() && mediaUrls.length === 0)}
+            icon={!isSubmitting && <Zap size={18} fill="currentColor" />}
+            style={{
+              height: '44px',
+              borderRadius: '8px',
+              fontWeight: 600,
+              padding: '0 24px',
+              background: colors.primary.solid,
+              border: 'none',
+              boxShadow: shadows.md,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}
+          >
+            {isSubmitting ? 'Synthesizing...' : 'Transmit'}
+          </Button>
+        </Space>
+      </div>
+
+      <style>{`
+        .spin-anim { animation: spin 2s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
+    </div>
   );
 };
 

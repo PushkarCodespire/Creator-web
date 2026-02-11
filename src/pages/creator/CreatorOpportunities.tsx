@@ -3,12 +3,23 @@
 // ===========================================
 
 import { useEffect, useState } from 'react';
-import { Card, List, Tag, Button, Modal, Form, Input, InputNumber, message, Empty, Spin, Row, Col, Select, Pagination, Grid, Tabs } from 'antd';
-import { DollarOutlined, TeamOutlined, SearchOutlined, FolderOpenOutlined, SafetyCertificateOutlined } from '@ant-design/icons';
+import { Card, Tag, Button, Modal, Form, Input, InputNumber, message, Empty, Spin, Row, Col, Select, Pagination, Grid, Tabs, Typography } from 'antd';
+import {
+  DollarSign,
+  Users,
+  Search,
+  FolderClosed,
+  ShieldCheck,
+  ChevronRight,
+  Briefcase,
+  Zap
+} from 'lucide-react';
 import { opportunityApi, creatorApi } from '../../services/api';
+import { colors, spacing, shadows } from '../../styles/tokens';
 
 const { TextArea } = Input;
 const { useBreakpoint } = Grid;
+const { Title, Text } = Typography;
 
 const CreatorOpportunities = () => {
   const [activeTab, setActiveTab] = useState('opportunities');
@@ -23,13 +34,11 @@ const CreatorOpportunities = () => {
 
   // Applications pagination
   const [appCurrentPage, setAppCurrentPage] = useState(1);
-  const [appTotal, setAppTotal] = useState(0);
 
   const [filters, setFilters] = useState({
     search: '',
     type: undefined as string | undefined,
     category: undefined as string | undefined,
-    minBudget: undefined as number | undefined,
     maxBudget: undefined as number | undefined
   });
 
@@ -85,15 +94,7 @@ const CreatorOpportunities = () => {
         status: appFilters.status,
         creatorId: creatorId
       });
-      // Assuming the structure based on user request: { success: true, data: [...] }
-      // If the backend actually returns pagination inside data, adjust accordingly.
-      // Based on api.ts pattern, usually it is response.data.data or response.data
-      // Let's assume standard response structure: response.data.data (list) or response.data.data.applications
-      // The user specified response format: { success: true, data: [...] }
-      // So response.data.data is the array.
       setApplications(response.data.data || []);
-      // If no pagination provided in this specific endpoint yet, we might fallback or update total if available
-      setAppTotal(response.data.data?.length || 0);
     } catch (err) {
       console.error('Failed to fetch applications:', err);
     } finally {
@@ -120,8 +121,6 @@ const CreatorOpportunities = () => {
             : item
         )
       );
-      // Optionally refresh to show status if we were on the apps tab? 
-      // But we are usually on opps tab when applying.
     } catch (err: any) {
       message.error(err.response?.data?.error || 'Failed to apply');
     } finally {
@@ -130,52 +129,77 @@ const CreatorOpportunities = () => {
   };
 
   const renderStatusTag = (status: string) => {
-    let color = 'default';
+    let color = colors.gray[500];
+    let bgColor = colors.gray[50];
+
     switch (status) {
-      case 'ACCEPTED': color = 'success'; break;
-      case 'REJECTED': color = 'error'; break;
-      case 'PENDING': color = 'processing'; break;
+      case 'ACCEPTED':
+        color = colors.success.solid;
+        bgColor = colors.success.subtle;
+        break;
+      case 'REJECTED':
+        color = colors.error.solid;
+        bgColor = colors.error.subtle;
+        break;
+      case 'PENDING':
+        color = colors.primary.solid;
+        bgColor = colors.primary.subtle;
+        break;
     }
-    return <Tag color={color}>{status}</Tag>;
+    return (
+      <Tag bordered={false} style={{
+        background: bgColor,
+        color: color,
+        borderRadius: '6px',
+        fontWeight: 700,
+        fontSize: '11px',
+        padding: '2px 10px'
+      }}>
+        {status}
+      </Tag>
+    );
   };
 
   const renderOpportunitiesTab = () => (
     <>
       {/* Search and Filters */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        borderRadius: '24px',
+        background: '#ffffff',
+        borderRadius: '20px',
         padding: isMobile ? '20px' : '32px',
-        marginBottom: isMobile ? '24px' : '40px',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        marginBottom: spacing[8],
+        border: `1px solid ${colors.gray[100]}`,
+        boxShadow: shadows.md
       }}>
-        <Row gutter={[20, 20]}>
+        <Row gutter={[24, 24]}>
           <Col xs={24} lg={10}>
             <Input
               placeholder="Search by brand or title..."
-              prefix={<SearchOutlined style={{ color: '#6366F1' }} />}
+              prefix={<Search size={18} style={{ color: colors.primary.solid }} />}
               value={filters.search}
               onChange={(e) => {
                 setFilters({ ...filters, search: e.target.value });
                 setCurrentPage(1);
               }}
-              className="flagship-input"
-              style={{ height: '52px', borderRadius: '14px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#FFFFFF' }}
+              style={{
+                height: '48px',
+                borderRadius: '12px',
+                background: colors.gray[50],
+                border: `1px solid ${colors.gray[200]}`
+              }}
             />
           </Col>
           <Col xs={24} sm={12} lg={7}>
             <Select
               placeholder="Opportunity Type"
-              style={{ width: '100%', height: '52px' }}
+              style={{ width: '100%', height: '48px' }}
               value={filters.type}
               onChange={(value) => {
                 setFilters({ ...filters, type: value });
                 setCurrentPage(1);
               }}
               allowClear
-              dropdownStyle={{ background: '#0F172A', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+              dropdownStyle={{ borderRadius: '12px', padding: '8px' }}
             >
               <Select.Option value="BRAND_DEAL">Brand Deal</Select.Option>
               <Select.Option value="CAMPAIGN">Campaign</Select.Option>
@@ -186,13 +210,13 @@ const CreatorOpportunities = () => {
           <Col xs={24} sm={12} lg={7}>
             <InputNumber
               placeholder="Max Budget (₹)"
-              style={{ width: '100%', height: '52px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#FFFFFF' }}
+              style={{ width: '100%', height: '48px', borderRadius: '12px' }}
               value={filters.maxBudget}
               onChange={(value) => {
                 setFilters({ ...filters, maxBudget: value || undefined });
                 setCurrentPage(1);
               }}
-              prefix={<span style={{ color: '#818CF8' }}>₹</span>}
+              prefix={<DollarSign size={16} style={{ color: colors.warning.solid }} />}
               min={0}
             />
           </Col>
@@ -200,18 +224,18 @@ const CreatorOpportunities = () => {
       </div>
 
       {loading && !opportunities.length ? (
-        <div style={{ textAlign: 'center', padding: '100px 0' }}>
-          <Spin size="large" tip={<span style={{ color: '#94A3B8', marginTop: '16px', display: 'block' }}>Scanning opportunities...</span>} />
+        <div style={{ textAlign: 'center', padding: '100px 0', background: '#ffffff', borderRadius: '16px', border: `1px solid ${colors.gray[100]}` }}>
+          <Spin size="large" tip={<span style={{ color: colors.text.tertiary, marginTop: '16px', display: 'block' }}>Scanning opportunities...</span>} />
         </div>
       ) : opportunities.length === 0 ? (
         <div style={{
-          background: 'rgba(15, 23, 42, 0.4)',
-          borderRadius: '32px',
+          background: '#ffffff',
+          borderRadius: '16px',
           padding: '80px 40px',
           textAlign: 'center',
-          border: '1px solid rgba(255, 255, 255, 0.05)'
+          border: `1px solid ${colors.gray[100]}`
         }}>
-          <Empty description={<span style={{ color: '#94A3B8', fontSize: '16px' }}>No opportunities found matching your filters</span>} />
+          <Empty description={<span style={{ color: colors.text.tertiary, fontSize: '16px' }}>No opportunities found matching your filters</span>} />
         </div>
       ) : (
         <div style={{ width: '100%' }}>
@@ -221,152 +245,138 @@ const CreatorOpportunities = () => {
               const appliedStatus = item.myApplicationStatus ? item.myApplicationStatus.replace('_', ' ') : 'Applied';
 
               return (
-              <Col xs={24} sm={24} md={12} lg={8} key={item.id}>
-                <Card
-                  bordered={false}
-                  className="opportunity-card-flagship"
-                  style={{
-                    background: 'rgba(15, 23, 42, 0.4)',
-                    backdropFilter: 'blur(20px) saturate(180%)',
-                    borderRadius: '32px',
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    boxShadow: '0 20px 40px rgba(0,0,0,0.12)',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    height: '520px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    overflow: 'hidden',
-                    width: '100%'
-                  }}
-                  bodyStyle={{
-                    padding: '32px',
-                    height: '100%',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    position: 'relative'
-                  }}
-                >
-                  <div style={{
-                    position: 'absolute',
-                    top: '-10%',
-                    right: '-10%',
-                    width: '120px',
-                    height: '120px',
-                    background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
-                    opacity: 0.03,
-                    filter: 'blur(40px)',
-                    borderRadius: '50%',
-                    zIndex: 0
-                  }} />
-
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                      <div style={{
-                        background: 'rgba(99, 102, 241, 0.1)',
-                        borderRadius: '16px',
-                        padding: '14px',
-                        color: '#818CF8',
-                        fontSize: '22px',
-                        border: '1px solid rgba(99, 102, 241, 0.15)',
-                        boxShadow: '0 8px 16px rgba(0,0,0,0.1)'
-                      }}>
-                        <TeamOutlined />
-                      </div>
-                      <Tag color="blue" bordered={false} style={{ borderRadius: '8px', fontWeight: 800, padding: '4px 14px', fontSize: '11px', textTransform: 'uppercase' }}>
-                        {item.type?.replace('_', ' ')}
-                      </Tag>
-                    </div>
-
-                    <h3 style={{
-                      fontSize: '20px',
-                      fontWeight: 900,
-                      color: '#FFFFFF',
-                      marginBottom: '12px',
-                      letterSpacing: '-0.02em',
-                      lineHeight: 1.3,
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden',
-                      height: '52px'
-                    }}>
-                      {item.title}
-                    </h3>
-
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                      {item.budget && (
-                        <Tag icon={<DollarOutlined />} color="gold" bordered={false} style={{ borderRadius: '8px', fontWeight: 700, padding: '4px 12px' }}>
-                          ₹{item.budget.toLocaleString()}
-                        </Tag>
-                      )}
-                      {item.category && (
-                        <Tag color="cyan" bordered={false} style={{ borderRadius: '8px', fontWeight: 700, padding: '4px 12px' }}>
-                          {item.category}
-                        </Tag>
-                      )}
-                      <Tag icon={<TeamOutlined />} color="blue" bordered={false} style={{ borderRadius: '8px', fontWeight: 700, padding: '4px 12px' }}>
-                        {item._count?.applications || 0} applied
-                      </Tag>
-                      {alreadyApplied && (
-                        <Tag color="green" bordered={false} style={{ borderRadius: '8px', fontWeight: 700, padding: '4px 12px' }}>
-                          {appliedStatus}
-                        </Tag>
-                      )}
-                    </div>
-
-                    <p style={{
-                      color: '#94A3B8',
-                      fontSize: '14px',
-                      lineHeight: 1.6,
-                      marginBottom: '0',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 3,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>
-                      {item.description}
-                    </p>
-                  </div>
-
-                  <div style={{ position: 'relative', zIndex: 1 }}>
-                    <div style={{
+                <Col xs={24} sm={24} md={12} lg={8} key={item.id}>
+                  <Card
+                    bordered={false}
+                    className="opportunity-card-flagship"
+                    style={{
+                      background: '#ffffff',
+                      borderRadius: '16px',
+                      border: `1px solid ${colors.gray[100]}`,
+                      boxShadow: shadows.md,
+                      transition: 'all 0.3s ease',
+                      height: '480px',
                       display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      marginBottom: '20px',
-                      padding: '14px 18px',
-                      background: 'rgba(255, 255, 255, 0.03)',
-                      borderRadius: '18px',
-                      border: '1px solid rgba(255, 255, 255, 0.05)'
-                    }}>
-                      <div style={{ fontSize: '11px', fontWeight: 700, color: '#6366F1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Brand:</div>
-                      <div style={{ fontSize: '13px', fontWeight: 800, color: '#E2E8F0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.company?.companyName}</div>
+                      flexDirection: 'column',
+                      overflow: 'hidden'
+                    }}
+                    bodyStyle={{
+                      padding: '24px',
+                      height: '100%',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between'
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                        <div style={{
+                          background: colors.primary.subtle,
+                          borderRadius: '12px',
+                          padding: '12px',
+                          color: colors.primary.solid,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          border: `1px solid ${colors.primary.solid}15`
+                        }}>
+                          <Users size={20} />
+                        </div>
+                        <Tag bordered={false} style={{
+                          background: colors.primary.subtle,
+                          color: colors.primary.solid,
+                          borderRadius: '6px',
+                          fontWeight: 700,
+                          padding: '2px 10px',
+                          fontSize: '10px',
+                          textTransform: 'uppercase'
+                        }}>
+                          {item.type?.replace('_', ' ')}
+                        </Tag>
+                      </div>
+
+                      <h3 style={{
+                        fontSize: '18px',
+                        fontWeight: 700,
+                        color: colors.text.primary,
+                        marginBottom: '12px',
+                        letterSpacing: '-0.01em',
+                        lineHeight: 1.4,
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        height: '50px'
+                      }}>
+                        {item.title}
+                      </h3>
+
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
+                        {item.budget && (
+                          <Tag icon={<DollarSign size={12} />} bordered={false} style={{ background: colors.warning.subtle, color: colors.warning.solid, borderRadius: '6px', fontWeight: 700 }}>
+                            ₹{item.budget.toLocaleString()}
+                          </Tag>
+                        )}
+                        {item.category && (
+                          <Tag bordered={false} style={{ background: colors.info.subtle, color: colors.info.solid, borderRadius: '6px', fontWeight: 700 }}>
+                            {item.category}
+                          </Tag>
+                        )}
+                        <Tag icon={<Users size={12} />} bordered={false} style={{ background: colors.primary.subtle, color: colors.primary.solid, borderRadius: '6px', fontWeight: 700 }}>
+                          {item._count?.applications || 0} applied
+                        </Tag>
+                      </div>
+
+                      <p style={{
+                        color: colors.text.secondary,
+                        fontSize: '14px',
+                        lineHeight: 1.6,
+                        marginBottom: '0',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden'
+                      }}>
+                        {item.description}
+                      </p>
                     </div>
 
-                    <Button
-                      type="primary"
-                      block
-                      onClick={() => !alreadyApplied && setApplyModal(item)}
-                      disabled={alreadyApplied}
-                      style={{
-                        borderRadius: '16px',
-                        height: '52px',
-                        fontWeight: 800,
-                        fontSize: '15px',
-                        background: alreadyApplied
-                          ? 'rgba(148, 163, 184, 0.25)'
-                          : 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
-                        border: 'none',
-                        boxShadow: '0 8px 20px rgba(99, 102, 241, 0.2)'
-                      }}
-                    >
-                      {alreadyApplied ? appliedStatus : 'Analyze & Apply'}
-                    </Button>
-                  </div>
-                </Card>
-              </Col>
-            );
+                    <div>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        marginBottom: '16px',
+                        padding: '12px',
+                        background: colors.gray[50],
+                        borderRadius: '12px',
+                        border: `1px solid ${colors.gray[100]}`
+                      }}>
+                        <div style={{ fontSize: '10px', fontWeight: 700, color: colors.text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Brand:</div>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: colors.text.primary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.company?.companyName}</div>
+                      </div>
+
+                      <Button
+                        type="primary"
+                        block
+                        onClick={() => !alreadyApplied && setApplyModal(item)}
+                        disabled={alreadyApplied}
+                        style={{
+                          borderRadius: '8px',
+                          height: '44px',
+                          fontWeight: 600,
+                          background: alreadyApplied ? colors.gray[100] : colors.primary.solid,
+                          color: alreadyApplied ? colors.text.disabled : '#ffffff',
+                          border: 'none',
+                          boxShadow: alreadyApplied ? 'none' : shadows.md
+                        }}
+                      >
+                        {alreadyApplied ? appliedStatus : 'Analyze & Apply'}
+                      </Button>
+                    </div>
+                  </Card>
+                </Col>
+              );
             })}
           </Row>
 
@@ -383,7 +393,7 @@ const CreatorOpportunities = () => {
                 }}
                 showSizeChanger
                 pageSizeOptions={['12', '24', '48']}
-                showTotal={(total) => <span style={{ color: '#94A3B8' }}>Total {total} opportunities</span>}
+                showTotal={(total) => <span style={{ color: colors.text.tertiary }}>Total {total} opportunities</span>}
               />
             </div>
           )}
@@ -395,25 +405,25 @@ const CreatorOpportunities = () => {
   const renderApplicationsTab = () => (
     <>
       <div style={{
-        background: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        borderRadius: '24px',
+        background: '#ffffff',
+        borderRadius: '20px',
         padding: isMobile ? '20px' : '32px',
-        marginBottom: isMobile ? '24px' : '40px',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
+        marginBottom: spacing[8],
+        border: `1px solid ${colors.gray[100]}`,
+        boxShadow: shadows.md
       }}>
-        <Row gutter={[20, 20]}>
+        <Row gutter={[24, 24]}>
           <Col xs={24} sm={12} lg={6}>
             <Select
               placeholder="Filter by Status"
-              style={{ width: '100%', height: '52px' }}
+              style={{ width: '100%', height: '48px' }}
               value={appFilters.status}
               onChange={(value) => {
                 setAppFilters({ status: value });
                 setAppCurrentPage(1);
               }}
               allowClear
-              dropdownStyle={{ background: '#0F172A', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+              dropdownStyle={{ borderRadius: '12px', padding: '8px' }}
             >
               <Select.Option value="PENDING">Pending</Select.Option>
               <Select.Option value="ACCEPTED">Accepted</Select.Option>
@@ -424,18 +434,18 @@ const CreatorOpportunities = () => {
       </div>
 
       {loading && !applications.length ? (
-        <div style={{ textAlign: 'center', padding: '100px 0' }}>
+        <div style={{ textAlign: 'center', padding: '100px 0', background: '#ffffff', borderRadius: '16px', border: `1px solid ${colors.gray[100]}` }}>
           <Spin size="large" />
         </div>
       ) : applications.length === 0 ? (
         <div style={{
-          background: 'rgba(15, 23, 42, 0.4)',
-          borderRadius: '32px',
+          background: '#ffffff',
+          borderRadius: '16px',
           padding: '80px 40px',
           textAlign: 'center',
-          border: '1px solid rgba(255, 255, 255, 0.05)'
+          border: `1px solid ${colors.gray[100]}`
         }}>
-          <Empty description={<span style={{ color: '#94A3B8' }}>No applications found</span>} />
+          <Empty description={<span style={{ color: colors.text.tertiary }}>No applications found</span>} />
         </div>
       ) : (
         <div style={{ width: '100%' }}>
@@ -445,45 +455,65 @@ const CreatorOpportunities = () => {
                 <Card
                   bordered={false}
                   style={{
-                    background: '#1E293B',
-                    borderRadius: '24px',
-                    overflow: 'hidden',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
-                    height: '240px',
+                    background: '#ffffff',
+                    borderRadius: '16px',
+                    border: `1px solid ${colors.gray[100]}`,
+                    boxShadow: shadows.sm,
+                    height: 'auto',
                     display: 'flex',
-                    flexDirection: 'column',
-                    justifyContent: 'space-between',
-                    width: '100%'
+                    flexDirection: 'column'
                   }}
-                  bodyStyle={{ padding: '24px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                  bodyStyle={{ padding: '24px' }}
                 >
-                  <div>
-                    <div style={{ marginBottom: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <SafetyCertificateOutlined style={{ fontSize: '24px', color: '#6366F1' }} />
-                      {renderStatusTag(item.status)}
+                  <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ background: colors.primary.subtle, padding: '10px', borderRadius: '10px' }}>
+                      <ShieldCheck size={20} style={{ color: colors.primary.solid }} />
                     </div>
-                    <h3 style={{
-                      color: '#F8FAFC',
-                      margin: '0 0 8px 0',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 1,
-                      WebkitBoxOrient: 'vertical',
-                      overflow: 'hidden'
-                    }}>{item.opportunity?.title}</h3>
-                    <div style={{
-                      color: '#64748B',
-                      fontSize: '13px',
-                      marginBottom: '16px',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis'
-                    }}>{item.opportunity?.company?.companyName}</div>
+                    {renderStatusTag(item.status)}
                   </div>
+                  <h3 style={{
+                    color: colors.text.primary,
+                    fontSize: '16px',
+                    fontWeight: 700,
+                    marginBottom: '8px',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 1,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }}>{item.opportunity?.title}</h3>
+                  <div style={{
+                    color: colors.text.tertiary,
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    marginBottom: '20px'
+                  }}>{item.opportunity?.company?.companyName}</div>
 
                   {item.deal && (
-                    <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '12px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.2)' }}>
-                      <div style={{ fontSize: '11px', color: '#10B981', fontWeight: 700, textTransform: 'uppercase' }}>DEAL ACTIVE</div>
-                      <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '18px' }}>₹{item.deal.amount.toLocaleString()}</div>
+                    <div style={{
+                      background: colors.success.subtle,
+                      padding: '16px',
+                      borderRadius: '12px',
+                      border: `1px solid ${colors.success.solid}15`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <div style={{
+                        background: '#FFFFFF',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '8px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: shadows.sm
+                      }}>
+                        <Zap size={20} style={{ color: colors.success.solid }} />
+                      </div>
+                      <div>
+                        <div style={{ fontSize: '10px', color: colors.success.solid, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Deal Active</div>
+                        <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '18px' }}>₹{item.deal.amount.toLocaleString()}</div>
+                      </div>
                     </div>
                   )}
                 </Card>
@@ -496,140 +526,180 @@ const CreatorOpportunities = () => {
   );
 
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ marginBottom: isMobile ? '24px' : '40px' }}>
-        <h1 style={{ fontSize: isMobile ? '28px' : '36px', fontWeight: 900, margin: 0, letterSpacing: '-0.03em', color: '#FFFFFF', lineHeight: 1.2 }}>
-          {activeTab === 'opportunities' ? 'Brand Opportunities' : 'My Applications'}
-        </h1>
-        <p style={{ color: '#94A3B8', fontSize: isMobile ? '15px' : '18px', fontWeight: 500, marginTop: '8px' }}>
-          {activeTab === 'opportunities' ? 'Curated collaborations for your AI persona matrix' : 'Track your proposals and active deals'}
-        </p>
-      </div>
-
-      <Tabs
-        activeKey={activeTab}
-        onChange={setActiveTab}
-        type="card"
-        className="premium-tabs"
-        items={[
-          {
-            key: 'opportunities',
-            label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <FolderOpenOutlined /> Available Opportunities
-              </span>
-            ),
-            children: renderOpportunitiesTab()
-          },
-          {
-            key: 'applications',
-            label: (
-              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <SafetyCertificateOutlined /> My Applications
-              </span>
-            ),
-            children: renderApplicationsTab()
-          }
-        ]}
-      />
-
-      {/* Apply Modal */}
-      <Modal
-        title={
-          <div style={{ color: '#FFFFFF', fontSize: '20px', fontWeight: 900 }}>
-            <TeamOutlined style={{ marginRight: '12px', color: '#6366F1' }} />
-            Application Strategy
-          </div>
-        }
-        open={!!applyModal}
-        onCancel={() => { setApplyModal(null); form.resetFields(); }}
-        footer={null}
-        width={isMobile ? '95%' : 600}
-        className="flagship-modal"
-        centered
-      >
-        <div style={{ marginBottom: '24px', padding: '16px', background: 'rgba(99, 102, 241, 0.05)', borderRadius: '14px', border: '1px solid rgba(99, 102, 241, 0.1)' }}>
-          <div style={{ fontSize: '13px', fontWeight: 700, color: '#818CF8', textTransform: 'uppercase', marginBottom: '4px' }}>Applying For</div>
-          <div style={{ fontSize: '18px', fontWeight: 800, color: '#FFFFFF' }}>{applyModal?.title}</div>
+    <div style={{ padding: isMobile ? spacing[3] : spacing[8], background: colors.background, minHeight: '100vh' }}>
+      <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <div style={{ marginBottom: isMobile ? spacing[6] : spacing[10] }}>
+          <Title level={isMobile ? 3 : 1} style={{ fontWeight: 800, margin: 0, letterSpacing: '-0.03em', color: colors.text.primary, lineHeight: 1.1 }}>
+            {activeTab === 'opportunities' ? 'Collaboration Matrix' : 'Proposal Hub'}
+          </Title>
+          <Text style={{ color: colors.text.secondary, fontSize: isMobile ? '14px' : '16px', fontWeight: 500, marginTop: '12px', display: 'block' }}>
+            {activeTab === 'opportunities' ? 'Strategic partnerships for your neural brand narrative' : 'Synchronizing your multi-agent collaboration proposals'}
+          </Text>
         </div>
 
-        <Form form={form} layout="vertical" onFinish={handleApply}>
-          <Form.Item
-            name="pitch"
-            label={<span style={{ color: '#94A3B8', fontWeight: 600 }}>Proposal & Innovation Strategy</span>}
-            rules={[{ required: true, message: 'Please write your pitch' }]}
-          >
-            <TextArea
-              rows={6}
-              placeholder="Outline how your AI persona will revolutionize this campaign..."
-              style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#FFFFFF', borderRadius: '12px' }}
-            />
-          </Form.Item>
+        <Tabs
+          activeKey={activeTab}
+          onChange={setActiveTab}
+          className="premium-tabs"
+          items={[
+            {
+              key: 'opportunities',
+              label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Briefcase size={18} /> Available Deals
+                </span>
+              ),
+              children: renderOpportunitiesTab()
+            },
+            {
+              key: 'applications',
+              label: (
+                <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <ShieldCheck size={18} /> Active Proposals
+                </span>
+              ),
+              children: renderApplicationsTab()
+            }
+          ]}
+        />
 
-          <Form.Item
-            name="proposedBudget"
-            label={<span style={{ color: '#94A3B8', fontWeight: 600 }}>Proposed Revenue (₹)</span>}
-          >
-            <InputNumber
-              style={{ width: '100%', height: '48px', background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.1)', color: '#FFFFFF', borderRadius: '12px' }}
-              placeholder="Enter your rate"
-              min={0}
-              prefix="₹"
-            />
-          </Form.Item>
-
-          <Button
-            type="primary"
-            htmlType="submit"
-            loading={submitting}
-            block
-            size="large"
-            style={{ height: '52px', borderRadius: '14px', fontWeight: 800, background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)', border: 'none', marginTop: '12px' }}
-          >
-            Submit Secure Application
-          </Button>
-        </Form>
-      </Modal>
-
-      <style>{`
-          .flagship-modal .ant-modal-content {
-            background: #0F172A !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 24px !important;
-            box-shadow: 0 30px 60px rgba(0,0,0,0.4) !important;
+        {/* Apply Modal */}
+        <Modal
+          title={
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ background: colors.primary.subtle, padding: '8px', borderRadius: '10px' }}>
+                <Zap size={20} style={{ color: colors.primary.solid }} />
+              </div>
+              <div style={{ fontSize: '20px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em' }}>
+                Collaboration Strategy
+              </div>
+            </div>
           }
+          open={!!applyModal}
+          onCancel={() => { setApplyModal(null); form.resetFields(); }}
+          footer={null}
+          width={isMobile ? '95%' : 600}
+          centered
+          className="premium-modal"
+        >
+          <div style={{
+            marginBottom: '32px',
+            padding: '20px',
+            background: colors.gray[50],
+            borderRadius: '16px',
+            border: `1px solid ${colors.gray[100]}`
+          }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: colors.text.tertiary, textTransform: 'uppercase', marginBottom: '8px' }}>Strategic Collaboration For</div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.01em' }}>{applyModal?.title}</div>
+          </div>
+
+          <Form form={form} layout="vertical" onFinish={handleApply} requiredMark={false}>
+            <Form.Item
+              name="pitch"
+              label={<span style={{ color: colors.text.secondary, fontWeight: 700, fontSize: '13px', textTransform: 'uppercase' }}>Proposal Narrative</span>}
+              rules={[{ required: true, message: 'Your proposal narrative is required' }]}
+            >
+              <TextArea
+                rows={6}
+                placeholder="Outline your strategic vision for this collaboration..."
+                style={{ borderRadius: '12px', padding: '16px', background: '#FFFFFF', border: `1px solid ${colors.gray[200]}` }}
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="proposedBudget"
+              label={<span style={{ color: colors.text.secondary, fontWeight: 700, fontSize: '13px', textTransform: 'uppercase' }}>Proposed Capital Allocation (₹)</span>}
+            >
+              <InputNumber
+                style={{ width: '100%', height: '48px', borderRadius: '12px', paddingTop: '8px' }}
+                placeholder="0.00"
+                min={0}
+                prefix={<span style={{ color: colors.text.tertiary }}>₹</span>}
+              />
+            </Form.Item>
+
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitting}
+              block
+              size="large"
+              style={{
+                height: '48px',
+                borderRadius: '8px',
+                fontWeight: 600,
+                marginTop: '12px',
+                background: colors.primary.solid,
+                color: '#ffffff',
+                border: 'none',
+                boxShadow: shadows.md
+              }}
+            >
+              Transmit Strategy
+            </Button>
+          </Form>
+        </Modal>
+
+        <style>{`
           .premium-tabs .ant-tabs-nav::before {
-              border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid ${colors.gray[100]} !important;
           }
           .premium-tabs .ant-tabs-tab {
-              background: transparent !important;
-              border: 1px solid transparent !important;
-              color: #94A3B8 !important;
-              font-weight: 600;
+            background: transparent !important;
+            color: ${colors.text.tertiary} !important;
+            font-weight: 500;
+            padding: 12px 0 !important;
+            margin: 0 32px 0 0 !important;
+            transition: all 0.3s ease;
           }
-          .premium-tabs .ant-tabs-tab-active {
-              color: #F8FAFC !important;
-              border-bottom: 2px solid #6366F1 !important;
+          .premium-tabs .ant-tabs-tab:hover {
+            color: ${colors.primary.solid} !important;
+          }
+          .premium-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+            color: ${colors.primary.solid} !important;
+            font-weight: 700 !important;
+          }
+          .premium-tabs .ant-tabs-ink-bar {
+            background: ${colors.primary.solid} !important;
+            height: 3px !important;
           }
           .opportunity-card-flagship:hover {
-            transform: translateY(-8px);
-            border-color: rgba(99, 102, 241, 0.4) !important;
-            box-shadow: 0 25px 50px rgba(99, 102, 241, 0.1) !important;
+            transform: translateY(-4px);
+            border-color: ${colors.primary.subtle} !important;
+            box-shadow: ${shadows.xl} !important;
           }
-          .ant-select-selector {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
-            color: #FFFFFF !important;
-            border-radius: 14px !important;
+          .ant-pagination-item-active {
+            border-color: ${colors.primary.solid} !important;
+            background: ${colors.primary.subtle} !important;
           }
-          .ant-pagination-item, .ant-pagination-prev, .ant-pagination-next {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          .ant-pagination-item-active a {
+            color: ${colors.primary.solid} !important;
           }
-          .ant-pagination-item a { color: #94A3B8 !important; }
-          .ant-pagination-item-active { border-color: #6366F1 !important; }
-          .ant-pagination-item-active a { color: #818CF8 !important; }
+          .premium-modal .ant-modal-content {
+            border-radius: 12px !important;
+            padding: 24px !important;
+            background: #FFFFFF !important;
+            border: 1px solid ${colors.gray[200]} !important;
+            box-shadow: ${shadows.xl} !important;
+          }
+          .premium-modal .ant-modal-header {
+            margin-bottom: 24px !important;
+            background: transparent !important;
+          }
+          .premium-modal .ant-modal-title {
+            color: ${colors.text.primary} !important;
+          }
+          .ant-input, .ant-select-selector, .ant-input-number {
+            border-radius: 8px !important;
+            background: #ffffff !important;
+            border: 1px solid ${colors.gray[200]} !important;
+            color: ${colors.text.primary} !important;
+          }
+          .ant-select-selection-placeholder, .ant-input-number-input::placeholder {
+            color: ${colors.text.tertiary} !important;
+          }
         `}</style>
+      </div>
     </div >
   );
 };

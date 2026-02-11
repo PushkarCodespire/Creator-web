@@ -168,19 +168,17 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
       height: '100%',
       position: 'relative',
       overflow: 'hidden',
-      background: colors.dark.surface,
-      borderRight: `1px solid ${colors.dark.border}`
+      background: '#ffffff',
+      borderRight: `1px solid ${colors.gray[200]}`
     }}>
-      {/* Subtle Mesh Glow */}
+      {/* Suble Accent Glow */}
       <div style={{
         position: 'absolute',
         top: '-10%',
         left: '-10%',
         width: '120%',
         height: '120%',
-        backgroundImage: isAdmin
-          ? 'radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.12) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.12) 0%, transparent 50%)'
-          : 'radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.08) 0%, transparent 50%), radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.08) 0%, transparent 50%)',
+        backgroundImage: 'radial-gradient(circle at 20% 30%, rgba(18, 104, 255, 0.03) 0%, transparent 50%)',
         pointerEvents: 'none',
       }} />
 
@@ -192,17 +190,17 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
           zIndex: 1,
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '32px' }}>
           <Link
             to="/"
             onClick={() => setMobileMenuOpen(false)}
-            style={{ display: 'block' }}
+            style={{ display: 'flex', alignItems: 'center', gap: '10px', textDecoration: 'none' }}
           >
             <img
               src="/Logo.png"
               alt="CodeSpire"
               style={{
-                height: isMobile ? 36 : 42,
+                height: isMobile ? 32 : 36,
                 width: 'auto',
                 display: 'block'
               }}
@@ -210,20 +208,20 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
           </Link>
         </div>
 
-        {type === 'user' && (
+        {(type === 'user' || type === 'creator') && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             style={{
               padding: '16px',
-              background: 'rgba(255, 255, 255, 0.03)',
+              background: colors.gray[50],
               borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              border: `1px solid ${colors.gray[100]}`,
               display: 'flex',
               alignItems: 'center',
               gap: '12px',
-              marginBottom: '16px'
+              marginBottom: '20px'
             }}
           >
             <Avatar
@@ -234,8 +232,8 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                 return false;
               }}
               style={{
-                border: '2px solid rgba(102, 126, 234, 0.3)',
-                background: !user?.avatar || avatarError ? '#6366F1' : '#1E293B',
+                border: `2px solid ${colors.primary.subtle}`,
+                background: !user?.avatar || avatarError ? colors.primary.solid : colors.gray[100],
                 color: '#fff',
                 fontWeight: 600
               }}
@@ -244,7 +242,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             </Avatar>
             <div style={{ overflow: 'hidden' }}>
               <div style={{
-                color: '#F8FAFC',
+                color: colors.text.primary,
                 fontWeight: 700,
                 fontSize: '14px',
                 whiteSpace: 'nowrap',
@@ -259,12 +257,12 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                 alignItems: 'center',
                 gap: '4px',
                 fontSize: '11px',
-                color: '#818CF8',
+                color: colors.primary.solid,
                 fontWeight: 600,
                 marginTop: '2px'
               }}>
                 {subscription?.plan === 'PREMIUM' ? 'Premium Member' : subscription?.plan === 'FREE' ? 'Free Member' : 'Member'}
-                {subscription?.plan === 'PREMIUM' && <Star size={10} style={{ color: '#FCD34D' }} />}
+                {subscription?.plan === 'PREMIUM' && <Star size={10} style={{ color: colors.warning.solid }} />}
               </div>
             </div>
           </motion.div>
@@ -274,59 +272,45 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
       <Menu
         mode="inline"
         selectedKeys={[location.pathname]}
-        className={`dashboard-menu ${isAdmin ? 'admin-menu' : ''}`}
+        className="dashboard-menu flagship-menu"
         items={menuItems}
         onClick={() => setMobileMenuOpen(false)}
-        style={{ background: 'transparent', borderRight: 'none', paddingTop: '8px' }}
+        style={{ background: 'transparent', borderRight: 'none', paddingTop: '0' }}
       />
 
       <style>{`
-        .admin-menu .ant-menu-item {
-          color: #94A3B8 !important;
-        }
-        .admin-menu .ant-menu-item:hover {
-          color: #F8FAFC !important;
-          background: rgba(255, 255, 255, 0.05) !important;
-        }
-        .admin-menu .ant-menu-item-selected {
-          background: linear-gradient(90deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%) !important;
-          color: #F8FAFC !important;
-          border: 1px solid rgba(102, 126, 234, 0.3);
-        }
-        .admin-menu .ant-menu-item-selected a,
-        .admin-menu .ant-menu-item-selected span,
-        .admin-menu .ant-menu-item-selected .anticon {
-          color: #F8FAFC !important;
-        }
-        .dashboard-menu .ant-menu-item {
-          height: 48px !important;
-          line-height: 48px !important;
+        .flagship-menu .ant-menu-item {
+          height: 44px !important;
+          line-height: 44px !important;
           margin: 4px 16px !important;
-          border-radius: 12px !important;
-          color: #94A3B8 !important;
-          font-weight: 600 !important;
+          border-radius: 10px !important;
+          color: ${colors.text.secondary} !important;
+          font-weight: 500 !important;
           transition: all 0.2s ease !important;
         }
-        .dashboard-menu .ant-menu-item:hover {
-          color: #F8FAFC !important;
-          background: rgba(255, 255, 255, 0.05) !important;
+        .flagship-menu .ant-menu-item .ant-menu-title-content a {
+          color: inherit !important;
         }
-        .dashboard-menu .ant-menu-item-selected {
-          background: linear-gradient(90deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%) !important;
-          color: #F8FAFC !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-          border: 1px solid rgba(102, 126, 234, 0.2);
+        .flagship-menu .ant-menu-item:hover {
+          color: ${colors.primary.solid} !important;
+          background: ${colors.primary.subtle} !important;
         }
-        .dashboard-menu .ant-menu-item-selected .anticon {
-          color: #ffffff !important;
-        }
-        .dashboard-menu .ant-menu-item-selected {
+        .flagship-menu .ant-menu-item-selected {
           background: ${colors.primary.solid} !important;
           color: #ffffff !important;
+          box-shadow: ${shadows.md} !important;
         }
-        .dashboard-menu .ant-menu-item:hover {
-          background: rgba(18, 104, 255, 0.1) !important;
-          color: ${colors.primary.solid} !important;
+        .flagship-menu .ant-menu-item-selected a {
+          color: #ffffff !important;
+          font-weight: 600 !important;
+        }
+        .flagship-menu .ant-menu-item-selected .anticon,
+        .flagship-menu .ant-menu-item-selected svg {
+          color: #ffffff !important;
+        }
+        .flagship-menu .ant-menu-item-divider {
+          margin: 16px 24px !important;
+          border-color: ${colors.gray[100]} !important;
         }
       `}</style>
     </div >
@@ -336,7 +320,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
     <Layout
       style={{
         minHeight: '100vh',
-        background: isAdmin ? '#e6ebf8' : '#020617',
+        background: colors.background,
       }}
     >
       <DemoModeBanner />
@@ -344,11 +328,9 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
         <Sider
           width={type === 'user' ? 240 : 260}
           style={{
-            background: isAdmin
-              ? 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)'
-              : 'linear-gradient(180deg, #1E293B 0%, #0F172A 100%)',
-            borderRight: isAdmin ? '1px solid rgba(102, 126, 234, 0.15)' : '1px solid rgba(255, 255, 255, 0.05)',
-            boxShadow: isAdmin ? '6px 0 24px rgba(15, 23, 42, 0.08)' : '4px 0 24px rgba(0, 0, 0, 0.2)',
+            background: '#ffffff',
+            borderRight: `1px solid ${colors.gray[200]}`,
+            boxShadow: '4px 0 24px rgba(16, 24, 40, 0.02)',
             position: 'fixed',
             height: '100vh',
             left: 0,
@@ -367,7 +349,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
         onClose={() => setMobileMenuOpen(false)}
         open={mobileMenuOpen}
         styles={{
-          body: { padding: 0, background: isAdmin ? '#0F172A' : '#0F172A' },
+          body: { padding: 0, background: '#ffffff' },
           mask: { backdropFilter: 'blur(4px)' }
         }}
         width={260}
@@ -379,33 +361,19 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
       <Layout style={{
         marginLeft: isMobile ? 0 : (type === 'user' ? 240 : 260),
         minHeight: '100vh',
-        background: isAdmin
-          ? 'linear-gradient(135deg, #e1e6f6 0%, #d4dbf1 100%)'
-          : 'linear-gradient(135deg, #020617 0%, #0F172A 100%)',
+        background: colors.background,
         position: 'relative',
         overflow: 'hidden'
       }}>
-        {/* Neural Decoration Spheres */}
+        {/* Suble Decoration Spheres */}
         <div style={{
           position: 'absolute',
           top: '-10%',
           right: '-5%',
           width: '600px',
           height: '600px',
-          background: isAdmin ? 'rgba(102, 126, 234, 0.26)' : 'rgba(99, 102, 241, 0.08)',
+          background: 'rgba(18, 104, 255, 0.03)',
           filter: 'blur(120px)',
-          borderRadius: '50%',
-          zIndex: 0,
-          pointerEvents: 'none'
-        }} />
-        <div style={{
-          position: 'absolute',
-          bottom: '-5%',
-          left: '10%',
-          width: '400px',
-          height: '400px',
-          background: isAdmin ? 'rgba(118, 75, 162, 0.22)' : 'rgba(168, 85, 247, 0.05)',
-          filter: 'blur(100px)',
           borderRadius: '50%',
           zIndex: 0,
           pointerEvents: 'none'
@@ -413,14 +381,13 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
 
         <Header
           style={{
-            background: isAdmin ? 'rgba(230, 235, 248, 0.95)' : 'rgba(15, 23, 42, 0.4)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            background: 'rgba(255, 255, 255, 0.8)',
+            backdropFilter: 'blur(12px)',
             padding: isMobile ? '0 16px' : '0 32px',
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            borderBottom: isAdmin ? '1px solid rgba(102, 126, 234, 0.12)' : '1px solid rgba(255, 255, 255, 0.05)',
+            borderBottom: `1px solid ${colors.gray[200]}`,
             position: 'sticky',
             top: 0,
             zIndex: 10,
@@ -431,7 +398,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             {isMobile && (
               <AntButton
                 type="text"
-                icon={<MenuIcon size={18} style={{ color: '#FFFFFF' }} />}
+                icon={<MenuIcon size={20} style={{ color: colors.text.primary }} />}
                 onClick={() => setMobileMenuOpen(true)}
                 style={{ padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
               />
@@ -439,9 +406,9 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
             <h2
               style={{
                 margin: 0,
-                fontSize: isMobile ? 18 : 22,
-                fontWeight: 800,
-                color: isAdmin ? '#1f2a44' : '#FFFFFF',
+                fontSize: isMobile ? 18 : 20,
+                fontWeight: 700,
+                color: colors.text.primary,
                 letterSpacing: '-0.02em',
               }}
             >
@@ -451,7 +418,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
           <Space size={isMobile ? "middle" : "large"}>
             {(type === 'creator' || type === 'user') && (
               <NotificationCenter
-                theme="dark"
+                theme="light"
                 title="Notifications"
                 emptyText="No notifications yet"
               />
@@ -465,8 +432,8 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                     return false;
                   }}
                   style={{
-                    border: isAdmin ? '2px solid rgba(102, 126, 234, 0.4)' : '2px solid rgba(99, 102, 241, 0.4)',
-                    background: !user?.avatar || avatarError ? (isAdmin ? '#1E293B' : '#6366F1') : undefined,
+                    border: `1px solid ${colors.gray[200]}`,
+                    background: !user?.avatar || avatarError ? colors.primary.solid : colors.gray[100],
                     color: '#fff',
                     fontWeight: 600
                   }}
@@ -475,7 +442,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
                   {user?.name?.[0]?.toUpperCase() || <User size={isMobile ? 14 : 18} />}
                 </Avatar>
                 {!isMobile && (
-                  <span style={{ fontWeight: 600, color: isAdmin ? '#4b5563' : '#94A3B8' }}>
+                  <span style={{ fontWeight: 600, color: colors.text.secondary }}>
                     {user?.name || 'User'}
                   </span>
                 )}
@@ -486,34 +453,33 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
 
         <Content
           style={{
-            margin: isMobile ? '16px' : '24px 32px',
+            margin: isMobile ? '16px' : '32px',
             background: 'transparent',
             padding: 0,
-            minHeight: 'calc(100vh - 64px)',
+            minHeight: 'calc(100vh - 128px)',
             position: 'relative',
             zIndex: 1
           }}
         >
           {isCreatorRejected && (
-            <div style={{ marginBottom: '16px' }}>
+            <div style={{ marginBottom: '24px' }}>
               <div
                 style={{
-                  background: 'rgba(239, 68, 68, 0.1)',
-                  border: '1px solid rgba(239, 68, 68, 0.2)',
-                  color: '#F8FAFC',
+                  background: colors.error.subtle,
+                  border: `1px solid ${colors.error.light}`,
+                  color: colors.error.dark,
                   padding: '16px 20px',
                   borderRadius: '16px',
-                  backdropFilter: 'blur(8px)'
                 }}
               >
-                <div style={{ fontWeight: 800, fontSize: '16px', marginBottom: '6px', color: '#FCA5A5' }}>
+                <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '6px' }}>
                   Creator Application Rejected
                 </div>
-                <div style={{ fontSize: '13px', color: '#E2E8F0' }}>
+                <div style={{ fontSize: '14px', opacity: 0.9 }}>
                   {creatorRejectionReason || 'Your creator application was rejected.'}
                 </div>
                 {creatorRejectedAt && (
-                  <div style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px' }}>
+                  <div style={{ fontSize: '12px', opacity: 0.7, marginTop: '8px' }}>
                     Rejected on {new Date(creatorRejectedAt).toLocaleDateString()}
                   </div>
                 )}

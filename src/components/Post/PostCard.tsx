@@ -1,24 +1,33 @@
+// ===========================================
+// POST CARD COMPONENT - Premium Light Theme
+// ===========================================
+
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import {
-  MessageOutlined,
-  ShareAltOutlined,
-  MoreOutlined,
-  CheckCircleFilled,
-  DeleteOutlined,
-  EditOutlined,
-  HeartOutlined,
-  HeartFilled
-} from '@ant-design/icons';
-import { Dropdown, Modal, message, Avatar, Button, Typography } from 'antd';
+  MessageSquare,
+  Share2,
+  MoreVertical,
+  CircleCheck,
+  Trash2,
+  Edit,
+  Heart,
+  ExternalLink,
+  ChevronRight,
+  TrendingUp,
+  Image as ImageIcon,
+  Play
+} from 'lucide-react';
+import { Dropdown, Modal, message, Avatar, Button, Typography, Space, Tag } from 'antd';
 import type { MenuProps } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { postApi, getImageUrl } from '../../services/api';
 import { CommentSection } from '../Comment';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
 
-const { Text } = Typography;
+const { Text, Paragraph } = Typography;
 
 export interface PostData {
   id: string;
@@ -63,7 +72,6 @@ const PostCard: React.FC<PostCardProps> = ({
   const [likesCount, setLikesCount] = useState<number>(post.likesCount);
   const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
 
-  // Keep local like state in sync if the server sends updated data (e.g. after refresh)
   useEffect(() => {
     setIsLiked(post.isLiked);
     setLikesCount(post.likesCount);
@@ -102,25 +110,27 @@ const PostCard: React.FC<PostCardProps> = ({
       } catch (err) { console.error(err); }
     } else {
       await navigator.clipboard.writeText(shareUrl);
-      message.success('Link copied to clipboard!');
+      message.success('Nexus link copied to clipboard!');
     }
   };
 
   const handleDeletePost = () => {
     Modal.confirm({
-      title: 'Delete Post',
-      content: 'Are you sure you want to delete this post? This action cannot be undone.',
-      okText: 'Delete',
+      title: 'Purge Transmission?',
+      content: 'Are you sure you want to disconnect this neural transmission from the matrix?',
+      okText: 'Purge',
       okType: 'danger',
       cancelText: 'Cancel',
+      okButtonProps: { style: { borderRadius: '10px', fontWeight: 700 } },
+      cancelButtonProps: { style: { borderRadius: '10px', fontWeight: 700 } },
       onOk: async () => {
         setIsDeleting(true);
         try {
           await postApi.deletePost(post.id);
-          message.success('Post deleted successfully');
+          message.success('Transmission purged');
           onPostDelete?.(post.id);
         } catch (error: any) {
-          message.error(error.response?.data?.error || 'Failed to delete post');
+          message.error(error.response?.data?.error || 'Failed to purge');
         } finally {
           setIsDeleting(false);
         }
@@ -130,17 +140,17 @@ const PostCard: React.FC<PostCardProps> = ({
 
   const menuItems: MenuProps['items'] = isOwnPost
     ? [
-      { key: 'edit', label: 'Edit Post', icon: <EditOutlined />, onClick: () => onPostUpdate?.(post.id) },
-      { key: 'delete', label: 'Delete Post', icon: <DeleteOutlined />, danger: true, onClick: handleDeletePost },
+      { key: 'edit', label: 'Modify Matrix', icon: <Edit size={16} />, onClick: () => onPostUpdate?.(post.id) },
+      { key: 'delete', label: 'Purge Stream', icon: <Trash2 size={16} />, danger: true, onClick: handleDeletePost },
     ]
-    : [{ key: 'report', label: 'Report Post', onClick: () => message.info('Report feature coming soon') }];
+    : [{ key: 'report', label: 'Report Disruption', icon: <ExternalLink size={16} />, onClick: () => message.info('Analytics pending') }];
 
   const formatTimestamp = (timestamp: string) => {
     const diff = Math.floor((new Date().getTime() - new Date(timestamp).getTime()) / 1000);
-    if (diff < 60) return 'Just now';
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-    if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
+    if (diff < 60) return 'NOW';
+    if (diff < 3600) return `${Math.floor(diff / 60)}m`;
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h`;
+    if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
     return new Date(timestamp).toLocaleDateString();
   };
 
@@ -150,114 +160,149 @@ const PostCard: React.FC<PostCardProps> = ({
     return (
       <div style={{
         width: '100%',
-        borderRadius: '16px',
+        borderRadius: '20px',
         overflow: 'hidden',
-        marginTop: '16px',
-        marginBottom: '16px',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
-        background: '#F8FAFC'
+        marginTop: '20px',
+        marginBottom: '20px',
+        border: `1px solid ${colors.gray[100]}`,
+        background: colors.gray[50],
+        position: 'relative'
       }}>
         {media.type === 'image' ? (
-          <img src={media.url} alt="" style={{ width: '100%', maxHeight: '600px', objectFit: 'cover', display: 'block' }} />
+          <img src={media.url} alt="" style={{ width: '100%', maxHeight: '640px', objectFit: 'cover', display: 'block' }} />
         ) : (
-          <video src={media.url} controls style={{ width: '100%', maxHeight: '600px', objectFit: 'cover', display: 'block' }} />
+          <div style={{ position: 'relative' }}>
+            <video src={media.url} controls style={{ width: '100%', maxHeight: '640px', objectFit: 'cover', display: 'block' }} />
+            <div style={{ position: 'absolute', top: '20px', right: '20px' }}>
+              <Tag bordered={false} icon={<Play size={12} fill="currentColor" />} style={{ background: 'rgba(0,0,0,0.6)', color: '#fff', borderRadius: '8px', fontWeight: 700, backdropFilter: 'blur(10px)', padding: '4px 12px' }}>NEURAL FEED</Tag>
+            </div>
+          </div>
         )}
       </div>
     );
   };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.4 }}
+    <div
       style={{
-        background: 'rgba(255, 255, 255, 0.8)',
-        backdropFilter: 'blur(20px)',
-        border: '1px solid rgba(226, 232, 240, 0.8)',
-        borderRadius: '24px',
-        padding: '24px',
-        marginBottom: '24px',
-        opacity: isDeleting ? 0.5 : 1,
+        padding: '32px',
+        opacity: isDeleting ? 0.4 : 1,
         position: 'relative',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)'
+        transition: 'all 0.3s ease'
       }}
+      className="premium-post-card"
     >
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }} onClick={handleCreatorClick}>
+      {/* Post Header */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', cursor: 'pointer' }} onClick={handleCreatorClick}>
           <div style={{ position: 'relative' }}>
             <Avatar
-              size={50}
+              size={56}
               src={post.creator.profileImage ? getImageUrl(post.creator.profileImage) : undefined}
               style={{
-                border: '2px solid rgba(99, 102, 241, 0.1)',
-                background: !post.creator.profileImage ? '#6366F1' : '#F1F5F9',
-                color: '#fff',
-                fontWeight: 600
+                border: `3px solid ${colors.gray[100]}`,
+                background: !post.creator.profileImage ? colors.primary.gradient : '#F8FAFC',
+                boxShadow: shadows.sm
               }}
             >
               {post.creator.displayName?.[0]?.toUpperCase()}
             </Avatar>
             {post.creator.isVerified && (
-              <CheckCircleFilled style={{
+              <div style={{
                 position: 'absolute',
-                bottom: 0,
-                right: 0,
-                color: '#6366F1',
-                fontSize: '14px',
+                bottom: -2,
+                right: -2,
                 background: '#fff',
                 borderRadius: '50%',
-                border: '1px solid #fff'
-              }} />
+                padding: '2px'
+              }}>
+                <CircleCheck size={18} fill={colors.primary.solid} color="#fff" />
+              </div>
             )}
           </div>
           <div>
-            <div style={{ color: '#1E293B', fontWeight: 700, fontSize: '16px', lineHeight: 1.2 }}>{post.creator.displayName}</div>
-            <div style={{ color: '#64748B', fontSize: '13px', marginTop: '2px' }}>
-              {formatTimestamp(post.createdAt)} {post.creator.category ? `• ${post.creator.category}` : ''}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Text style={{ color: colors.text.primary, fontWeight: 800, fontSize: '17px', letterSpacing: '-0.01em' }}>{post.creator.displayName}</Text>
+              {post.creator.category && <Tag bordered={false} style={{ background: colors.gray[50], color: colors.text.tertiary, borderRadius: '6px', fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{post.creator.category}</Tag>}
             </div>
+            <Text style={{ color: colors.text.tertiary, fontSize: '13px', fontWeight: 600 }}>
+              Synchronized {formatTimestamp(post.createdAt)} ago
+            </Text>
           </div>
         </div>
 
         {showActions && (
-          <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight">
-            <Button type="text" icon={<MoreOutlined style={{ color: '#94A3B8', fontSize: '20px' }} />} />
+          <Dropdown menu={{ items: menuItems }} trigger={['click']} placement="bottomRight" overlayStyle={{ borderRadius: '12px', minWidth: '160px' }}>
+            <Button type="text" icon={<MoreVertical size={20} color={colors.text.tertiary} />} style={{ borderRadius: '10px' }} />
           </Dropdown>
         )}
       </div>
 
-      <div style={{ color: '#334155', fontSize: '16px', lineHeight: '1.6', whiteSpace: 'pre-wrap', marginBottom: '8px' }}>
-        {post.content}
+      {/* Post Content */}
+      <div style={{ padding: '0 4px' }}>
+        <Paragraph style={{ color: colors.text.primary, fontSize: '17px', lineHeight: '1.7', whiteSpace: 'pre-wrap', marginBottom: '20px', fontWeight: 500 }}>
+          {post.content}
+        </Paragraph>
+
+        {renderMedia()}
       </div>
 
-      {renderMedia()}
-
+      {/* Post Actions */}
       {showActions && (
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: '32px',
-          paddingTop: '16px',
+          paddingTop: '24px',
           marginTop: '8px',
-          borderTop: '1px solid rgba(226, 232, 240, 0.6)'
+          borderTop: `1px solid ${colors.gray[50]}`
         }}>
-          <motion.div whileTap={{ scale: 0.9 }} style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={handleLike}>
-            {isLiked ? <HeartFilled style={{ color: '#F43F5E', fontSize: '22px' }} /> : <HeartOutlined style={{ color: '#64748B', fontSize: '22px' }} />}
-            <Text style={{ color: isLiked ? '#F43F5E' : '#64748B', fontWeight: 700, fontSize: '15px' }}>{likesCount.toLocaleString()}</Text>
+          <motion.div whileTap={{ scale: 0.9 }} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleLike}>
+            <div style={{
+              padding: '10px',
+              borderRadius: '12px',
+              background: isLiked ? '#fff1f2' : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}>
+              <Heart size={22} fill={isLiked ? '#e11d48' : 'none'} color={isLiked ? '#e11d48' : colors.text.tertiary} />
+            </div>
+            <Text style={{ color: isLiked ? '#e11d48' : colors.text.tertiary, fontWeight: 800, fontSize: '15px' }}>{likesCount.toLocaleString()}</Text>
           </motion.div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={handleCommentClick}>
-            <MessageOutlined style={{ color: '#64748B', fontSize: '22px' }} />
-            <Text style={{ color: '#64748B', fontWeight: 700, fontSize: '15px' }}>{commentsCount.toLocaleString()}</Text>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleCommentClick}>
+            <div style={{
+              padding: '10px',
+              borderRadius: '12px',
+              background: showComments ? colors.primary.subtle : 'transparent',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.2s ease'
+            }}>
+              <MessageSquare size={22} fill={showComments ? colors.primary.solid : 'none'} color={showComments ? colors.primary.solid : colors.text.tertiary} />
+            </div>
+            <Text style={{ color: showComments ? colors.primary.solid : colors.text.tertiary, fontWeight: 800, fontSize: '15px' }}>{commentsCount.toLocaleString()}</Text>
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }} onClick={handleShareClick}>
-            <ShareAltOutlined style={{ color: '#64748B', fontSize: '22px' }} />
-          </div>
+          <motion.div whileTap={{ scale: 0.9 }} style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={handleShareClick}>
+            <div style={{
+              padding: '10px',
+              borderRadius: '12px',
+              background: colors.gray[50],
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <Share2 size={20} color={colors.text.tertiary} />
+            </div>
+          </motion.div>
         </div>
       )}
 
+      {/* Comments Section */}
       <AnimatePresence>
         {showComments && (
           <motion.div
@@ -266,13 +311,19 @@ const PostCard: React.FC<PostCardProps> = ({
             exit={{ opacity: 0, height: 0 }}
             style={{ overflow: 'hidden' }}
           >
-            <div style={{ padding: '24px 0', marginTop: '16px' }}>
+            <div style={{ paddingTop: '32px', marginTop: '24px', borderTop: `2px dashed ${colors.gray[50]}` }}>
               <CommentSection postId={post.id} initialCommentsCount={commentsCount} />
             </div>
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+
+      <style>{`
+        .premium-post-card:hover {
+            background: ${colors.gray[50]}11;
+        }
+      `}</style>
+    </div>
   );
 };
 

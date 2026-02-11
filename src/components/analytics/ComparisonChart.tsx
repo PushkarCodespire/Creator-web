@@ -1,16 +1,17 @@
 // ===========================================
-// COMPARISON CHART COMPONENT - Flagship Redesign
+// COMPARISON CHART COMPONENT - Premium Light Theme
 // ===========================================
 
 import React from 'react';
 import { Row, Col, Tag, Empty, Typography } from 'antd';
 import {
-  ArrowUpOutlined,
-  ArrowDownOutlined,
-  MessageOutlined,
-  DollarOutlined,
-  UserAddOutlined
-} from '@ant-design/icons';
+  MessageSquare,
+  DollarSign,
+  UserPlus,
+  ArrowUp,
+  ArrowDown,
+  Activity
+} from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -21,7 +22,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { colors, spacing, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
@@ -57,8 +58,8 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
 }) => {
   if (!data) {
     return (
-      <div style={{ padding: '48px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '32px' }}>
-        <Empty description={<span style={{ color: '#94A3B8' }}>No comparison data available yet.</span>} />
+      <div style={{ padding: '64px', textAlign: 'center', background: '#FFFFFF', borderRadius: '24px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+        <Empty description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>No comparison data analyzed yet.</span>} />
       </div>
     );
   }
@@ -82,25 +83,25 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
   ];
 
   const getTrendProps = (changePercent: number) => {
-    if (changePercent > 0) return { icon: <ArrowUpOutlined />, color: 'success', prefix: '+' };
-    if (changePercent < 0) return { icon: <ArrowDownOutlined />, color: 'error', prefix: '' };
-    return { icon: null, color: 'default', prefix: '' };
+    if (changePercent > 0) return { icon: <ArrowUp size={12} />, color: colors.success.solid, bg: colors.success.subtle, prefix: '+' };
+    if (changePercent < 0) return { icon: <ArrowDown size={12} />, color: colors.error.solid, bg: colors.error.subtle, prefix: '' };
+    return { icon: null, color: colors.text.tertiary, bg: colors.gray[100], prefix: '' };
   };
 
   const CustomTooltip = ({ active, payload }: any) => {
     if (!active || !payload || payload.length === 0) return null;
     return (
       <div style={{
-        backgroundColor: '#0F172A',
+        backgroundColor: '#FFFFFF',
         padding: '16px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${colors.gray[200]}`,
         borderRadius: '16px',
-        boxShadow: shadows.xl
+        boxShadow: shadows.lg
       }}>
-        <div style={{ fontWeight: 800, color: '#F8FAFC', marginBottom: '8px' }}>{payload[0].payload.metric}</div>
+        <div style={{ fontWeight: 800, color: colors.text.primary, marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>{payload[0].payload.metric}</div>
         {payload.map((entry: any, index: number) => (
-          <div key={index} style={{ color: entry.color, fontWeight: 700, fontSize: '14px' }}>
-            {entry.name}: {entry.metric === 'Revenue (₹)' ? '₹' : ''}{entry.value.toLocaleString()}
+          <div key={index} style={{ color: entry.color, fontWeight: 800, fontSize: '15px', marginBottom: index === 0 ? '4px' : 0 }}>
+            {entry.name}: {entry.payload.metric === 'Revenue (₹)' ? '₹' : ''}{entry.value.toLocaleString()}
           </div>
         ))}
       </div>
@@ -109,47 +110,55 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.4)',
-      backdropFilter: 'blur(32px)',
+      background: '#FFFFFF',
       padding: '40px',
-      borderRadius: '40px',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+      borderRadius: '24px',
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.md
     }}>
       <div style={{ marginBottom: '40px' }}>
-        <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Momentum Comparison</Title>
-        <Text style={{ color: '#64748B' }}>Last {periodDays} days vs previous period</Text>
+        <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Momentum Comparison</Title>
+        <Text style={{ color: colors.text.secondary, fontWeight: 500 }}>Last {periodDays} days vs previous period</Text>
       </div>
 
       <Row gutter={[24, 24]} style={{ marginBottom: '48px' }}>
         {[
-          { label: 'Total Messages', value: data.currentPeriod.messages, prevValue: data.previousPeriod.messages, icon: <MessageOutlined />, change: data.change.messages, color: '#6366F1' },
-          { label: 'Total Revenue', value: data.currentPeriod.revenue, prevValue: data.previousPeriod.revenue, icon: '₹', change: data.change.revenue, color: '#10B981', isCurrency: true },
-          { label: 'New Users', value: data.currentPeriod.newUsers, prevValue: data.previousPeriod.newUsers, icon: <UserAddOutlined />, change: data.change.newUsers, color: '#F59E0B' }
+          { label: 'Total Messages', value: data.currentPeriod.messages, prevValue: data.previousPeriod.messages, icon: <MessageSquare size={18} />, change: data.change.messages, color: colors.primary.solid },
+          { label: 'Total Revenue', value: data.currentPeriod.revenue, prevValue: data.previousPeriod.revenue, icon: <DollarSign size={18} />, change: data.change.revenue, color: colors.success.solid, isCurrency: true },
+          { label: 'New Users', value: data.currentPeriod.newUsers, prevValue: data.previousPeriod.newUsers, icon: <UserPlus size={18} />, change: data.change.newUsers, color: colors.warning.solid }
         ].map((item, i) => (
           <Col xs={24} sm={8} key={i}>
             <motion.div
               whileHover={{ y: -5 }}
               style={{
-                background: 'rgba(255, 255, 255, 0.02)',
+                background: colors.gray[50],
                 padding: '28px',
-                borderRadius: '24px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
+                borderRadius: '20px',
+                border: `1px solid ${colors.gray[100]}`,
                 position: 'relative',
                 overflow: 'hidden'
               }}
             >
-              <div style={{ position: 'absolute', top: -5, right: -5, width: 60, height: 60, background: item.color, filter: 'blur(40px)', opacity: 0.1 }} />
+              <div style={{ position: 'absolute', top: -5, right: -5, width: 60, height: 60, background: item.color, filter: 'blur(40px)', opacity: 0.05 }} />
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                <Text style={{ color: '#94A3B8', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase' }}>{item.label}</Text>
-                <Tag color={getTrendProps(item.change).color} style={{ borderRadius: '6px', fontWeight: 800 }}>
+                <Text style={{ color: colors.text.tertiary, fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.label}</Text>
+                <Tag bordered={false} style={{
+                  borderRadius: '6px',
+                  fontWeight: 800,
+                  background: getTrendProps(item.change).bg,
+                  color: getTrendProps(item.change).color,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontSize: '11px'
+                }}>
                   {getTrendProps(item.change).icon} {getTrendProps(item.change).prefix}{item.change}%
                 </Tag>
               </div>
-              <div style={{ fontSize: '28px', fontWeight: 900, color: '#F8FAFC', marginBottom: '8px' }}>
+              <div style={{ fontSize: '28px', fontWeight: 800, color: colors.text.primary, marginBottom: '8px', letterSpacing: '-0.02em' }}>
                 {item.isCurrency ? '₹' : ''}{item.value.toLocaleString()}
               </div>
-              <Text style={{ fontSize: '12px', color: '#475569', fontWeight: 600 }}>
+              <Text style={{ fontSize: '12px', color: colors.text.tertiary, fontWeight: 600 }}>
                 vs {item.isCurrency ? '₹' : ''}{item.prevValue.toLocaleString()} previously
               </Text>
             </motion.div>
@@ -159,13 +168,17 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
 
       <ResponsiveContainer width="100%" height={320}>
         <BarChart data={chartData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.03)" />
-          <XAxis dataKey="metric" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 13, fontWeight: 700 }} />
-          <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 700 }} />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gray[100]} />
+          <XAxis dataKey="metric" axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 13, fontWeight: 700 }} />
+          <YAxis axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} />
           <Tooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ paddingTop: '32px' }} iconType="circle" />
+          <Legend
+            wrapperStyle={{ paddingTop: '32px' }}
+            iconType="circle"
+            formatter={(value) => <span style={{ color: colors.text.secondary, fontWeight: 600, fontSize: '13px' }}>{value}</span>}
+          />
           <Bar dataKey="Current" fill={colors.primary.solid} name="Current Period" radius={[8, 8, 0, 0]} barSize={40} />
-          <Bar dataKey="Previous" fill="rgba(255, 255, 255, 0.1)" name="Previous Period" radius={[8, 8, 0, 0]} barSize={40} />
+          <Bar dataKey="Previous" fill={colors.gray[200]} name="Previous Period" radius={[8, 8, 0, 0]} barSize={40} />
         </BarChart>
       </ResponsiveContainer>
     </div>

@@ -1,9 +1,11 @@
+// ===========================================
+// CREATOR PAYOUTS PAGE - Premium Light Theme
+// ===========================================
+
 import { useState, useEffect } from 'react';
 import {
-  Card,
   Row,
   Col,
-  Statistic,
   Button,
   Table,
   Form,
@@ -29,13 +31,20 @@ import {
   CheckCircle,
   Clock,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  ArrowRight,
+  Zap,
+  TrendingUp,
+  ShieldCheck,
+  CreditCard,
+  Users
 } from 'lucide-react';
 import { payoutApi } from '../../services/api';
 import { format } from 'date-fns';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { motion } from 'framer-motion';
 
 const { Title, Text, Paragraph } = Typography;
-const { TabPane } = Tabs;
 const { useBreakpoint } = Grid;
 
 interface BankAccount {
@@ -102,7 +111,6 @@ const CreatorPayouts = () => {
   const screens = useBreakpoint();
   const isMobile = !screens.md;
 
-  // Load data
   useEffect(() => {
     loadEarnings();
     loadBankAccount();
@@ -121,7 +129,7 @@ const CreatorPayouts = () => {
       const response = await payoutApi.getEarningsBreakdown();
       setEarnings(response.data.data);
     } catch (error: any) {
-      message.error('Failed to load earnings');
+      console.error('Failed to load earnings');
     }
   };
 
@@ -130,9 +138,8 @@ const CreatorPayouts = () => {
       const response = await payoutApi.getBankAccount();
       setBankAccount(response.data.data);
     } catch (error: any) {
-      // Don't show error if 404 (just means no account added yet)
       if (error.response?.status !== 404) {
-        message.error('Failed to load bank account');
+        console.error('Failed to load bank account');
       }
     }
   };
@@ -147,7 +154,7 @@ const CreatorPayouts = () => {
         total: data.pagination?.total ?? prev.total
       }));
     } catch (error: any) {
-      message.error('Failed to load payouts');
+      console.error('Failed to load payouts');
     }
   };
 
@@ -161,7 +168,7 @@ const CreatorPayouts = () => {
         total: data.pagination?.total ?? prev.total
       }));
     } catch (error: any) {
-      message.error('Failed to load ledger');
+      console.error('Failed to load ledger');
     }
   };
 
@@ -169,12 +176,12 @@ const CreatorPayouts = () => {
     try {
       setLoading(true);
       await payoutApi.addBankAccount(values);
-      message.success('Bank account saved successfully');
+      message.success('Bank account synchronization successful');
       setIsBankModalVisible(false);
       bankForm.resetFields();
       loadBankAccount();
     } catch (error: any) {
-      message.error(error.response?.data?.error || 'Failed to save bank account');
+      message.error(error.response?.data?.error || 'Failed to sync bank details');
     } finally {
       setLoading(false);
     }
@@ -184,72 +191,103 @@ const CreatorPayouts = () => {
     try {
       setLoading(true);
       await payoutApi.requestPayout(payoutAmount);
-      message.success('Payout requested successfully');
+      message.success('Capital withdrawal initiated');
       setIsPayoutModalVisible(false);
       setPayoutAmount(0);
       loadEarnings();
       loadPayouts();
     } catch (error: any) {
-      message.error(error.response?.data?.error || 'Failed to request payout');
+      message.error(error.response?.data?.error || 'Failed to initiate withdrawal');
     } finally {
       setLoading(false);
     }
   };
 
   const getStatusTag = (status: string) => {
-    const statusConfig: Record<string, { color: string; icon: any }> = {
-      PENDING: { color: 'orange', icon: <Clock size={14} /> },
-      PROCESSING: { color: 'blue', icon: <Clock size={14} /> },
-      COMPLETED: { color: 'green', icon: <CheckCircle size={14} /> },
-      FAILED: { color: 'red', icon: <XCircle size={14} /> },
-      REJECTED: { color: 'red', icon: <XCircle size={14} /> },
-      CANCELLED: { color: 'default', icon: <XCircle size={14} /> }
-    };
+    let color = colors.gray[500];
+    let bgColor = colors.gray[50];
+    let icon = <Clock size={12} />;
 
-    const config = statusConfig[status] || statusConfig.PENDING;
+    switch (status) {
+      case 'COMPLETED':
+        color = colors.success.solid;
+        bgColor = colors.success.subtle;
+        icon = <CheckCircle size={12} />;
+        break;
+      case 'FAILED':
+      case 'REJECTED':
+        color = colors.error.solid;
+        bgColor = colors.error.subtle;
+        icon = <XCircle size={12} />;
+        break;
+      case 'PENDING':
+      case 'PROCESSING':
+        color = colors.primary.solid;
+        bgColor = colors.primary.subtle;
+        icon = <Clock size={12} />;
+        break;
+    }
+
     return (
-      <Tag icon={config.icon} color={config.color}>
+      <Tag bordered={false} icon={icon} style={{
+        background: bgColor,
+        color: color,
+        borderRadius: '6px',
+        fontWeight: 700,
+        fontSize: '11px',
+        padding: '2px 10px',
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '4px'
+      }}>
         {status}
       </Tag>
     );
   };
 
   const getKYCStatusTag = (status: string) => {
-    const statusConfig: Record<string, { color: string; text: string }> = {
-      PENDING: { color: 'orange', text: 'Pending' },
-      SUBMITTED: { color: 'blue', text: 'Under Review' },
-      VERIFIED: { color: 'green', text: 'Verified' },
-      REJECTED: { color: 'red', text: 'Rejected' }
-    };
-
-    const config = statusConfig[status] || statusConfig.PENDING;
-    return <Tag color={config.color}>{config.text}</Tag>;
+    const isVerified = status === 'VERIFIED';
+    return (
+      <Tag bordered={false} style={{
+        background: isVerified ? colors.success.subtle : colors.warning.subtle,
+        color: isVerified ? colors.success.solid : colors.warning.solid,
+        borderRadius: '6px',
+        fontWeight: 700,
+        fontSize: '11px',
+        padding: '2px 10px'
+      }}>
+        {isVerified ? 'VERIFIED' : status}
+      </Tag>
+    );
   };
 
   const payoutColumns = [
     {
-      title: 'Date',
+      title: 'Temporal Mark',
       dataIndex: 'requestedAt',
       key: 'requestedAt',
-      render: (date: string) => format(new Date(date), 'MMM dd, yyyy HH:mm')
+      render: (date: string) => (
+        <div style={{ color: colors.text.primary, fontWeight: 600 }}>
+          {format(new Date(date), 'MMM dd, yyyy')}
+          <div style={{ fontSize: '11px', color: colors.text.tertiary, fontWeight: 500 }}>{format(new Date(date), 'HH:mm')}</div>
+        </div>
+      )
     },
     {
-      title: 'Amount',
-      dataIndex: 'amount',
-      key: 'amount',
-      render: (amount: number | string) => `₹${Number(amount).toFixed(2)} `
-    },
-    {
-      title: 'Fee',
-      dataIndex: 'fee',
-      key: 'fee',
-      render: (fee: number | string) => `-₹${Number(fee).toFixed(2)} `
-    },
-    {
-      title: 'Net Amount',
+      title: 'Net Capital',
       dataIndex: 'netAmount',
       key: 'netAmount',
-      render: (amount: number | string) => <strong>₹{Number(amount).toFixed(2)}</strong>
+      render: (amount: number | string) => <div style={{ fontWeight: 800, color: colors.text.primary, fontSize: '15px' }}>₹{Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
+    },
+    {
+      title: 'Breakdown',
+      key: 'breakdown',
+      render: (record: Payout) => (
+        <div style={{ fontSize: '12px', color: colors.text.secondary }}>
+          <div>Gross: ₹{Number(record.amount).toLocaleString()}</div>
+          <div style={{ color: colors.error.solid }}>Fee: -₹{Number(record.fee).toLocaleString()}</div>
+        </div>
+      )
     },
     {
       title: 'Status',
@@ -258,104 +296,107 @@ const CreatorPayouts = () => {
       render: (status: string) => getStatusTag(status)
     },
     {
-      title: 'Processed',
-      dataIndex: 'processedAt',
-      key: 'processedAt',
-      render: (date: string | null | undefined) => date ? format(new Date(date), 'MMM dd, yyyy') : '-'
-    },
-    {
-      title: 'Completed',
-      dataIndex: 'completedAt',
-      key: 'completedAt',
-      render: (date: string | null | undefined) => date ? format(new Date(date), 'MMM dd, yyyy') : '-'
-    },
-    {
-      title: 'UTR',
-      dataIndex: 'utr',
+      title: 'Transaction Details',
       key: 'utr',
-      render: (utr: string) => utr || '-'
+      render: (record: Payout) => (
+        <div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: colors.text.primary }}>{record.utr || '---'}</div>
+          <div style={{ fontSize: '11px', color: colors.text.tertiary }}>UTR Reference</div>
+        </div>
+      )
     }
   ];
 
   const ledgerColumns = [
     {
-      title: 'Date',
+      title: 'Temporal Mark',
       dataIndex: 'createdAt',
       key: 'createdAt',
-      render: (date: string) => format(new Date(date), 'MMM dd, yyyy HH:mm')
+      render: (date: string) => (
+        <div style={{ color: colors.text.primary, fontWeight: 600 }}>
+          {format(new Date(date), 'MMM dd, yyyy')}
+          <div style={{ fontSize: '11px', color: colors.text.tertiary, fontWeight: 500 }}>{format(new Date(date), 'HH:mm')}</div>
+        </div>
+      )
     },
     {
-      title: 'Source',
+      title: 'Neural Stream',
       dataIndex: 'sourceType',
       key: 'sourceType',
-      filters: [
-        { text: 'Chat (Subscription)', value: 'subscription' },
-        { text: 'Brand Deal', value: 'brand_deal' },
-        { text: 'Payout', value: 'payout' },
-        { text: 'Adjustment', value: 'adjustment' }
-      ],
-      onFilter: (value: any, record: LedgerEntry) => record.sourceType === value,
-      render: (sourceType: string) => (
-        <Tag color={sourceType === 'subscription' ? 'purple' : sourceType === 'brand_deal' ? 'blue' : sourceType === 'payout' ? 'gold' : 'default'}>
-          {sourceType?.toUpperCase() || 'N/A'}
-        </Tag>
-      )
+      render: (sourceType: string) => {
+        let color = colors.primary.solid;
+        let bgColor = colors.primary.subtle;
+        if (sourceType === 'subscription') { color = '#ec4899'; bgColor = '#fdf2f8'; }
+        if (sourceType === 'payout') { color = colors.warning.solid; bgColor = colors.warning.subtle; }
+
+        return (
+          <Tag bordered={false} style={{
+            background: bgColor,
+            color: color,
+            fontWeight: 800,
+            fontSize: '10px',
+            textTransform: 'uppercase',
+            borderRadius: '6px'
+          }}>
+            {sourceType?.replace('_', ' ') || 'SYSTEM'}
+          </Tag>
+        );
+      }
     },
     {
-      title: 'Description',
+      title: 'Narrative',
       dataIndex: 'description',
-      key: 'description'
+      key: 'description',
+      render: (text: string) => <div style={{ color: colors.text.secondary, fontWeight: 500, maxWidth: '200px' }}>{text}</div>
     },
     {
-      title: 'Type',
-      dataIndex: 'type',
-      key: 'type',
-      render: (type: string) => (
-        <Tag color={type === 'CREDIT' ? 'green' : type === 'DEBIT' ? 'red' : 'blue'}>
-          {type}
-        </Tag>
-      )
-    },
-    {
-      title: 'Amount',
+      title: 'Quantum Change',
       dataIndex: 'amount',
       key: 'amount',
       render: (amount: number | string, record: LedgerEntry) => (
-        <span style={{ color: record.type === 'CREDIT' ? '#52c41a' : '#ff4d4f' }}>
-          {record.type === 'CREDIT' ? '+' : '-'}₹{Number(amount).toFixed(2)}
-        </span>
+        <div style={{
+          color: record.type === 'CREDIT' ? colors.success.solid : colors.error.solid,
+          fontWeight: 800,
+          fontSize: '15px'
+        }}>
+          {record.type === 'CREDIT' ? '+' : '-'}₹{Number(amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+        </div>
       )
     },
     {
-      title: 'Balance After',
+      title: 'Balance Reserve',
       dataIndex: 'balanceAfter',
       key: 'balanceAfter',
-      render: (balance: number | string) => `₹${Number(balance).toFixed(2)} `
+      render: (balance: number | string) => <div style={{ fontWeight: 700, color: colors.text.primary }}>₹{Number(balance).toLocaleString(undefined, { minimumFractionDigits: 2 })}</div>
     }
   ];
 
   return (
-    <div style={{ padding: isMobile ? '8px' : '24px' }}>
-      <div style={{ marginBottom: isMobile ? '24px' : '40px' }}>
-        <h1 style={{ fontSize: isMobile ? '28px' : '36px', fontWeight: 900, margin: 0, letterSpacing: '-0.03em', color: '#FFFFFF', lineHeight: 1.2 }}>
-          Payouts & Earnings
-        </h1>
-        <p style={{ color: '#94A3B8', fontSize: isMobile ? '15px' : '18px', fontWeight: 500, marginTop: '8px' }}>
-          Financial center for your AI creator matrix
-        </p>
-      </div>
+    <div style={{ padding: isMobile ? spacing[3] : spacing[8], background: colors.background, minHeight: '100vh' }}>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        style={{ marginBottom: spacing[10] }}
+      >
+        <Title level={isMobile ? 3 : 1} style={{ fontWeight: 800, margin: 0, letterSpacing: '-0.03em', color: colors.text.primary, lineHeight: 1.1 }}>
+          Financial <span style={{ color: colors.primary.solid }}>Nexus</span>
+        </Title>
+        <Text style={{ color: colors.text.secondary, fontSize: isMobile ? '14px' : '16px', fontWeight: 500, marginTop: '12px', display: 'block' }}>
+          Real-time capital synchronization for your creator matrix
+        </Text>
+      </motion.div>
 
-      {/* Earnings Overview */}
-      <Row gutter={[24, 24]} style={{ marginBottom: '40px' }}>
+      {/* Main Stats Card */}
+      <Row gutter={[24, 24]} style={{ marginBottom: spacing[10] }}>
         <Col xs={24} lg={10}>
           <div style={{
-            background: 'linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%)',
+            background: colors.primary.gradient,
             borderRadius: '28px',
-            padding: isMobile ? '24px' : '32px',
+            padding: isMobile ? '32px' : '48px',
             color: '#FFFFFF',
             position: 'relative',
             overflow: 'hidden',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            boxShadow: shadows.lg,
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
@@ -363,26 +404,35 @@ const CreatorPayouts = () => {
           }}>
             <div style={{
               position: 'absolute',
-              top: '-50px',
-              right: '-50px',
-              width: '200px',
-              height: '200px',
-              background: 'linear-gradient(135deg, #6366F1 0%, #A855F7 100%)',
-              opacity: 0.15,
+              top: '-60px',
+              right: '-60px',
+              width: '240px',
+              height: '240px',
+              background: 'rgba(255, 255, 255, 0.12)',
               borderRadius: '50%',
-              filter: 'blur(40px)'
+              filter: 'blur(50px)'
             }} />
 
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Wallet size={16} /> Available Balance
+              <div style={{
+                fontSize: '13px',
+                fontWeight: 800,
+                color: 'rgba(255,255,255,0.8)',
+                marginBottom: '12px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                textTransform: 'uppercase',
+                letterSpacing: '0.05em'
+              }}>
+                <Wallet size={18} /> Available for Withdrawal
               </div>
-              <div style={{ fontSize: isMobile ? '32px' : '42px', fontWeight: 800, letterSpacing: '-0.02em' }}>
+              <div style={{ fontSize: isMobile ? '40px' : '56px', fontWeight: 900, letterSpacing: '-0.03em', color: '#FFFFFF', lineHeight: 1 }}>
                 ₹{(earnings?.availableBalance || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
               </div>
             </div>
 
-            <div style={{ marginTop: '32px' }}>
+            <div style={{ marginTop: '48px' }}>
               <Button
                 type="primary"
                 block
@@ -390,48 +440,64 @@ const CreatorPayouts = () => {
                 onClick={() => setIsPayoutModalVisible(true)}
                 disabled={!bankAccount || bankAccount.kycStatus !== 'VERIFIED' || (earnings?.availableBalance || 0) < 1000}
                 style={{
-                  height: '52px',
-                  borderRadius: '16px',
+                  height: '56px',
+                  borderRadius: '12px',
                   fontWeight: 700,
                   fontSize: '16px',
-                  background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+                  background: '#FFFFFF',
+                  color: colors.primary.solid,
                   border: 'none',
-                  boxShadow: '0 8px 20px rgba(99, 102, 241, 0.3)'
+                  boxShadow: shadows.md,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '10px'
                 }}
               >
-                Withdraw Funds
+                Capture Funds <Zap size={16} />
               </Button>
-              <div style={{ textAlign: 'center', marginTop: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
-                Min. withdrawal ₹1,000 • Processing in 24-48h
+              <div style={{ textAlign: 'center', marginTop: '20px', fontSize: '12px', color: 'rgba(255,255,255,0.75)', fontWeight: 600 }}>
+                Min. Withdrawal ₹1,000 • Temporal Delay 24-48h
               </div>
             </div>
           </div>
         </Col>
 
         <Col xs={24} lg={14}>
-          <Row gutter={[16, 16]}>
+          <Row gutter={[20, 20]}>
             {[
-              { title: 'Pending Balance', value: earnings?.pendingBalance || 0, color: '#F59E0B', label: 'Payouts in progress' },
-              { title: 'Lifetime Earnings', value: earnings?.lifetimeEarnings || 0, color: '#10B981', label: 'Total earned all time' },
-              { title: 'Brand Deals', value: earnings?.brandDealEarnings || 0, color: '#6366F1', label: 'From collaborations' },
-              { title: 'Subscriptions', value: earnings?.subscriptionEarnings || 0, color: '#EC4899', label: 'From fans' }
+              { title: 'In-Transit', value: earnings?.pendingBalance || 0, color: colors.warning.solid, bg: colors.warning.subtle, icon: <Clock size={20} /> },
+              { title: 'Total Injected', value: earnings?.lifetimeEarnings || 0, color: colors.success.solid, bg: colors.success.subtle, icon: <TrendingUp size={20} /> },
+              { title: 'Deal Revenue', value: earnings?.brandDealEarnings || 0, color: colors.primary.solid, bg: colors.primary.subtle, icon: <ShieldCheck size={20} /> },
+              { title: 'Agent Subs', value: earnings?.subscriptionEarnings || 0, color: '#ec4899', bg: '#fdf2f8', icon: <Users size={20} /> }
             ].map((item, i) => (
               <Col xs={12} sm={12} key={i}>
                 <div style={{
-                  background: 'rgba(15, 23, 42, 0.4)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
+                  background: '#FFFFFF',
                   borderRadius: '24px',
-                  padding: '28px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
-                  boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+                  padding: '32px 24px',
+                  border: `1px solid ${colors.gray[100]}`,
+                  boxShadow: shadows.md,
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center'
                 }}>
-                  <div style={{ fontSize: '14px', fontWeight: 700, color: '#94A3B8', marginBottom: '12px' }}>{item.title}</div>
-                  <div style={{ fontSize: '24px', fontWeight: 900, color: '#FFFFFF', letterSpacing: '-0.01em' }}>₹{item.value.toLocaleString()}</div>
-                  <div style={{ fontSize: '12px', color: '#64748B', marginTop: '8px', fontWeight: 600 }}>{item.label}</div>
+                  <div style={{
+                    fontSize: '11px',
+                    fontWeight: 800,
+                    color: colors.text.tertiary,
+                    marginBottom: '16px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.1em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span style={{ color: item.color }}>{item.icon}</span>
+                    {item.title}
+                  </div>
+                  <div style={{ fontSize: '26px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em' }}>₹{item.value.toLocaleString()}</div>
                 </div>
               </Col>
             ))}
@@ -439,116 +505,117 @@ const CreatorPayouts = () => {
         </Col>
       </Row>
 
-      {/* Bank Account Section */}
+      {/* Account Matrix */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        borderRadius: '32px',
-        padding: '32px',
-        marginBottom: '40px',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)'
+        background: '#FFFFFF',
+        borderRadius: '24px',
+        padding: isMobile ? '32px' : '48px',
+        marginBottom: spacing[10],
+        border: `1px solid ${colors.gray[100]}`,
+        boxShadow: shadows.lg
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
             <div style={{
-              background: 'rgba(99, 102, 241, 0.1)',
-              padding: '14px',
+              background: colors.primary.subtle,
+              padding: '16px',
               borderRadius: '16px',
-              color: '#818CF8',
-              border: '1px solid rgba(99, 102, 241, 0.1)'
+              color: colors.primary.solid,
+              border: `1px solid ${colors.primary.solid}15`
             }}>
-              <Landmark size={22} />
+              <Landmark size={28} />
             </div>
-            <h3 style={{ margin: 0, fontWeight: 800, fontSize: '22px', color: '#FFFFFF', letterSpacing: '-0.01em' }}>Bank Account</h3>
+            <div>
+              <h3 style={{ margin: 0, fontWeight: 800, fontSize: '22px', color: colors.text.primary, letterSpacing: '-0.02em' }}>Payout Matrix</h3>
+              <Text style={{ color: colors.text.tertiary, fontSize: '13px', fontWeight: 500 }}>Secure endpoint for capital transmission</Text>
+            </div>
           </div>
           <Button
-            icon={<Plus size={16} />}
             onClick={() => {
-              if (bankAccount) {
-                bankForm.setFieldsValue(bankAccount);
-              }
+              if (bankAccount) bankForm.setFieldsValue(bankAccount);
               setIsBankModalVisible(true);
             }}
             style={{
-              borderRadius: '14px',
+              borderRadius: '12px',
               fontWeight: 700,
-              height: '44px',
-              padding: '0 24px'
+              height: '48px',
+              padding: '0 24px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: shadows.sm
             }}
           >
-            {bankAccount ? 'Modify Details' : 'Account Setup'}
+            <Plus size={18} /> {bankAccount ? 'Update Protocol' : 'Setup Matrix'}
           </Button>
         </div>
 
         {bankAccount ? (
-          <div style={{ background: 'rgba(255, 255, 255, 0.02)', padding: isMobile ? '20px' : '32px', borderRadius: '24px', border: '1px solid rgba(255, 255, 255, 0.03)' }}>
-            <Row gutter={[32, 32]}>
+          <div style={{ background: colors.gray[50], padding: isMobile ? '32px 24px' : '40px', borderRadius: '24px', border: `1px solid ${colors.gray[100]}` }}>
+            <Row gutter={[40, 40]}>
               <Col xs={24} sm={12}>
-                <div style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Account Holder</div>
-                <div style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '18px' }}>{bankAccount.accountHolderName}</div>
+                <div style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.1em' }}>Protocol Holder</div>
+                <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '20px' }}>{bankAccount.accountHolderName}</div>
               </Col>
               <Col xs={24} sm={12}>
-                <div style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Account Number</div>
-                <div style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '18px', letterSpacing: '0.1em' }}>{bankAccount.accountNumber.replace(/.(?=.{4})/g, '•')}</div>
+                <div style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.1em' }}>Endpoint ID</div>
+                <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '20px', letterSpacing: '0.1em' }}>{bankAccount.accountNumber.replace(/.(?=.{4})/g, '•')}</div>
               </Col>
               <Col xs={24} sm={12}>
-                <div style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Bank & IFSC</div>
-                <div style={{ color: '#FFFFFF', fontWeight: 800, fontSize: '18px' }}>{bankAccount.bankName} • {bankAccount.ifscCode}</div>
+                <div style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.1em' }}>Gateway & IFSC</div>
+                <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '20px' }}>{bankAccount.bankName} <span style={{ color: colors.primary.solid, margin: '0 8px' }}>•</span> {bankAccount.ifscCode}</div>
               </Col>
               <Col xs={24} sm={12}>
-                <div style={{ color: '#64748B', fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Verification Status</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', marginBottom: '12px', letterSpacing: '0.1em' }}>Verification Integrity</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   {getKYCStatusTag(bankAccount.kycStatus)}
-                  <span style={{ color: '#94A3B8', fontSize: '14px', fontWeight: 600 }}>{bankAccount.accountType.toLowerCase()} account</span>
+                  <span style={{ color: colors.text.secondary, fontSize: '14px', fontWeight: 700, textTransform: 'capitalize' }}>{bankAccount.accountType.toLowerCase()} Channel</span>
                 </div>
               </Col>
             </Row>
             {bankAccount.kycStatus !== 'VERIFIED' && (
               <div style={{
-                marginTop: '24px',
-                padding: '16px',
-                background: '#FFFBEB',
-                border: '1px solid #FEF3C7',
-                borderRadius: '12px',
+                marginTop: '32px',
+                padding: '20px',
+                background: colors.warning.subtle,
+                border: `1px solid ${colors.warning.solid}20`,
+                borderRadius: '16px',
                 display: 'flex',
                 alignItems: 'center',
-                gap: '12px'
+                gap: '16px'
               }}>
-                <AlertCircle size={18} style={{ color: '#D97706' }} />
-                <span style={{ color: '#92400E', fontSize: '13px', fontWeight: 500 }}>
-                  Complete your identity verification (KYC) to enable withdrawals to this account.
+                <AlertCircle size={24} style={{ color: colors.warning.solid }} />
+                <span style={{ color: colors.text.secondary, fontSize: '14px', fontWeight: 600 }}>
+                  Strategic Note: Verification (KYC) is required for capital capture. Please complete the identity protocol.
                 </span>
               </div>
             )}
           </div>
         ) : (
-          <div style={{ textAlign: 'center', padding: '60px 0', background: 'rgba(255, 255, 255, 0.01)', borderRadius: '24px', border: '1px dashed rgba(255, 255, 255, 0.1)' }}>
-            <Landmark size={64} style={{ color: 'rgba(255, 255, 255, 0.05)', marginBottom: '24px' }} />
-            <p style={{ color: '#94A3B8', marginBottom: '32px', fontSize: '16px', fontWeight: 500 }}>Establish your payout matrix to receive earnings</p>
-            <Button type="primary" size="large" onClick={() => setIsBankModalVisible(true)} style={{ borderRadius: '16px', fontWeight: 800, padding: '0 40px', height: '52px' }}>
-              Initialize Payout Method
+          <div style={{ textAlign: 'center', padding: '80px 0', background: colors.gray[50], borderRadius: '24px', border: `2px dashed ${colors.gray[200]}` }}>
+            <Landmark size={64} style={{ color: colors.gray[200], marginBottom: '24px' }} />
+            <p style={{ color: colors.text.tertiary, marginBottom: '32px', fontSize: '18px', fontWeight: 600 }}>Neutral Payout matrix. Initialize to receive earnings.</p>
+            <Button type="primary" size="large" onClick={() => setIsBankModalVisible(true)} style={{ borderRadius: '12px', fontWeight: 700, padding: '0 32px', height: '44px', background: colors.primary.solid, color: '#FFFFFF', border: 'none', boxShadow: shadows.md }}>
+              Initialize Protocol
             </Button>
           </div>
         )}
       </div>
 
-      {/* Tabs for Payouts and Ledger */}
+      {/* Synchronized History */}
       <div style={{
-        background: 'rgba(15, 23, 42, 0.4)',
-        backdropFilter: 'blur(20px) saturate(180%)',
-        borderRadius: '32px',
-        padding: isMobile ? '16px' : '32px',
-        border: '1px solid rgba(255, 255, 255, 0.05)',
-        boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+        background: '#FFFFFF',
+        borderRadius: '24px',
+        padding: isMobile ? '24px' : '40px',
+        border: `1px solid ${colors.gray[100]}`,
+        boxShadow: shadows.lg,
         overflow: 'hidden'
       }}>
-        <Tabs defaultActiveKey="payouts" className="vibrant-tabs">
-          <TabPane
+        <Tabs defaultActiveKey="payouts" className="premium-tabs">
+          <Tabs.TabPane
             tab={
               <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <History size={16} />
-                Payout History
+                <History size={18} /> Withdrawal History
               </span>
             }
             key="payouts"
@@ -562,19 +629,18 @@ const CreatorPayouts = () => {
                 pageSize: payoutPagination.limit,
                 total: payoutPagination.total,
                 showSizeChanger: true,
-                onChange: (page, pageSize) => setPayoutPagination({ page, limit: pageSize || payoutPagination.limit, total: payoutPagination.total })
+                style: { marginTop: '32px' }
               }}
-              locale={{ emptyText: <Empty description="No payouts recorded" /> }}
+              locale={{ emptyText: <Empty description="No temporal marks recorded" /> }}
               className="flagship-table"
-              style={{ marginTop: '24px' }}
+              style={{ marginTop: '32px' }}
               scroll={{ x: 'max-content' }}
             />
-          </TabPane>
-          <TabPane
+          </Tabs.TabPane>
+          <Tabs.TabPane
             tab={
               <span style={{ fontWeight: 800, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <CircleDollarSign size={16} />
-                Earnings Ledger
+                <CircleDollarSign size={18} /> Earnings Ledger
               </span>
             }
             key="ledger"
@@ -588,186 +654,147 @@ const CreatorPayouts = () => {
                 pageSize: ledgerPagination.limit,
                 total: ledgerPagination.total,
                 showSizeChanger: true,
-                onChange: (page, pageSize) => setLedgerPagination({ page, limit: pageSize || ledgerPagination.limit, total: ledgerPagination.total })
+                style: { marginTop: '32px' }
               }}
-              locale={{ emptyText: <Empty description="No transactions recorded" /> }}
+              locale={{ emptyText: <Empty description="No quantum entries recorded" /> }}
               className="flagship-table"
-              style={{ marginTop: '24px' }}
+              style={{ marginTop: '32px' }}
               scroll={{ x: 'max-content' }}
             />
-          </TabPane>
+          </Tabs.TabPane>
         </Tabs>
 
         <style>{`
-  .vibrant - tabs.ant - tabs - nav::before { border - bottom: 2px solid rgba(255, 255, 255, 0.05)!important; }
-          .vibrant - tabs.ant - tabs - tab { color: #64748B!important; font - size: 16px!important; transition: all 0.3s ease!important; }
-          .vibrant - tabs.ant - tabs - tab - active.ant - tabs - tab - btn { color: #6366F1!important; transform: scale(1.05); }
-          .vibrant - tabs.ant - tabs - ink - bar { background: #6366F1!important; height: 3px!important; border - radius: 3px 3px 0 0; }
+          .premium-tabs .ant-tabs-nav::before { border-bottom: 1px solid ${colors.gray[100]} !important; }
+          .premium-tabs .ant-tabs-tab { padding: 12px 0 !important; margin-right: 32px !important; color: ${colors.text.tertiary} !important; font-size: 15px !important; transition: all 0.2s ease; }
+          .premium-tabs .ant-tabs-tab:hover { color: ${colors.primary.solid} !important; }
+          .premium-tabs .ant-tabs-tab-active .ant-tabs-tab-btn { color: ${colors.primary.solid} !important; font-weight: 700 !important; }
+          .premium-tabs .ant-tabs-ink-bar { background: ${colors.primary.solid} !important; height: 3px !important; }
           
-          .flagship - table { background: transparent!important; }
-          .flagship - table.ant - table { background: transparent!important; color: #E2E8F0!important; }
-          .flagship - table.ant - table - thead > tr > th {
-  background: rgba(255, 255, 255, 0.03)!important;
-  color: #94A3B8!important;
-  border - bottom: 1px solid rgba(255, 255, 255, 0.05)!important;
-  font - weight: 700!important;
-  text - transform: uppercase;
-  font - size: 12px;
-  letter - spacing: 0.05em;
-}
-          .flagship - table.ant - table - tbody > tr > td { border - bottom: 1px solid rgba(255, 255, 255, 0.03)!important; }
-          .flagship - table.ant - table - tbody > tr: hover > td { background: rgba(255, 255, 255, 0.02)!important; }
-`}</style>
+          .flagship-table .ant-table { background: #ffffff !important; }
+          .flagship-table .ant-table-thead > tr > th {
+            background: ${colors.gray[50]} !important;
+            color: ${colors.text.tertiary} !important;
+            border-bottom: 1px solid ${colors.gray[100]} !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.1em;
+            padding: 16px !important;
+          }
+          .flagship-table .ant-table-tbody > tr > td { 
+            border-bottom: 1px solid ${colors.gray[100]} !important; 
+            padding: 16px !important;
+            background: #ffffff !important;
+            color: ${colors.text.primary} !important;
+          }
+          .flagship-table .ant-table-tbody > tr:hover > td { background: ${colors.gray[50]} !important; }
+          .flagship-table .ant-table-placeholder .ant-table-cell { background: #ffffff !important; border-bottom: none !important; }
+
+          .premium-modal .ant-modal-content { border-radius: 12px !important; padding: 24px !important; background: #FFFFFF !important; border: 1px solid ${colors.gray[200]} !important; box-shadow: ${shadows.xl} !important; }
+          .premium-modal .ant-modal-header { border-bottom: none !important; margin-bottom: 24px !important; background: transparent !important; }
+          .premium-modal .ant-modal-title { color: ${colors.text.primary} !important; }
+          
+          .ant-input, .ant-input-number, .ant-select-selector { border-radius: 8px !important; height: 40px !important; border: 1px solid ${colors.gray[200]} !important; background: #ffffff !important; color: ${colors.text.primary} !important; }
+          .ant-input:focus, .ant-select-focused .ant-select-selector { border-color: ${colors.primary.solid} !important; box-shadow: 0 0 0 2px ${colors.primary.subtle} !important; }
+          .ant-form-item-label label { fontWeight: 600 !important; color: ${colors.text.secondary} !important; font-size: 13px !important; text-transform: uppercase !important; letterSpacing: 0.05em !important; }
+          .ant-empty-description { color: ${colors.text.tertiary} !important; }
+        `}</style>
       </div>
 
-      {/* Bank Account Modal */}
+      {/* Bank Modal */}
       <Modal
-        title={bankAccount ? 'Update Bank Account' : 'Add Bank Account'}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: colors.primary.subtle, padding: '8px', borderRadius: '10px' }}>
+              <Landmark size={20} style={{ color: colors.primary.solid }} />
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em' }}>
+              Matrix Configuration
+            </div>
+          </div>
+        }
         open={isBankModalVisible}
-        onCancel={() => {
-          setIsBankModalVisible(false);
-          bankForm.resetFields();
-        }}
+        onCancel={() => { setIsBankModalVisible(false); bankForm.resetFields(); }}
         footer={null}
-        width={600}
+        width={isMobile ? '95%' : 600}
+        centered
+        className="premium-modal"
       >
-        <Form
-          form={bankForm}
-          layout="vertical"
-          onFinish={handleAddBankAccount}
-        >
-          <Form.Item
-            label="Account Holder Name"
-            name="accountHolderName"
-            rules={[
-              { required: true, message: 'Please enter account holder name' },
-              { min: 2, max: 100, message: 'Name must be between 2 and 100 characters' }
-            ]}
-          >
-            <Input placeholder="As per bank records" />
+        <Form form={bankForm} layout="vertical" onFinish={handleAddBankAccount} requiredMark={false}>
+          <Form.Item label="Registry Holder Name" name="accountHolderName" rules={[{ required: true, message: 'Registry name required' }]}>
+            <Input placeholder="As per legal records" />
           </Form.Item>
 
-          <Form.Item
-            label="Account Number"
-            name="accountNumber"
-            rules={[
-              { required: true, message: 'Please enter account number' },
-              { pattern: /^[0-9]{9,18}$/, message: 'Invalid account number' }
-            ]}
-          >
-            <Input placeholder="Enter your account number" maxLength={18} />
+          <Form.Item label="Endpoint Identifier" name="accountNumber" rules={[{ required: true, message: 'Endpoint ID required' }]}>
+            <Input placeholder="Account Number" />
           </Form.Item>
 
           <Row gutter={16}>
             <Col span={12}>
-              <Form.Item
-                label="IFSC Code"
-                name="ifscCode"
-                rules={[
-                  { required: true, message: 'Please enter IFSC code' },
-                  { pattern: /^[A-Z]{4}0[A-Z0-9]{6}$/, message: 'Invalid IFSC code' }
-                ]}
-              >
-                <Input placeholder="IFSC Code" style={{ textTransform: 'uppercase' }} maxLength={11} />
+              <Form.Item label="Gateway IFSC" name="ifscCode" rules={[{ required: true, message: 'IFSC required' }]}>
+                <Input placeholder="IFSC Code" style={{ textTransform: 'uppercase' }} />
               </Form.Item>
             </Col>
             <Col span={12}>
-              <Form.Item
-                label="Bank Name"
-                name="bankName"
-                rules={[{ required: true, message: 'Please enter bank name' }]}
-              >
-                <Input placeholder="e.g., HDFC Bank" />
+              <Form.Item label="Neural Bank" name="bankName" rules={[{ required: true, message: 'Bank name required' }]}>
+                <Input placeholder="e.g. HDFC Bank" />
               </Form.Item>
             </Col>
           </Row>
 
-          <Form.Item
-            label="Account Type"
-            name="accountType"
-            initialValue="SAVINGS"
-            rules={[{ required: true }]}
-          >
+          <Form.Item label="Channel Type" name="accountType" initialValue="SAVINGS">
             <Select>
-              <Select.Option value="SAVINGS">Savings</Select.Option>
-              <Select.Option value="CURRENT">Current</Select.Option>
+              <Select.Option value="SAVINGS">Savings Matrix</Select.Option>
+              <Select.Option value="CURRENT">Current Stream</Select.Option>
             </Select>
           </Form.Item>
 
-          <Divider />
+          <Divider style={{ margin: '32px 0' }} />
 
-          <Title level={5}>KYC Documents (Optional)</Title>
-          <Paragraph type="secondary" style={{ fontSize: '12px' }}>
-            Required for payouts. You can add these details later.
-          </Paragraph>
-
-          <Form.Item
-            label="PAN Number"
-            name="panNumber"
-            rules={[
-              { pattern: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, message: 'Invalid PAN format' }
-            ]}
-          >
-            <Input placeholder="ABCDE1234F" style={{ textTransform: 'uppercase' }} maxLength={10} />
+          <Form.Item label="Regional Identity (PAN)" name="panNumber" rules={[{ pattern: /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/, message: 'Invalid format' }]}>
+            <Input placeholder="ABCDE1234F" style={{ textTransform: 'uppercase' }} />
           </Form.Item>
 
-          <Form.Item
-            label="Aadhar Last 4 Digits"
-            name="aadharLast4"
-            rules={[
-              { pattern: /^[0-9]{4}$/, message: 'Enter last 4 digits' }
-            ]}
-          >
-            <Input placeholder="1234" maxLength={4} />
-          </Form.Item>
-
-          <Form.Item>
-            <Space>
-              <Button type="primary" htmlType="submit" loading={loading}>
-                Save Bank Account
-              </Button>
-              <Button onClick={() => {
-                setIsBankModalVisible(false);
-                bankForm.resetFields();
-              }}>
-                Cancel
-              </Button>
-            </Space>
-          </Form.Item>
+          <Button type="primary" htmlType="submit" loading={loading} block style={{ height: '56px', borderRadius: '14px', fontWeight: 800, marginTop: '24px', background: colors.primary.gradient, border: 'none', boxShadow: shadows.lg }}>
+            Synchronize Protocol
+          </Button>
         </Form>
       </Modal>
 
-      {/* Request Payout Modal */}
+      {/* Withdrawal Modal */}
       <Modal
-        title="Request Payout"
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: colors.success.subtle, padding: '8px', borderRadius: '10px' }}>
+              <CreditCard size={20} style={{ color: colors.success.solid }} />
+            </div>
+            <div style={{ fontSize: '20px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em' }}>
+              Capital Capture
+            </div>
+          </div>
+        }
         open={isPayoutModalVisible}
-        onCancel={() => {
-          setIsPayoutModalVisible(false);
-          setPayoutAmount(0);
-        }}
+        onCancel={() => { setIsPayoutModalVisible(false); setPayoutAmount(0); }}
         onOk={handleRequestPayout}
         confirmLoading={loading}
-        okText="Request Payout"
+        okText="Authorize Capture"
+        centered
+        className="premium-modal"
+        okButtonProps={{ style: { height: '52px', borderRadius: '14px', fontWeight: 800, background: colors.primary.gradient, border: 'none' } }}
+        cancelButtonProps={{ style: { height: '52px', borderRadius: '14px', fontWeight: 700 } }}
       >
-        <Paragraph>
-          Available Balance: <Text strong>₹{earnings?.availableBalance ? Number(earnings.availableBalance).toFixed(2) : '0.00'}</Text>
-        </Paragraph>
-        <Paragraph type="secondary" style={{ fontSize: '12px' }}>
-          Minimum payout amount: ₹1,000
-        </Paragraph>
+        <div style={{ background: colors.gray[50], padding: '24px', borderRadius: '20px', marginBottom: '32px', border: `1px solid ${colors.gray[100]}` }}>
+          <div style={{ fontSize: '11px', fontWeight: 800, color: colors.text.tertiary, textTransform: 'uppercase', marginBottom: '8px', letterSpacing: '0.05em' }}>Liquid Reserve</div>
+          <div style={{ fontSize: '32px', fontWeight: 900, color: colors.text.primary, letterSpacing: '-0.02em' }}>₹{(earnings?.availableBalance || 0).toLocaleString()}</div>
+        </div>
 
         <Form layout="vertical">
-          <Form.Item
-            label="Payout Amount"
-            required
-            rules={[
-              { required: true, message: 'Please enter amount' }
-            ]}
-          >
+          <Form.Item label="Capture Volume (₹)" required>
             <Input
               type="number"
-              prefix="₹"
-              placeholder="Enter amount"
+              prefix={<span style={{ color: colors.text.tertiary, fontWeight: 700 }}>₹</span>}
+              placeholder="0.00"
               value={payoutAmount}
               onChange={(e) => setPayoutAmount(Number(e.target.value))}
               min={1000}
@@ -776,23 +803,20 @@ const CreatorPayouts = () => {
           </Form.Item>
         </Form>
 
-        <div style={{ padding: '12px', background: '#f0f5ff', borderRadius: '4px', marginTop: '16px' }}>
-          <Text strong>Payout Details:</Text>
-          <div style={{ marginTop: '8px' }}>
-            <Row justify="space-between">
-              <Text>Amount:</Text>
-              <Text>₹{payoutAmount.toFixed(2)}</Text>
-            </Row>
-            <Row justify="space-between">
-              <Text>Processing Fee:</Text>
-              <Text>₹{(payoutAmount >= 20000 ? 20 : 3).toFixed(2)}</Text>
-            </Row>
-            <Divider style={{ margin: '8px 0' }} />
-            <Row justify="space-between">
-              <Text strong>Net Amount:</Text>
-              <Text strong>₹{(payoutAmount - (payoutAmount >= 20000 ? 20 : 3)).toFixed(2)}</Text>
-            </Row>
-          </div>
+        <div style={{ padding: '24px', background: `${colors.success.solid}05`, borderRadius: '16px', border: `1px dashed ${colors.success.solid}30`, marginTop: '24px' }}>
+          <Row justify="space-between" style={{ marginBottom: '12px' }}>
+            <Text style={{ color: colors.text.secondary, fontWeight: 600 }}>Gross Capture:</Text>
+            <Text strong style={{ color: colors.text.primary }}>₹{Number(payoutAmount).toFixed(2)}</Text>
+          </Row>
+          <Row justify="space-between" style={{ marginBottom: '12px' }}>
+            <Text style={{ color: colors.text.secondary, fontWeight: 600 }}>Protocol Fee:</Text>
+            <Text style={{ color: colors.error.solid, fontWeight: 700 }}>-₹{(payoutAmount >= 20000 ? 20 : 3).toFixed(2)}</Text>
+          </Row>
+          <Divider style={{ margin: '16px 0', borderColor: `${colors.success.solid}20` }} />
+          <Row justify="space-between">
+            <Text style={{ color: colors.text.primary, fontWeight: 800, fontSize: '15px' }}>Net Capital Surge:</Text>
+            <Text style={{ color: colors.success.solid, fontWeight: 900, fontSize: '22px' }}>₹{(payoutAmount - (payoutAmount >= 20000 ? 20 : 3)).toLocaleString(undefined, { minimumFractionDigits: 2 })}</Text>
+          </Row>
         </div>
       </Modal>
     </div>

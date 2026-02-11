@@ -1,11 +1,11 @@
 // ===========================================
-// RETENTION CHART COMPONENT - Flagship Redesign
+// RETENTION CHART COMPONENT - Premium Light Theme
 // ===========================================
 
 import React from 'react';
 import { Table, Tag, Tooltip, Empty, Typography } from 'antd';
-import { InfoCircleOutlined, UserOutlined } from '@ant-design/icons';
-import { colors, spacing, shadows } from '../../styles/tokens';
+import { User, Info, Calendar } from 'lucide-react';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
@@ -28,10 +28,10 @@ interface RetentionChartProps {
 
 export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = false }) => {
   const getRetentionStyle = (percentage: number) => {
-    if (percentage >= 70) return { color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)', label: 'Excellent' };
-    if (percentage >= 50) return { color: '#6366F1', bg: 'rgba(99, 102, 241, 0.1)', label: 'Good' };
-    if (percentage >= 30) return { color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)', label: 'Average' };
-    return { color: '#EF4444', bg: 'rgba(239, 68, 68, 0.1)', label: 'Low' };
+    if (percentage >= 70) return { color: colors.success.solid, bg: colors.success.subtle, label: 'Excellent' };
+    if (percentage >= 50) return { color: colors.primary.solid, bg: colors.primary.subtle, label: 'Good' };
+    if (percentage >= 30) return { color: colors.warning.solid, bg: colors.warning.subtle, label: 'Average' };
+    return { color: colors.error.solid, bg: colors.error.subtle, label: 'Low' };
   };
 
   const columns = [
@@ -42,7 +42,7 @@ export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = 
       fixed: 'left' as const,
       width: 140,
       render: (month: string) => (
-        <span style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '14px' }}>{month}</span>
+        <span style={{ color: colors.text.primary, fontWeight: 800, fontSize: '14px' }}>{month}</span>
       )
     },
     {
@@ -52,9 +52,9 @@ export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = 
       width: 100,
       align: 'center' as const,
       render: (size: number) => (
-        <span style={{ color: '#94A3B8', fontWeight: 700 }}>
-          <UserOutlined style={{ marginRight: 4, fontSize: '12px' }} />
-          {size}
+        <span style={{ color: colors.text.tertiary, fontWeight: 700, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+          <User size={14} />
+          {size.toLocaleString()}
         </span>
       )
     },
@@ -67,16 +67,16 @@ export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = 
         const val = (record.retention as any)[wk];
         const style = getRetentionStyle(val);
         return (
-          <Tooltip title={`${style.label} Retention: ${val}%`} overlayInnerStyle={{ borderRadius: '8px', background: '#0F172A', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+          <Tooltip title={`${style.label} Retention: ${val}%`} overlayInnerStyle={{ borderRadius: '12px', background: colors.text.primary, border: `1px solid ${colors.gray[700]}` }}>
             <motion.div
               whileHover={{ scale: 1.05 }}
               style={{
-                padding: '10px 4px',
+                padding: '12px 4px',
                 borderRadius: '12px',
                 backgroundColor: style.bg,
                 border: `1px solid ${style.color}20`,
                 color: style.color,
-                fontWeight: 900,
+                fontWeight: 800,
                 fontSize: '14px'
               }}
             >
@@ -90,29 +90,37 @@ export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = 
 
   if (!data || data.length === 0) {
     return (
-      <div style={{ padding: '48px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '32px' }}>
-        <Empty description={<span style={{ color: '#94A3B8' }}>No retention cohorts found.</span>} />
+      <div style={{ padding: '64px', textAlign: 'center', background: '#FFFFFF', borderRadius: '24px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+        <Empty description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>No retention data analyzed yet.</span>} />
       </div>
     );
   }
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.4)',
-      backdropFilter: 'blur(32px)',
+      background: '#FFFFFF',
       padding: '40px',
-      borderRadius: '40px',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+      borderRadius: '24px',
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.md
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Cohort Retention Matrix</Title>
-          <Text style={{ color: '#64748B' }}>User stickiness analysis over 8-week cycles</Text>
+          <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Cohort Retention Matrix</Title>
+          <Text style={{ color: colors.text.secondary, fontWeight: 500 }}>User stickiness analysis over 8-week cycles</Text>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Tag color="processing" style={{ borderRadius: '8px', fontWeight: 800, padding: '4px 12px' }}>
-            <InfoCircleOutlined /> ROLLING WINDOW
+          <Tag bordered={false} style={{
+            borderRadius: '8px',
+            fontWeight: 800,
+            padding: '6px 12px',
+            background: colors.primary.subtle,
+            color: colors.primary.solid,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
+            <Calendar size={14} /> ROLLING WINDOW
           </Tag>
         </div>
       </div>
@@ -132,26 +140,28 @@ export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = 
       <style>{`
         .flagship-table .ant-table {
           background: transparent !important;
-          color: #94A3B8 !important;
+          color: ${colors.text.secondary} !important;
         }
         .flagship-table .ant-table-thead > tr > th {
-          background: rgba(255, 255, 255, 0.02) !important;
-          color: #64748B !important;
-          border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+          background: ${colors.gray[50]} !important;
+          color: ${colors.text.tertiary} !important;
+          border-bottom: 1px solid ${colors.gray[100]} !important;
           font-weight: 800 !important;
-          font-size: 12px !important;
-          letter-spacing: 0.05em !important;
+          font-size: 11px !important;
+          letter-spacing: 0.1em !important;
+          text-transform: uppercase !important;
+          padding: 16px !important;
         }
         .flagship-table .ant-table-tbody > tr > td {
-          border-bottom: 1px solid rgba(255, 255, 255, 0.03) !important;
-          padding: 16px 8px !important;
+          border-bottom: 1px solid ${colors.gray[50]} !important;
+          padding: 20px 8px !important;
         }
         .flagship-table .ant-table-tbody > tr:hover > td {
-          background: rgba(255, 255, 255, 0.02) !important;
+          background: ${colors.gray[50]}00 !important;
         }
         .flagship-table .ant-table-cell-fix-left {
-          background: rgba(15, 23, 42, 0.95) !important;
-          backdrop-filter: blur(10px);
+          background: #FFFFFF !important;
+          box-shadow: 4px 0 8px rgba(0,0,0,0.02) !important;
         }
       `}</style>
     </div>

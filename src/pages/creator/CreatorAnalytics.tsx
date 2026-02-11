@@ -1,23 +1,22 @@
 // ===========================================
-// CREATOR ANALYTICS PAGE - Flagship Redesign
+// CREATOR ANALYTICS PAGE - Premium Light Theme
 // ===========================================
 
 import { useEffect, useState, useMemo } from 'react';
-import { Row, Col, Spin, Tag, Grid, Typography, ConfigProvider, theme } from 'antd';
+import { Row, Col, Spin, Tag, Grid, Typography } from 'antd';
 import {
   MessageSquare,
   TrendingUp,
-  CircleDollarSign,
-  User,
-  BarChart,
+  DollarSign,
   Activity,
   LayoutDashboard,
-  Grid3X3,
+  BarChart3,
   Filter,
   Users,
-  Star,
+  Grid3X3,
   Calendar,
-  History
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import {
   XAxis,
@@ -38,7 +37,7 @@ import { ExportButton } from '../../components/analytics/ExportButton';
 import CompetitiveAnalysis from '../../components/analytics/CompetitiveAnalysis';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 const { useBreakpoint } = Grid;
@@ -102,11 +101,11 @@ const CreatorAnalytics = () => {
   const menuItems = [
     { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
     { id: 'engagement', label: 'Engagement', icon: <TrendingUp size={18} /> },
-    { id: 'revenue', label: 'Revenue', icon: <CircleDollarSign size={18} /> },
+    { id: 'revenue', label: 'Revenue', icon: <DollarSign size={18} /> },
     { id: 'activity', label: 'Heatmap', icon: <Activity size={18} /> },
     { id: 'funnel', label: 'Funnel', icon: <Filter size={18} /> },
     { id: 'comparison', label: 'Comparison', icon: <Grid3X3 size={18} /> },
-    { id: 'competitive', label: 'Competitive', icon: <BarChart size={18} /> },
+    { id: 'competitive', label: 'Competitive', icon: <BarChart3 size={18} /> },
   ];
 
   const chartData = useMemo(() => {
@@ -129,64 +128,65 @@ const CreatorAnalytics = () => {
   if (loading) {
     return (
       <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="large" />
+        <Spin size="large" tip={<span style={{ color: colors.text.tertiary, marginTop: '20px', display: 'block', fontWeight: 600 }}>Analyzing neural patterns...</span>} />
       </div>
     );
   }
 
   return (
-    <div style={{ padding: isMobile ? spacing[3] : spacing[8], minHeight: '100vh', background: '#020617' }}>
+    <div style={{ padding: isMobile ? spacing[3] : spacing[8], minHeight: '100vh', background: colors.background }}>
       {/* Header Section */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: spacing[8] }}
+        style={{ marginBottom: spacing[10] }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '20px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '24px' }}>
           <div>
-            <Title level={isMobile ? 3 : 1} style={{ color: '#FFFFFF', margin: 0, fontWeight: 900, letterSpacing: '-0.04em' }}>
-              Creator <span style={{ background: colors.primary.gradient, WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Analytics</span>
+            <Title level={isMobile ? 3 : 1} style={{ color: colors.text.primary, margin: 0, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
+              Intelligence <span style={{ color: colors.primary.solid }}>Studio</span>
             </Title>
-            <Text style={{ color: '#94A3B8', fontSize: '18px', fontWeight: 500 }}>
-              Flagship performance tracking for {user?.name}
+            <Text style={{ color: colors.text.secondary, fontSize: isMobile ? '14px' : '16px', fontWeight: 500, marginTop: '12px', display: 'block' }}>
+              Strategic performance tracking for {user?.name}
             </Text>
           </div>
           <ExportButton creatorName={user?.name || 'Creator'} />
         </div>
       </motion.div>
 
-      {/* Flagship Custom Tabs */}
+      {/* Premium Tab Selection */}
       <div style={{
         display: 'flex',
         gap: '8px',
-        marginBottom: spacing[8],
-        padding: '6px',
-        background: 'rgba(255, 255, 255, 0.03)',
-        borderRadius: '16px',
+        marginBottom: spacing[10],
+        padding: '8px',
+        background: '#FFFFFF',
+        borderRadius: '20px',
         overflowX: 'auto',
         scrollbarWidth: 'none',
-        border: '1px solid rgba(255, 255, 255, 0.05)'
+        border: `1px solid ${colors.gray[100]}`,
+        boxShadow: shadows.md
       }}>
         {menuItems.map((item) => (
           <motion.div
             key={item.id}
             whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.95 }}
+            whileTap={{ scale: 0.96 }}
             onClick={() => setActiveTab(item.id)}
             style={{
               padding: '12px 24px',
-              borderRadius: '12px',
+              borderRadius: '14px',
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '10px',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              background: activeTab === item.id ? colors.primary.gradient : 'transparent',
-              color: activeTab === item.id ? '#FFFFFF' : '#64748B',
+              background: activeTab === item.id ? colors.primary.solid : 'transparent',
+              color: activeTab === item.id ? '#FFFFFF' : colors.text.secondary,
               whiteSpace: 'nowrap',
-              fontWeight: 700,
+              fontWeight: 600,
               fontSize: '14px',
-              boxShadow: activeTab === item.id ? '0 10px 20px rgba(99, 102, 241, 0.3)' : 'none'
+              boxShadow: activeTab === item.id ? shadows.md : 'none'
             }}
           >
             {item.icon}
@@ -198,74 +198,99 @@ const CreatorAnalytics = () => {
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, y: 20, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: -20, scale: 0.98 }}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
         >
           {activeTab === 'overview' && (
             <>
-              {/* Stats Grid */}
-              <Row gutter={[24, 24]} style={{ marginBottom: spacing[8] }}>
+              {/* Perspective Stats Grid */}
+              <Row gutter={[24, 24]} style={{ marginBottom: spacing[10] }}>
                 {[
-                  { title: 'Total Revenue', value: analytics?.overview?.totalEarnings || 0, prefix: '₹', color: '#F59E0B', icon: <CircleDollarSign size={20} /> },
-                  { title: 'Active Chats', value: analytics?.overview?.totalChats || 0, color: '#6366F1', icon: <MessageSquare size={20} /> },
-                  { title: 'Avg Messages', value: analytics?.avgMessagesPerConversation || 0, color: '#10B981', icon: <Users size={20} /> },
-                  { title: '30D Conv.', value: analytics?.totalConversationsLast30Days || 0, color: '#EC4899', icon: <Calendar size={20} /> }
+                  { title: 'Total Revenue', value: analytics?.overview?.totalEarnings || 0, prefix: '₹', color: colors.warning.solid, bg: colors.warning.subtle, icon: <DollarSign size={20} /> },
+                  { title: 'Active Chats', value: analytics?.overview?.totalChats || 0, color: colors.primary.solid, bg: colors.primary.subtle, icon: <MessageSquare size={20} /> },
+                  { title: 'Avg Interaction', value: analytics?.avgMessagesPerConversation || 0, units: 'msgs', color: colors.success.solid, bg: colors.success.subtle, icon: <Activity size={20} /> },
+                  { title: '30D Velocity', value: analytics?.totalConversationsLast30Days || 0, color: '#ec4899', bg: '#fdf2f8', icon: <Calendar size={20} /> }
                 ].map((stat, i) => (
                   <Col xs={12} lg={6} key={i}>
                     <div style={{
-                      background: 'rgba(15, 23, 42, 0.4)',
-                      backdropFilter: 'blur(30px) saturate(200%)',
+                      background: '#FFFFFF',
                       padding: '32px',
-                      borderRadius: '32px',
-                      border: '1px solid rgba(255, 255, 255, 0.05)',
-                      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                      borderRadius: '24px',
+                      border: `1px solid ${colors.gray[100]}`,
+                      boxShadow: shadows.md,
                       height: '100%',
                       position: 'relative',
-                      overflow: 'hidden'
                     }}>
-                      <div style={{ position: 'absolute', top: -10, right: -10, width: 80, height: 80, background: stat.color, filter: 'blur(50px)', opacity: 0.15 }} />
-                      <div style={{ color: '#94A3B8', fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ color: stat.color }}>{stat.icon}</span> {stat.title}
+                      <div style={{
+                        color: colors.text.tertiary,
+                        fontWeight: 800,
+                        fontSize: '11px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.08em',
+                        marginBottom: '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px'
+                      }}>
+                        <div style={{
+                          background: stat.bg,
+                          padding: '8px',
+                          borderRadius: '10px',
+                          color: stat.color,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}>{stat.icon}</div>
+                        {stat.title}
                       </div>
-                      <div style={{ fontSize: '36px', fontWeight: 900, color: '#F8FAFC', letterSpacing: '-0.03em' }}>
-                        {stat.prefix}{typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
+                        <div style={{ fontSize: '32px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em' }}>
+                          {stat.prefix}{typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
+                        </div>
+                        {stat.units && <span style={{ color: colors.text.tertiary, fontWeight: 700, fontSize: '14px' }}>{stat.units}</span>}
                       </div>
                     </div>
                   </Col>
                 ))}
               </Row>
 
-              {/* Main Chart Card */}
+              {/* Trajectory Analytics */}
               <div style={{
-                background: 'rgba(15, 23, 42, 0.4)',
-                backdropFilter: 'blur(30px)',
-                padding: isMobile ? '24px' : '48px',
-                borderRadius: '40px',
-                border: '1px solid rgba(255, 255, 255, 0.05)',
-                boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+                background: '#FFFFFF',
+                padding: isMobile ? '32px' : '48px',
+                borderRadius: '24px',
+                border: `1px solid ${colors.gray[100]}`,
+                boxShadow: shadows.md,
               }}>
-                <div style={{ marginBottom: '40px' }}>
-                  <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Conversations Over Time</Title>
-                  <Text style={{ color: '#64748B' }}>Growth trajectory for the last 30 days</Text>
+                <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700, letterSpacing: '-0.01em' }}>Conversion Trajectory</Title>
+                    <Text style={{ color: colors.text.secondary, fontWeight: 500 }}>Active interaction growth for the last 30 days</Text>
+                  </div>
+                  {!isMobile && (
+                    <Tag bordered={false} style={{ background: colors.success.subtle, color: colors.success.solid, fontWeight: 800, borderRadius: '8px', padding: '6px 16px' }}>
+                      +14.2% Growth
+                    </Tag>
+                  )}
                 </div>
-                <ResponsiveContainer width="100%" height={380}>
+                <ResponsiveContainer width="100%" height={400}>
                   <AreaChart data={chartData}>
                     <defs>
-                      <linearGradient id="flagshipGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor="#6366F1" stopOpacity={0.4} />
-                        <stop offset="100%" stopColor="#6366F1" stopOpacity={0} />
+                      <linearGradient id="studioGradient" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stopColor={colors.primary.solid} stopOpacity={0.15} />
+                        <stop offset="100%" stopColor={colors.primary.solid} stopOpacity={0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.05)" />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 600 }} dy={10} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 600 }} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gray[100]} />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} dy={15} />
+                    <YAxis axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} dx={-10} />
                     <Tooltip
-                      contentStyle={{ background: '#0F172A', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '16px', boxShadow: shadows.xl }}
-                      itemStyle={{ color: '#F8FAFC', fontWeight: 700 }}
+                      contentStyle={{ background: '#FFFFFF', border: `1px solid ${colors.gray[200]}`, borderRadius: '16px', boxShadow: shadows.lg }}
+                      itemStyle={{ color: colors.text.primary, fontWeight: 800 }}
                     />
-                    <Area type="monotone" dataKey="count" stroke="#6366F1" strokeWidth={4} fill="url(#flagshipGradient)" dot={{ r: 4, fill: '#6366F1', strokeWidth: 2, stroke: '#FFFFFF' }} activeDot={{ r: 8, strokeWidth: 0 }} />
+                    <Area type="monotone" dataKey="count" stroke={colors.primary.solid} strokeWidth={4} fill="url(#studioGradient)" dot={{ r: 6, fill: colors.primary.solid, strokeWidth: 3, stroke: '#FFFFFF' }} activeDot={{ r: 8, strokeWidth: 0 }} />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -276,29 +301,29 @@ const CreatorAnalytics = () => {
             <Row gutter={[24, 24]}>
               <Col xs={24} lg={16}>
                 <div style={{
-                  background: 'rgba(15, 23, 42, 0.4)',
-                  backdropFilter: 'blur(30px)',
-                  padding: '40px',
-                  borderRadius: '32px',
-                  border: '1px solid rgba(255, 255, 255, 0.05)',
+                  background: '#FFFFFF',
+                  padding: '48px',
+                  borderRadius: '24px',
+                  border: `1px solid ${colors.gray[100]}`,
+                  boxShadow: shadows.md,
                   height: '100%'
                 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'center' }}>
-                    <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Engagement Velocity</Title>
-                    <Tag color="purple" style={{ borderRadius: '8px', padding: '4px 12px', fontWeight: 800 }}>7 DAY TREND</Tag>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '48px', alignItems: 'center' }}>
+                    <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700 }}>Engagement Velocity</Title>
+                    <Tag bordered={false} style={{ background: colors.primary.subtle, color: colors.primary.solid, borderRadius: '8px', fontWeight: 800, padding: '4px 16px' }}>ROLLING 7-DAY TREND</Tag>
                   </div>
-                  <ResponsiveContainer width="100%" height={320}>
+                  <ResponsiveContainer width="100%" height={340}>
                     <AreaChart data={velocityData}>
                       <defs>
                         <linearGradient id="velocityGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor="#8B5CF6" stopOpacity={0.4} />
-                          <stop offset="100%" stopColor="#8B5CF6" stopOpacity={0} />
+                          <stop offset="0%" stopColor={colors.primary.solid} stopOpacity={0.1} />
+                          <stop offset="100%" stopColor={colors.primary.solid} stopOpacity={0} />
                         </linearGradient>
                       </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.05)" />
-                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12, fontWeight: 700 }} />
-                      <Tooltip contentStyle={{ background: '#0F172A', border: 'none', borderRadius: '12px' }} />
-                      <Area type="stepAfter" dataKey="count" stroke="#8B5CF6" strokeWidth={3} fill="url(#velocityGrad)" />
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gray[100]} />
+                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} />
+                      <Tooltip contentStyle={{ background: '#FFFFFF', border: `1px solid ${colors.gray[200]}`, borderRadius: '16px', boxShadow: shadows.lg }} />
+                      <Area type="stepAfter" dataKey="count" stroke={colors.primary.solid} strokeWidth={4} fill="url(#velocityGrad)" />
                     </AreaChart>
                   </ResponsiveContainer>
                 </div>
@@ -306,19 +331,36 @@ const CreatorAnalytics = () => {
               <Col xs={24} lg={8}>
                 <div style={{
                   background: colors.primary.gradient,
-                  padding: '40px',
-                  borderRadius: '32px',
+                  padding: '48px',
+                  borderRadius: '24px',
                   height: '100%',
                   color: '#FFFFFF',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'center',
-                  boxShadow: '0 20px 40px rgba(99, 102, 241, 0.2)'
+                  boxShadow: shadows.lg,
+                  position: 'relative',
+                  overflow: 'hidden'
                 }}>
-                  <BarChart size={48} style={{ marginBottom: '24px' }} />
-                  <div style={{ fontSize: '32px', fontWeight: 900, marginBottom: '8px' }}>Peak Momentum</div>
-                  <div style={{ fontSize: '18px', opacity: 0.9 }}>
-                    Your creator velocity is up by 12% compared to last week. Most interactions happen between 4 PM and 8 PM.
+                  <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: 150, height: 150, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(40px)' }} />
+                  <div style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    width: '56px',
+                    height: '56px',
+                    borderRadius: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    marginBottom: '32px'
+                  }}>
+                    <Zap size={32} />
+                  </div>
+                  <div style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>Peak Momentum</div>
+                  <div style={{ fontSize: '16px', opacity: 0.9, lineHeight: 1.7, fontWeight: 500 }}>
+                    Your creator velocity is up by 12% compared to last week. Your resonance peak occurs during afternoon windows.
+                  </div>
+                  <div style={{ marginTop: '32px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, cursor: 'pointer' }}>
+                    Analyze Deep Patterns <ArrowRight size={18} />
                   </div>
                 </div>
               </Col>
@@ -343,45 +385,50 @@ const CreatorAnalytics = () => {
 
           {activeTab === 'funnel' && funnelData && (
             <div style={{
-              background: 'rgba(15, 23, 42, 0.4)',
-              backdropFilter: 'blur(30px)',
-              padding: '48px',
-              borderRadius: '40px',
-              border: '1px solid rgba(255, 255, 255, 0.05)',
+              background: '#FFFFFF',
+              padding: isMobile ? '40px' : '64px',
+              borderRadius: '24px',
+              border: `1px solid ${colors.gray[100]}`,
+              boxShadow: shadows.md,
             }}>
-              <Title level={3} style={{ color: '#FFFFFF', marginBottom: '40px', textAlign: 'center' }}>Conversion Life Cycle</Title>
-              <Row gutter={[40, 40]} justify="center">
+              <Title level={3} style={{ color: colors.text.primary, marginBottom: '56px', fontWeight: 800, textAlign: 'center', letterSpacing: '-0.02em' }}>Life Cycle Synchrony</Title>
+              <Row gutter={[48, 48]} justify="center">
                 {[
-                  { label: 'Views', value: funnelData.profileViews, rate: '100%', color: '#6366F1' },
-                  { label: 'Chats', value: funnelData.chatStarts, rate: `${funnelData.conversionRate.viewToChat}%`, color: '#10B981' },
-                  { label: 'Retention', value: funnelData.returning, rate: `${funnelData.conversionRate.chatToReturn}%`, color: '#F59E0B' },
-                  { label: 'Total Value', value: funnelData.subscribed, rate: `${funnelData.conversionRate.returnToSubscribe}%`, color: '#EC4899' }
+                  { label: 'Views', value: funnelData.profileViews, rate: 'INIT', color: colors.primary.solid, bg: colors.primary.subtle },
+                  { label: 'Chats', value: funnelData.chatStarts, rate: `${funnelData.conversionRate.viewToChat}%`, color: colors.success.solid, bg: colors.success.subtle },
+                  { label: 'Retention', value: funnelData.returning, rate: `${funnelData.conversionRate.chatToReturn}%`, color: colors.warning.solid, bg: colors.warning.subtle },
+                  { label: 'Subs', value: funnelData.subscribed, rate: `${funnelData.conversionRate.returnToSubscribe}%`, color: '#ec4899', bg: '#fdf2f8' }
                 ].map((step, i) => (
                   <Col xs={24} sm={12} lg={6} key={i}>
                     <motion.div
-                      whileHover={{ scale: 1.05 }}
+                      whileHover={{ y: -8 }}
                       style={{ textAlign: 'center', position: 'relative' }}
                     >
                       <div style={{
                         width: '120px',
                         height: '120px',
                         margin: '0 auto 24px',
-                        borderRadius: '50%',
-                        background: `${step.color}20`,
-                        border: `2px solid ${step.color}`,
+                        borderRadius: '30%',
+                        background: step.bg,
+                        border: `1px solid ${step.color}15`,
                         display: 'flex',
                         flexDirection: 'column',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        boxShadow: `0 0 30px ${step.color}30`
+                        boxShadow: `0 8px 16px ${step.color}08`,
+                        transform: 'rotate(-5deg)'
                       }}>
-                        <div style={{ color: step.color, fontWeight: 900, fontSize: '24px' }}>{step.value}</div>
-                        <div style={{ color: '#94A3B8', fontSize: '10px', fontWeight: 800 }}>{step.label.toUpperCase()}</div>
+                        <div style={{ transform: 'rotate(5deg)' }}>
+                          <div style={{ color: step.color, fontWeight: 900, fontSize: '24px', letterSpacing: '-0.02em' }}>{step.value.toLocaleString()}</div>
+                          <div style={{ color: colors.text.tertiary, fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{step.label}</div>
+                        </div>
                       </div>
-                      <div style={{ color: '#F8FAFC', fontWeight: 900, fontSize: '20px' }}>{step.rate}</div>
-                      <Text style={{ color: '#64748B', fontWeight: 600 }}>Conv. Rate</Text>
+                      <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '22px', letterSpacing: '-0.01em' }}>{step.rate}</div>
+                      <Text style={{ color: colors.text.tertiary, fontWeight: 600, fontSize: '12px' }}>CONV. RATE</Text>
                       {i < 3 && !isMobile && (
-                        <div style={{ position: 'absolute', top: '60px', right: '-40px', fontSize: '24px', color: 'rgba(255, 255, 255, 0.1)' }}>→</div>
+                        <div style={{ position: 'absolute', top: '50px', right: '-40px', fontSize: '24px', color: colors.gray[200] }}>
+                          <ArrowRight size={24} />
+                        </div>
                       )}
                     </motion.div>
                   </Col>

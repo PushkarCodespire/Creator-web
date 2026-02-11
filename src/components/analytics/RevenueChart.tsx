@@ -1,9 +1,9 @@
 // ===========================================
-// REVENUE CHART COMPONENT - Flagship Redesign
+// REVENUE CHART COMPONENT - Premium Light Theme
 // ===========================================
 
 import React from 'react';
-import { Empty, Tag, Tooltip, Typography } from 'antd';
+import { Empty, Tag, Typography } from 'antd';
 import {
   XAxis,
   YAxis,
@@ -17,12 +17,13 @@ import {
   Line
 } from 'recharts';
 import {
-  RiseOutlined,
-  FallOutlined,
-  MinusOutlined,
-  InfoCircleOutlined
-} from '@ant-design/icons';
-import { colors, spacing, shadows } from '../../styles/tokens';
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Info,
+  Zap
+} from 'lucide-react';
+import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
@@ -42,8 +43,8 @@ interface RevenueChartProps {
 export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = false }) => {
   if (!data || !data.historical || data.historical.length === 0) {
     return (
-      <div style={{ padding: '48px', textAlign: 'center', background: 'rgba(15, 23, 42, 0.4)', borderRadius: '32px' }}>
-        <Empty description={<span style={{ color: '#94A3B8' }}>No revenue data available yet.</span>} />
+      <div style={{ padding: '64px', textAlign: 'center', background: '#FFFFFF', borderRadius: '24px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
+        <Empty description={<span style={{ color: colors.text.tertiary, fontWeight: 500 }}>No revenue data analyzed yet.</span>} />
       </div>
     );
   }
@@ -72,23 +73,23 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = fals
 
     return (
       <div style={{
-        backgroundColor: '#0F172A',
+        backgroundColor: '#FFFFFF',
         padding: '16px',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        border: `1px solid ${colors.gray[200]}`,
         borderRadius: '16px',
-        boxShadow: shadows.xl
+        boxShadow: shadows.lg
       }}>
-        <div style={{ fontWeight: 800, marginBottom: '8px', color: '#F8FAFC' }}>{d.month}</div>
+        <div style={{ fontWeight: 800, marginBottom: '8px', color: colors.text.primary, fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{d.month}</div>
         {isHistorical ? (
-          <div style={{ color: '#6366F1', fontWeight: 700 }}>
+          <div style={{ color: colors.primary.solid, fontWeight: 800, fontSize: '16px' }}>
             Revenue: ₹{d.historical.toLocaleString()}
           </div>
         ) : (
           <>
-            <div style={{ color: '#10B981', fontWeight: 700 }}>
+            <div style={{ color: colors.success.solid, fontWeight: 800, fontSize: '16px' }}>
               Forecast: ₹{d.forecast.toLocaleString()}
             </div>
-            <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+            <div style={{ fontSize: '12px', color: colors.text.tertiary, marginTop: '4px', fontWeight: 600 }}>
               Confidence Range: ₹{d.confidenceLow.toLocaleString()} - ₹{d.confidenceHigh.toLocaleString()}
             </div>
           </>
@@ -97,58 +98,71 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = fals
     );
   };
 
-  const trendIcon = data.trend === 'increasing' ? <RiseOutlined /> : data.trend === 'decreasing' ? <FallOutlined /> : <MinusOutlined />;
-  const trendColor = data.trend === 'increasing' ? '#10B981' : data.trend === 'decreasing' ? '#EF4444' : '#64748B';
+  const trendIcon = data.trend === 'increasing' ? <TrendingUp size={16} /> : data.trend === 'decreasing' ? <TrendingDown size={16} /> : <Minus size={16} />;
+  const trendColor = data.trend === 'increasing' ? colors.success.solid : data.trend === 'decreasing' ? colors.error.solid : colors.text.tertiary;
+  const trendBg = data.trend === 'increasing' ? colors.success.subtle : data.trend === 'decreasing' ? colors.error.subtle : colors.gray[100];
 
   return (
     <div style={{
-      background: 'rgba(15, 23, 42, 0.4)',
-      backdropFilter: 'blur(32px)',
+      background: '#FFFFFF',
       padding: '40px',
-      borderRadius: '40px',
-      border: '1px solid rgba(255, 255, 255, 0.05)',
-      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+      borderRadius: '24px',
+      border: `1px solid ${colors.gray[100]}`,
+      boxShadow: shadows.md
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '40px', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px' }}>
         <div>
-          <Title level={4} style={{ color: '#FFFFFF', margin: 0 }}>Revenue Projection</Title>
-          <Text style={{ color: '#64748B' }}>Historical earnings vs AI-powered 3-month forecast</Text>
+          <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700, letterSpacing: '-0.02em' }}>Revenue Projection</Title>
+          <Text style={{ color: colors.text.secondary, fontWeight: 500 }}>Historical earnings vs AI-powered 3-month forecast</Text>
         </div>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          <Tag color={data.trend === 'increasing' ? 'success' : 'error'} style={{ borderRadius: '8px', fontWeight: 800, padding: '4px 12px' }}>
+          <Tag bordered={false} style={{
+            borderRadius: '8px',
+            fontWeight: 800,
+            padding: '6px 12px',
+            background: trendBg,
+            color: trendColor,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
             {trendIcon} {data.trend.toUpperCase()}
           </Tag>
-          <div style={{ color: '#F8FAFC', fontWeight: 800, fontSize: '16px' }}>
-            Growth: <span style={{ color: trendColor }}>{data.growthRate > 0 ? '+' : ''}{data.growthRate}%</span>
+          <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '16px' }}>
+            Growth: <span style={{ color: colors.success.solid }}>{data.growthRate > 0 ? '+' : ''}{data.growthRate}%</span>
           </div>
         </div>
       </div>
 
       <ResponsiveContainer width="100%" height={400}>
         <ComposedChart data={chartData} margin={{ top: 20, right: 0, left: -20, bottom: 0 }}>
-          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(255, 255, 255, 0.03)" />
+          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gray[100]} />
           <XAxis
             dataKey="month"
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748B', fontSize: 12, fontWeight: 700 }}
+            tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }}
             dy={10}
           />
           <YAxis
             axisLine={false}
             tickLine={false}
-            tick={{ fill: '#64748B', fontSize: 12, fontWeight: 700 }}
+            tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }}
             tickFormatter={(val) => `₹${(val / 1000).toFixed(0)}k`}
           />
           <RechartsTooltip content={<CustomTooltip />} />
-          <Legend wrapperStyle={{ paddingTop: '32px' }} iconType="circle" />
+          <Legend
+            wrapperStyle={{ paddingTop: '32px' }}
+            iconType="circle"
+            formatter={(value) => <span style={{ color: colors.text.secondary, fontWeight: 600, fontSize: '13px' }}>{value}</span>}
+          />
 
           {/* Confidence interval area */}
           <Area
             type="monotone"
             dataKey="confidenceHigh"
             stroke="none"
-            fill="#10B981"
+            fill={colors.success.solid}
             fillOpacity={0.05}
             name="Confidence Range"
           />
@@ -162,9 +176,9 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = fals
           {/* Historical revenue bars */}
           <Bar
             dataKey="historical"
-            fill="#6366F1"
+            fill={colors.primary.solid}
             name="Past Performance"
-            radius={[10, 10, 0, 0]}
+            radius={[8, 8, 0, 0]}
             barSize={40}
           />
 
@@ -172,11 +186,11 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = fals
           <Line
             type="monotone"
             dataKey="forecast"
-            stroke="#10B981"
+            stroke={colors.success.solid}
             strokeWidth={4}
             strokeDasharray="8 8"
             name="AI Forecast"
-            dot={{ r: 6, fill: '#10B981', stroke: '#FFFFFF', strokeWidth: 2 }}
+            dot={{ r: 6, fill: colors.success.solid, stroke: '#FFFFFF', strokeWidth: 2 }}
           />
         </ComposedChart>
       </ResponsiveContainer>
@@ -184,13 +198,31 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = fals
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
-        style={{ marginTop: '40px', padding: '24px', background: 'rgba(255, 255, 255, 0.02)', borderRadius: '20px', border: '1px solid rgba(255, 255, 255, 0.05)' }}
+        style={{
+          marginTop: '40px',
+          padding: '24px',
+          background: colors.gray[50],
+          borderRadius: '20px',
+          border: `1px solid ${colors.gray[100]}`
+        }}
       >
-        <div style={{ color: '#94A3B8', fontSize: '13px', lineHeight: 1.6 }}>
-          <InfoCircleOutlined style={{ marginRight: '8px', color: '#6366F1' }} />
-          <strong>Intelligence insight:</strong> Based on your current engagement velocity and retention rates,
-          the AI predicts a <span style={{ color: '#10B981', fontWeight: 800 }}>steady {data.growthRate}% monthly climb</span>.
-          The shaded green region indicates the 95% confidence variance.
+        <div style={{ color: colors.text.secondary, fontSize: '13px', lineHeight: 1.6, display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div style={{
+            background: colors.primary.subtle,
+            padding: '8px',
+            borderRadius: '10px',
+            color: colors.primary.solid,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            <Zap size={18} />
+          </div>
+          <div>
+            <strong style={{ color: colors.text.primary }}>Intelligence insight:</strong> Based on your current engagement velocity and retention rates,
+            the AI predicts a <span style={{ color: colors.success.solid, fontWeight: 800 }}>steady {data.growthRate}% monthly climb</span>.
+            The shaded green region indicates the 95% confidence variance.
+          </div>
         </div>
       </motion.div>
     </div>
