@@ -104,20 +104,6 @@ envFrom: []
   #   key: api-key
   #   envName: API_KEY
 
-# =============================================================================
-# RESOURCE LIMITS
-# =============================================================================
-resources:
-  limits:
-    # -- CPU limit
-    cpu: 200m
-    # -- Memory limit
-    memory: 256Mi
-  requests:
-    # -- CPU request
-    cpu: 50m
-    # -- Memory request
-    memory: 64Mi
 
 # =============================================================================
 # HEALTH PROBES
