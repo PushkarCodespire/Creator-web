@@ -37,6 +37,8 @@ export interface User {
 
 export interface Creator {
   id: string;
+  userId?: string;       // Underlying user account id (for presence matching)
+  isOnline?: boolean;    // Real-time presence — initial value from REST, updated via socket
   displayName: string;
   bio?: string;
   tagline?: string;

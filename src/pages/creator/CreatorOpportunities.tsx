@@ -689,14 +689,55 @@ const CreatorOpportunities = () => {
           .premium-modal .ant-modal-title {
             color: ${colors.text.primary} !important;
           }
-          .ant-input, .ant-select-selector, .ant-input-number {
+          /* ==========================================================
+             Light-mode input overrides
+             Ant Design's dark algorithm can leak through when the OS
+             reports dark mode, producing inputs with a near-black
+             background on this otherwise-light page. The rules below
+             force every Input / InputNumber / Select variant back to
+             white with dark text regardless of the underlying theme.
+             ========================================================== */
+          .ant-input, .ant-select-selector, .ant-input-number,
+          .ant-input-number-affix-wrapper, .ant-input-affix-wrapper {
             border-radius: 8px !important;
             background: #ffffff !important;
             border: 1px solid ${colors.gray[200]} !important;
             color: ${colors.text.primary} !important;
           }
-          .ant-select-selection-placeholder, .ant-input-number-input::placeholder {
+          /* The actual <input> element nested inside InputNumber also
+             picks up a dark token background — force it transparent so
+             the white wrapper above shows through. */
+          .ant-input-number-input,
+          .ant-input-number-input-wrap,
+          .ant-input-affix-wrapper > .ant-input,
+          .ant-input-number-affix-wrapper .ant-input-number,
+          .ant-input-number-affix-wrapper .ant-input-number-input {
+            background: transparent !important;
+            color: ${colors.text.primary} !important;
+          }
+          /* Inner InputNumber inside the affix wrapper shouldn't double-border */
+          .ant-input-number-affix-wrapper .ant-input-number {
+            border: none !important;
+            box-shadow: none !important;
+          }
+          .ant-select-selection-placeholder,
+          .ant-input::placeholder,
+          .ant-input-number-input::placeholder {
             color: ${colors.text.tertiary} !important;
+          }
+          /* Select dropdown arrow + clear icon */
+          .ant-select-arrow, .ant-select-clear {
+            color: ${colors.text.tertiary} !important;
+            background: #ffffff !important;
+          }
+          /* Focus states — keep the primary blue ring instead of the
+             yellowish one that leaked from the warning-colored prefix */
+          .ant-input:focus, .ant-input-focused,
+          .ant-input-number-focused,
+          .ant-input-number-affix-wrapper-focused,
+          .ant-input-affix-wrapper-focused {
+            border-color: ${colors.primary.solid} !important;
+            box-shadow: 0 0 0 2px ${colors.primary.subtle} !important;
           }
         `}</style>
       </div>

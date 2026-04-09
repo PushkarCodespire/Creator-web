@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Card, Button, Table, Tag, Modal, Form, Input, InputNumber, Select, message, Typography, Row, Col } from 'antd';
-import { PlusOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { Card, Button, Table, Tag, Modal, Form, Input, InputNumber, Select, message, Typography, Row, Col, Space, Popconfirm, Tooltip } from 'antd';
+import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { opportunityApi, companyApi } from '../../services/api';
 import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
 import { motion } from 'framer-motion';
@@ -8,11 +8,16 @@ import { motion } from 'framer-motion';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
+type ModalMode = 'create' | 'edit';
+
 const CompanyOpportunities = () => {
   const [opportunities, setOpportunities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<ModalMode>('create');
+  const [editingOpportunity, setEditingOpportunity] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [form] = Form.useForm();
 
   useEffect(() => {
@@ -30,18 +35,79 @@ const CompanyOpportunities = () => {
     }
   };
 
-  const handleCreate = async (values: any) => {
+  const openCreateModal = () => {
+    setModalMode('create');
+    setEditingOpportunity(null);
+    form.resetFields();
+    setModalOpen(true);
+  };
+
+  const openEditModal = (opportunity: any) => {
+    setModalMode('edit');
+    setEditingOpportunity(opportunity);
+    form.setFieldsValue({
+      title: opportunity.title,
+      description: opportunity.description,
+      type: opportunity.type,
+      category: opportunity.category,
+      budget: opportunity.budget ? Number(opportunity.budget) : undefined,
+      budgetType: opportunity.budgetType,
+      minFollowers: opportunity.minFollowers,
+      requirements: opportunity.requirements
+    });
+    setModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setModalOpen(false);
+    setEditingOpportunity(null);
+    form.resetFields();
+  };
+
+  const handleSubmit = async (values: any) => {
     setSubmitting(true);
     try {
-      await opportunityApi.create(values);
-      message.success('Opportunity created!');
-      setModalOpen(false);
-      form.resetFields();
+      if (modalMode === 'edit' && editingOpportunity) {
+        // Strip `type` — backend ignores it anyway, but no point sending it
+        const { type, ...editable } = values;
+        await opportunityApi.update(editingOpportunity.id, editable);
+        message.success('Opportunity updated');
+      } else {
+        await opportunityApi.create(values);
+        message.success('Opportunity created!');
+      }
+      closeModal();
       fetchData();
     } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to create');
+      message.error(
+        err.response?.data?.error?.message ||
+          err.response?.data?.error ||
+          `Failed to ${modalMode === 'edit' ? 'update' : 'create'}`
+      );
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  const handleCancel = async (opportunity: any) => {
+    setCancellingId(opportunity.id);
+    try {
+      const res = await opportunityApi.cancel(opportunity.id);
+      const count = res.data?.data?.autoRejectedCount ?? 0;
+      message.success(
+        count > 0
+          ? `Opportunity cancelled. ${count} pending application${count === 1 ? '' : 's'} auto-rejected.`
+          : 'Opportunity cancelled.'
+      );
+      fetchData();
+    } catch (err: any) {
+      message.error(
+        err.response?.data?.error?.message ||
+          err.response?.data?.error ||
+          'Failed to cancel opportunity'
+      );
+    } finally {
+      setCancellingId(null);
     }
   };
 
@@ -56,7 +122,13 @@ const CompanyOpportunities = () => {
       title: 'Budget',
       dataIndex: 'budget',
       key: 'budget',
-      render: (b: number) => b ? <Text style={{ fontWeight: 700, color: colors.primary.solid, fontSize: '15px' }}>₹{b.toLocaleString()}</Text> : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>Negotiable</Text>
+      render: (b: any) => {
+        // Prisma Decimal serializes as a string; coerce before formatting.
+        const n = b != null ? Number(b) : null;
+        return n && !Number.isNaN(n)
+          ? <Text style={{ fontWeight: 700, color: colors.primary.solid, fontSize: '15px' }}>₹{n.toLocaleString('en-IN')}</Text>
+          : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>Negotiable</Text>;
+      }
     },
     {
       title: 'Applications',
@@ -80,11 +152,62 @@ const CompanyOpportunities = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (_: any, record: any) => (
-        <Button size="small" type="link" style={{ color: colors.primary.solid, fontWeight: 700 }} onClick={() => window.location.href = `/company-dashboard/opportunities/${record.id}`}>
-          View Details <ArrowRightOutlined style={{ fontSize: '10px' }} />
-        </Button>
-      )
+      render: (_: any, record: any) => {
+        const isOpen = record.status === 'OPEN';
+        const applicantCount = record._count?.applications || 0;
+        return (
+          <Space size={6}>
+            <Tooltip title="View details">
+              <Button
+                size="small"
+                type="text"
+                shape="circle"
+                icon={<EyeOutlined />}
+                style={{ color: colors.primary.solid }}
+                onClick={() => window.location.href = `/company-dashboard/opportunities/${record.id}`}
+              />
+            </Tooltip>
+            {isOpen && (
+              <Tooltip title="Edit">
+                <Button
+                  size="small"
+                  type="text"
+                  shape="circle"
+                  icon={<EditOutlined />}
+                  style={{ color: colors.text.secondary }}
+                  onClick={() => openEditModal(record)}
+                />
+              </Tooltip>
+            )}
+            {isOpen && (
+              <Popconfirm
+                title="Cancel this opportunity?"
+                description={
+                  applicantCount > 0
+                    ? `${applicantCount} pending application${applicantCount === 1 ? '' : 's'} will be auto-rejected and notified.`
+                    : 'This will mark the opportunity as cancelled. It cannot be undone.'
+                }
+                icon={<ExclamationCircleOutlined style={{ color: '#EF4444' }} />}
+                okText="Yes, cancel"
+                okButtonProps={{ danger: true, loading: cancellingId === record.id }}
+                cancelText="Keep it"
+                onConfirm={() => handleCancel(record)}
+              >
+                <Tooltip title="Cancel opportunity">
+                  <Button
+                    size="small"
+                    type="text"
+                    shape="circle"
+                    icon={<DeleteOutlined />}
+                    style={{ color: '#EF4444' }}
+                    loading={cancellingId === record.id}
+                  />
+                </Tooltip>
+              </Popconfirm>
+            )}
+          </Space>
+        );
+      }
     }
   ];
 
@@ -105,7 +228,7 @@ const CompanyOpportunities = () => {
         <Button
           type="primary"
           icon={<PlusOutlined />}
-          onClick={() => setModalOpen(true)}
+          onClick={openCreateModal}
           size="large"
           style={{
             background: colors.primary.solid,
@@ -239,18 +362,47 @@ const CompanyOpportunities = () => {
       `}</style>
 
       <Modal
-        title={<div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}><PlusOutlined style={{ color: colors.primary.solid }} /> Create Opportunity</div>}
+        title={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            {modalMode === 'edit' ? <EditOutlined style={{ color: colors.primary.solid }} /> : <PlusOutlined style={{ color: colors.primary.solid }} />}
+            {modalMode === 'edit' ? 'Edit Opportunity' : 'Create Opportunity'}
+          </div>
+        }
         open={modalOpen}
-        onCancel={() => setModalOpen(false)}
+        onCancel={closeModal}
         footer={null}
         width={600}
         centered
       >
         <div style={{ padding: '0 32px 32px 32px' }}>
-          <Text style={{ display: 'block', color: colors.text.tertiary, marginBottom: '32px', fontSize: '15px', fontWeight: 500 }}>
-            Define your campaign requirements and find the perfect creator to collaborate with.
+          <Text style={{ display: 'block', color: colors.text.tertiary, marginBottom: modalMode === 'edit' && (editingOpportunity?._count?.applications || 0) > 0 ? '16px' : '32px', fontSize: '15px', fontWeight: 500 }}>
+            {modalMode === 'edit'
+              ? 'Update your campaign details. The opportunity type cannot be changed after creation.'
+              : 'Define your campaign requirements and find the perfect creator to collaborate with.'}
           </Text>
-          <Form form={form} layout="vertical" onFinish={handleCreate} requiredMark={false}>
+          {modalMode === 'edit' && (editingOpportunity?._count?.applications || 0) > 0 && (
+            <div
+              style={{
+                padding: '12px 14px',
+                marginBottom: '24px',
+                borderRadius: 12,
+                background: 'rgba(245, 158, 11, 0.10)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                color: '#92400E',
+                fontSize: 13,
+                lineHeight: 1.5,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: 8
+              }}
+            >
+              <ExclamationCircleOutlined style={{ marginTop: 2 }} />
+              <span>
+                <strong>{editingOpportunity._count.applications}</strong> creator{editingOpportunity._count.applications === 1 ? ' has' : 's have'} already applied. Changes to budget, requirements, or deadline will apply to their applications too.
+              </span>
+            </div>
+          )}
+          <Form form={form} layout="vertical" onFinish={handleSubmit} requiredMark={false}>
             <Form.Item
               name="title"
               label={<span>📝 Opportunity Title</span>}
@@ -271,10 +423,10 @@ const CompanyOpportunities = () => {
               <Col span={12}>
                 <Form.Item
                   name="type"
-                  label={<span>🏷️ Type</span>}
-                  rules={[{ required: true, message: 'Select collaboration type' }]}
+                  label={<span>🏷️ Type{modalMode === 'edit' && <Text style={{ fontSize: 10, fontWeight: 600, color: colors.text.tertiary, marginLeft: 6 }}>(cannot be changed)</Text>}</span>}
+                  rules={modalMode === 'edit' ? [] : [{ required: true, message: 'Select collaboration type' }]}
                 >
-                  <Select size="large" placeholder="Select type">
+                  <Select size="large" placeholder="Select type" disabled={modalMode === 'edit'}>
                     <Select.Option value="SPONSORED_POST">Sponsored Post</Select.Option>
                     <Select.Option value="BRAND_AMBASSADOR">Brand Ambassador</Select.Option>
                     <Select.Option value="PRODUCT_REVIEW">Product Review</Select.Option>
@@ -331,7 +483,7 @@ const CompanyOpportunities = () => {
                 boxShadow: '0 8px 24px rgba(18, 104, 255, 0.25)'
               }}
             >
-              Post Opportunity
+              {modalMode === 'edit' ? 'Save Changes' : 'Post Opportunity'}
             </Button>
           </Form>
         </div>

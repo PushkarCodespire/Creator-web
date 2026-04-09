@@ -142,7 +142,7 @@ const OpportunityDetails = () => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                         {applications.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px', background: '#1E293B', borderRadius: '16px', border: '1px solid #334155', color: '#64748B' }}>
+                            <div style={{ textAlign: 'center', padding: '40px', background: colors.gray[50], borderRadius: '16px', border: `1px solid ${colors.gray[200]}`, color: colors.text.tertiary }}>
                                 No applications received yet.
                             </div>
                         ) : (

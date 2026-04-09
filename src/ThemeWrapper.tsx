@@ -7,10 +7,22 @@ type Props = {
 };
 
 function getInitialDarkMode(): boolean {
-  const saved = localStorage.getItem("darkMode");
-  if (saved === "true") return true;
-  if (saved === "false") return false;
-  return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? false;
+  // The app's layout uses hardcoded light backgrounds everywhere (#ffffff
+  // cards, light gray borders, dark text). There is no actual dark-mode
+  // support in the JSX / CSS for any page (except the Chat page which has
+  // its own isolated local theme state). Returning true here would make
+  // Ant Design emit dark tokens (Tags, Inputs, Buttons, etc.) while
+  // everything else stays white — producing visual mismatches.
+  //
+  // Always return false. If dark mode is added properly in the future,
+  // this function should be revisited.
+  //
+  // Also clear any stale "darkMode" key from localStorage so it doesn't
+  // interfere if this function is ever changed back.
+  try {
+    localStorage.removeItem("darkMode");
+  } catch (_) { /* SSR safety */ }
+  return false;
 }
 
 export default function ThemeWrapper({ children }: Props) {

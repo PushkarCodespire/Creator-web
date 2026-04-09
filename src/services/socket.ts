@@ -33,12 +33,24 @@ export interface MessageErrorData {
 class SocketService {
     private socket: Socket | null = null;
     private currentConversationId: string | null = null;
+    private authenticatedUserId: string | null = null;
 
     /**
-     * Initialize Socket.io connection with JWT authentication
+     * Initialize Socket.io connection with JWT authentication.
+     * Idempotent: re-binds auth when called with a different user.
      */
     connect(token?: string | null): Socket {
         if (this.socket?.connected) {
+            // If the logged-in user changed since we last authenticated this
+            // socket, re-emit authenticate so the server's userSockets map
+            // points to the current user's socket id (otherwise emitToUser
+            // for the new user fails to find a target).
+            const currentUserId = this.getStoredUserId();
+            if (currentUserId && currentUserId !== this.authenticatedUserId) {
+                this.socket.emit('authenticate', { userId: currentUserId });
+                this.authenticatedUserId = currentUserId;
+                console.log('🔁 Socket re-authenticated as', currentUserId);
+            }
             return this.socket;
         }
 
@@ -63,6 +75,7 @@ class SocketService {
             const resolvedUserId = this.getStoredUserId();
             if (resolvedUserId) {
                 this.socket?.emit('authenticate', { userId: resolvedUserId });
+                this.authenticatedUserId = resolvedUserId;
             }
             console.log('✅ Socket.io connected');
             // Re-join conversation room if we were in one
@@ -168,6 +181,7 @@ class SocketService {
             this.socket.disconnect();
             this.socket = null;
             this.currentConversationId = null;
+            this.authenticatedUserId = null;
             console.log('🔌 Socket.io disconnected');
         }
     }

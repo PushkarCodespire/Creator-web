@@ -42,6 +42,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import StreamingMessage from '../components/Chat/StreamingMessage';
 import MediaMessage from '../components/Chat/MediaMessage';
+import CreatorChatView from '../components/Chat/CreatorChatView';
 // uuid import removed
 import './ChatInterface.css';
 
@@ -53,12 +54,14 @@ const getNextGuestSequence = () => {
   return next;
 };
 
-const Chat = () => {
+// Fan-facing chat view. The default export `Chat` below dispatches between
+// this and CreatorChatView based on the logged-in user's role.
+const FanChatView = () => {
   const { creatorId } = useParams<{ creatorId: string }>();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
-  const { messages, isSending } = useSelector((state: RootState) => state.chat);
+  const { messages, isSending, currentConversation } = useSelector((state: RootState) => state.chat);
 
   // State
   const [creator, setCreator] = useState<Creator | null>(null);
@@ -90,6 +93,13 @@ const Chat = () => {
   // New state for streaming and rate limiting
   const [conversationId, setConversationId] = useState<string | null>(null);
   const conversationIdRef = useRef<string | null>(null);
+  const creatorUserIdRef = useRef<string | null>(null);
+  const [conversationMode, setConversationMode] = useState<'AI' | 'MANUAL'>('AI');
+  // Sync mode from Redux when the conversation loads or changes
+  useEffect(() => {
+    const m = (currentConversation as any)?.mode;
+    if (m === 'AI' || m === 'MANUAL') setConversationMode(m);
+  }, [currentConversation]);
   const [streamingMessage, setStreamingMessage] = useState(''); // Keep streaming message separate
   const [isAIStreaming, setIsAIStreaming] = useState(false);
   const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
@@ -179,7 +189,16 @@ const Chat = () => {
 
       // Fetch creator data
       const creatorResponse = await creatorApi.getById(creatorId!);
-      setCreator(creatorResponse.data.data);
+      const creatorData: Creator = creatorResponse.data.data;
+      setCreator(creatorData);
+      // Track userId in a ref so socket handlers can match presence events
+      // without being recreated on every state change.
+      creatorUserIdRef.current = creatorData.userId || null;
+      // Seed presence from REST so the badge shows the right state on first paint;
+      // socket events will keep it updated thereafter.
+      if (typeof creatorData.isOnline === 'boolean') {
+        setIsCreatorOnline(creatorData.isOnline);
+      }
 
       // Get or create conversation (works for guests too now)
       const convResponse = await chatApi.createConversation(creatorId!);
@@ -318,6 +337,47 @@ const Chat = () => {
       setStreamingMessage('');
       antMessage.error(data.error?.userMessage || data.error?.message || 'Failed to send message');
     });
+
+    // Listen for new messages pushed to the conversation room (e.g. when the
+    // creator manually replies during a takeover, or auto-release events).
+    const sock = socketService.getSocket();
+    if (sock) {
+      sock.off('message:new');
+      sock.on('message:new', (payload: any) => {
+        const msg = payload?.message;
+        if (!msg) return;
+        // Only handle messages for the currently-open conversation
+        if (payload.conversationId && payload.conversationId !== conversationIdRef.current) return;
+        // Skip USER role (we already added our own outgoing message locally)
+        if (msg.role === 'USER') return;
+        dispatch(addMessage(msg as any));
+        setIsTyping(false);
+      });
+
+      sock.off('conversation:mode-changed');
+      sock.on('conversation:mode-changed', (payload: any) => {
+        if (payload?.conversationId && payload.conversationId !== conversationIdRef.current) return;
+        if (payload?.mode === 'AI' || payload?.mode === 'MANUAL') {
+          setConversationMode(payload.mode);
+          if (payload.autoReleased) {
+            antMessage.info('The creator went offline. AI is replying again.');
+          } else if (payload.mode === 'MANUAL') {
+            antMessage.success(`${payload.creatorDisplayName || 'The creator'} is now replying personally.`);
+          } else {
+            antMessage.info('AI mode is back on.');
+          }
+        }
+      });
+
+      // Live presence updates: server broadcasts user_presence whenever any
+      // user goes online/offline. Match by the creator's userId (read from a
+      // ref so the handler always sees the latest creator).
+      sock.off('user_presence');
+      sock.on('user_presence', (payload: any) => {
+        if (!creatorUserIdRef.current || payload?.userId !== creatorUserIdRef.current) return;
+        setIsCreatorOnline(payload?.status === 'online');
+      });
+    }
   };
 
   const scrollToBottom = () => {
@@ -326,7 +386,20 @@ const Chat = () => {
 
   const handleSend = async () => {
     if ((!inputMessage.trim() && selectedFiles.length === 0) || !conversationId) return;
-    if (tokenBalance !== null && tokenBalance <= 0) {
+    // Creators and admins cannot initiate chats. They have no subscription row,
+    // so the backend would 404 and counters wouldn't update. Block at the UI level.
+    if (user?.role === 'CREATOR' || user?.role === 'ADMIN') {
+      antMessage.info(
+        user.role === 'CREATOR'
+          ? 'Creators cannot chat directly. Your AI clone handles conversations for you — view them in the Chats tab of your dashboard.'
+          : 'Admins cannot initiate chats.'
+      );
+      return;
+    }
+    // Only enforce token balance for PREMIUM users — FREE users are gated by daily
+    // message count, not tokens (backend only deducts tokens for PREMIUM plan).
+    const isPremium = rateLimitStatus?.subscription?.plan === 'PREMIUM';
+    if (isPremium && tokenBalance !== null && tokenBalance <= 0) {
       setShowTokenRenewModal(true);
       return;
     }
@@ -757,6 +830,25 @@ const Chat = () => {
               <div className="chat-creator-status">
                 <span className={`status-dot ${isCreatorOnline ? 'online' : 'offline'}`}></span>
                 {isCreatorOnline ? 'Online' : 'Offline'} • ₹{creator?.pricePerMessage || 50}/msg
+                {conversationMode === 'MANUAL' && (
+                  <span
+                    style={{
+                      marginLeft: 10,
+                      padding: '2px 8px',
+                      borderRadius: 999,
+                      background: 'rgba(16, 185, 129, 0.15)',
+                      color: '#059669',
+                      fontWeight: 600,
+                      fontSize: 11,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4
+                    }}
+                  >
+                    <CheckCircleFilled style={{ color: '#10B981', fontSize: 11 }} />
+                    Real creator is replying
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -825,6 +917,7 @@ const Chat = () => {
             <>
               {messages.map((msg, index) => {
                 const isUser = msg.role === 'USER';
+                const isManualCreator = (msg.role as any) === 'CREATOR';
                 return (
                   <div key={msg.id || index} className={`message-wrapper ${isUser ? 'user' : 'ai'}`}>
                     <Avatar
@@ -834,11 +927,38 @@ const Chat = () => {
                         : (creator?.profileImage ? getImageUrl(creator.profileImage) : undefined)
                       }
                       className="message-avatar"
+                      style={isManualCreator ? { border: '2px solid #10B981' } : undefined}
                     >
                       {isUser ? (user?.name?.[0] || 'G') : creator?.displayName?.[0]}
                     </Avatar>
                     <div className="message-content-wrapper">
-                      <div className="message-bubble">
+                      {isManualCreator && (
+                        <div
+                          style={{
+                            fontSize: 11,
+                            color: '#059669',
+                            fontWeight: 600,
+                            marginBottom: 4,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 4
+                          }}
+                        >
+                          <CheckCircleFilled style={{ color: '#10B981' }} />
+                          {creator?.displayName} (real creator, replying personally)
+                        </div>
+                      )}
+                      <div
+                        className="message-bubble"
+                        style={
+                          isManualCreator
+                            ? {
+                                background: 'rgba(16, 185, 129, 0.10)',
+                                border: '1px solid rgba(16, 185, 129, 0.35)'
+                              }
+                            : undefined
+                        }
+                      >
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>
                           {msg.content}
                         </ReactMarkdown>
@@ -905,6 +1025,47 @@ const Chat = () => {
 
         {/* Input Area */}
         <div className="chat-input-wrapper">
+          {/* Creator / Admin notice - they cannot send messages */}
+          {(user?.role === 'CREATOR' || user?.role === 'ADMIN') && (
+            <div
+              style={{
+                margin: '0 16px 12px',
+                padding: '10px 14px',
+                borderRadius: 12,
+                background: 'rgba(99, 102, 241, 0.08)',
+                border: '1px solid rgba(99, 102, 241, 0.25)',
+                color: '#4338CA',
+                fontSize: 13,
+                lineHeight: 1.5
+              }}
+            >
+              {user.role === 'CREATOR' ? (
+                <>
+                  <strong>You are logged in as a creator.</strong> Your AI clone handles all fan
+                  conversations automatically. You cannot send messages from here.{' '}
+                  <a
+                    href="/creator-dashboard/chats"
+                    style={{ color: '#4338CA', textDecoration: 'underline', fontWeight: 600 }}
+                  >
+                    View your chats
+                  </a>{' '}
+                  or{' '}
+                  <a
+                    href="/creator-dashboard/settings"
+                    style={{ color: '#4338CA', textDecoration: 'underline', fontWeight: 600 }}
+                  >
+                    adjust your AI settings
+                  </a>.
+                </>
+              ) : (
+                <>
+                  <strong>You are logged in as an admin.</strong> Admins cannot initiate chats with
+                  creators. Log in as a regular user to test the chat flow.
+                </>
+              )}
+            </div>
+          )}
+
           {/* File Preview */}
           {selectedFiles.length > 0 && (
             <div className="chat-file-preview">
@@ -998,8 +1159,19 @@ const Chat = () => {
                 className="send-inner-btn"
                 icon={<SendOutlined />}
                 onClick={handleSend}
-                disabled={(!inputMessage.trim() && selectedFiles.length === 0) || (tokenBalance !== null && tokenBalance <= 0)}
-                title="Send message"
+                disabled={
+                  (!inputMessage.trim() && selectedFiles.length === 0) ||
+                  (rateLimitStatus?.subscription?.plan === 'PREMIUM' && tokenBalance !== null && tokenBalance <= 0) ||
+                  user?.role === 'CREATOR' ||
+                  user?.role === 'ADMIN'
+                }
+                title={
+                  user?.role === 'CREATOR'
+                    ? 'Creators cannot send messages — your AI clone handles chats for you'
+                    : user?.role === 'ADMIN'
+                      ? 'Admins cannot send chat messages'
+                      : 'Send message'
+                }
               />
             </div>
           </div>
@@ -1038,7 +1210,7 @@ const Chat = () => {
                   )}
                 </>
               )}
-              {tokenBalance !== null && (
+              {rateLimitStatus?.subscription?.plan === 'PREMIUM' && tokenBalance !== null && (
                 <>
                   {' â€¢ '}
                   <span style={{
@@ -1139,6 +1311,34 @@ const Chat = () => {
       />
     </div>
   );
+};
+
+// Wrapper that picks the appropriate view based on the logged-in user's role.
+// Creators and admins see a read-only live inbox of conversations with their
+// AI clone; everyone else sees the normal fan-facing chat.
+const Chat = () => {
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  if (user?.role === 'CREATOR' || user?.role === 'ADMIN') {
+    return (
+      <CreatorChatView
+        currentCreator={
+          user.creator
+            ? {
+                id: user.creator.id,
+                displayName: user.creator.displayName,
+                profileImage: user.creator.profileImage || null,
+                isVerified: user.creator.isVerified,
+                pricePerMessage: user.creator.pricePerMessage ?? null
+              }
+            : null
+        }
+        currentUser={{ name: user.name, avatar: user.avatar || null }}
+      />
+    );
+  }
+
+  return <FanChatView />;
 };
 
 export default Chat;

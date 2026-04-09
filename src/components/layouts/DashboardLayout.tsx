@@ -200,7 +200,7 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
               src="/Logo.png"
               alt="CodeSpire"
               style={{
-                height: isMobile ? 32 : 36,
+                height: isMobile ? 26 : 30,
                 width: 'auto',
                 display: 'block'
               }}

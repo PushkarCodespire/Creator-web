@@ -112,7 +112,21 @@ const chatSlice = createSlice({
       state.error = null;
     },
     addMessage: (state, action: PayloadAction<Message>) => {
-      state.messages.push(action.payload);
+      // Dedupe by id — the same message may arrive via both REST response
+      // (sendMessage.fulfilled) and socket push (message:new). We want to
+      // only render it once.
+      const incoming = action.payload;
+      if (!incoming?.id) {
+        state.messages.push(incoming);
+        return;
+      }
+      const existingIdx = state.messages.findIndex(m => m.id === incoming.id);
+      if (existingIdx === -1) {
+        state.messages.push(incoming);
+      } else {
+        // Merge fields in case the later version has more info
+        state.messages[existingIdx] = { ...state.messages[existingIdx], ...incoming };
+      }
     },
     setGuestId: (state, action: PayloadAction<string>) => {
       state.guestId = action.payload;
@@ -151,12 +165,21 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.isSending = false;
-        if (action.payload.userMessage) {
-          state.messages.push(action.payload.userMessage);
-        }
-        if (action.payload.aiMessage) {
-          state.messages.push(action.payload.aiMessage);
-        }
+        const pushDedup = (msg: any) => {
+          if (!msg) return;
+          if (!msg.id) {
+            state.messages.push(msg);
+            return;
+          }
+          const idx = state.messages.findIndex(m => m.id === msg.id);
+          if (idx === -1) {
+            state.messages.push(msg);
+          } else {
+            state.messages[idx] = { ...state.messages[idx], ...msg };
+          }
+        };
+        pushDedup(action.payload.userMessage);
+        pushDedup(action.payload.aiMessage);
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.isSending = false;

@@ -225,6 +225,26 @@ export const creatorApi = {
   removeFollower: (followerId: string) =>
     api.delete(`/creators/followers/${followerId}`),
 
+  // Creator chat inbox (read-only view of conversations with the creator's AI clone)
+  getMyConversations: (params?: { page?: number; limit?: number }) =>
+    api.get('/creators/conversations/me', { params }),
+
+  getMyConversationDetails: (conversationId: string) =>
+    api.get(`/creators/conversations/me/${conversationId}`),
+
+  // Manual takeover: toggle a conversation between AI and MANUAL mode
+  setConversationMode: (conversationId: string, mode: 'AI' | 'MANUAL') =>
+    api.post(`/creators/conversations/me/${conversationId}/mode`, { mode }),
+
+  // Send a manual reply as the human creator (only allowed when mode === MANUAL)
+  replyAsCreator: (conversationId: string, content: string) =>
+    api.post(`/creators/conversations/me/${conversationId}/reply`, { content }),
+
+  // Manually trigger an AI reply for a queued/unanswered fan message
+  // (e.g. after coming back from MANUAL mode)
+  generateAiReplyForLast: (conversationId: string) =>
+    api.post(`/creators/conversations/me/${conversationId}/generate-ai-reply`),
+
   getEngagementTrend: (days: number = 7) =>
     api.get('/creators/analytics/engagement', { params: { days } })
 };
@@ -429,6 +449,14 @@ export const opportunityApi = {
 
   create: (data: any) => api.post('/opportunities', data),
 
+  // Partial update — only OPEN opportunities are editable. `type` and `status`
+  // are silently ignored by the backend if sent.
+  update: (id: string, data: any) => api.put(`/opportunities/${id}`, data),
+
+  // Cancel an OPEN opportunity. Auto-rejects all PENDING applications and
+  // notifies every applicant.
+  cancel: (id: string) => api.post(`/opportunities/${id}/cancel`),
+
   apply: (id: string, pitch: string, proposedBudget?: number) =>
     api.post(`/opportunities/${id}/apply`, { pitch, proposedBudget }),
 
@@ -437,6 +465,34 @@ export const opportunityApi = {
 
   rejectApplication: (applicationId: string) =>
     api.post(`/opportunities/applications/${applicationId}/reject`)
+};
+
+// ===========================================
+// MILESTONE API
+// Endpoints live under /api/deals/:dealId/milestones and /api/milestones/:id
+// ===========================================
+
+export const milestoneApi = {
+  list: (dealId: string) => api.get(`/deals/${dealId}/milestones`),
+
+  create: (
+    dealId: string,
+    data: { title: string; description?: string; dueDate?: string | null }
+  ) => api.post(`/deals/${dealId}/milestones`, data),
+
+  update: (
+    id: string,
+    data: {
+      title?: string;
+      description?: string;
+      dueDate?: string | null;
+      status?: 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'OVERDUE';
+    }
+  ) => api.patch(`/milestones/${id}`, data),
+
+  complete: (id: string) => api.patch(`/milestones/${id}`, { status: 'COMPLETED' }),
+
+  delete: (id: string) => api.delete(`/milestones/${id}`)
 };
 
 // ===========================================

@@ -134,7 +134,7 @@ const MainLayout = () => {
               src="/Logo.png"
               alt="CodeSpire"
               style={{
-                height: 48, // Slightly larger height for the logo image
+                height: 32,
                 width: 'auto',
                 display: 'block'
               }}
