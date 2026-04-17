@@ -41,6 +41,8 @@ command: []
 args: []
 
 env:
+  API_BACKEND_URL: "creator-platform-api.creator-platform-dev.svc.cluster.local:80"
+  WS_BACKEND_URL: "creator-platform-api.creator-platform-dev.svc.cluster.local:80"
   VITE_API_URL: "/api"
   VITE_SOCKET_URL: "wss://crp.dev.gcp.codespiresolutions.com"
   VITE_UPLOAD_PUBLIC_PATH: "/api/upload/image"
