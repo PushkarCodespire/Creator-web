@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { Avatar, Dropdown, message as antMessage, Modal, Input } from 'antd';
+// eslint-disable-next-line no-duplicate-imports
 import type { MenuProps } from 'antd';
 import {
   HeartOutlined,
@@ -23,6 +24,7 @@ import CommentComposer from './CommentComposer';
 import { colors, spacing, typography } from '../../styles/tokens';
 import { likeAnimation } from '../../styles/animations';
 import { Comment } from '../../types';
+import { logger } from '../../utils/logger';
 
 const { TextArea } = Input;
 
@@ -89,11 +91,12 @@ export const CommentItem: React.FC<CommentItemProps> = ({
       } else {
         await commentApi.likeComment(comment.id);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Revert on error
       setIsLiked(previousLiked);
       setLikesCount(previousCount);
-      antMessage.error(error.response?.data?.error || 'Failed to update like');
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to update like');
     }
   };
 
@@ -110,7 +113,7 @@ export const CommentItem: React.FC<CommentItemProps> = ({
       setReplies(response.data.data.replies || []);
       setShowReplies(true);
     } catch (error) {
-      console.error('Failed to load replies:', error);
+      logger.error('Failed to load replies:', error);
       antMessage.error('Failed to load replies');
     } finally {
       setIsLoadingReplies(false);
@@ -130,9 +133,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
       onCommentUpdate(comment.id, response.data.data);
       setIsEditing(false);
       antMessage.success('Comment updated');
-    } catch (error: any) {
-      console.error('Failed to update comment:', error);
-      antMessage.error(error.response?.data?.error || 'Failed to update comment');
+    } catch (error: unknown) {
+      logger.error('Failed to update comment:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to update comment');
     } finally {
       setIsUpdating(false);
     }
@@ -151,9 +155,10 @@ export const CommentItem: React.FC<CommentItemProps> = ({
           await commentApi.deleteComment(comment.id);
           onCommentDelete(comment.id);
           antMessage.success('Comment deleted');
-        } catch (error: any) {
-          console.error('Failed to delete comment:', error);
-          antMessage.error(error.response?.data?.error || 'Failed to delete comment');
+        } catch (error: unknown) {
+          logger.error('Failed to delete comment:', error);
+          const err = error as { response?: { data?: { error?: string } } };
+          antMessage.error(err.response?.data?.error || 'Failed to delete comment');
         }
       },
     });

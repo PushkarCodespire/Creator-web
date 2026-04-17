@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Modal, Input, Button, Upload, message, Select, Row, Col, Typography } from 'antd';
-import { UploadOutlined, FileImageOutlined, LoadingOutlined } from '@ant-design/icons';
+import { Modal, Input, Button, Upload, message, Select, Typography } from 'antd';
+import { UploadOutlined } from '@ant-design/icons';
 import { postApi } from '../../services/api';
 
 const { TextArea } = Input;
@@ -11,16 +11,17 @@ const { Text } = Typography;
 interface CreatePostModalProps {
     visible: boolean;
     onCancel: () => void;
-    onSuccess: (newPost: any) => void;
+    onSuccess: (newPost: Record<string, unknown>) => void;
 }
 
 const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onCancel, onSuccess }) => {
     const [content, setContent] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [fileList, setFileList] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
-    const [postType, setPostType] = useState('TEXT'); // 'TEXT', 'IMAGE', 'VIDEO'
+    const [_postType, setPostType] = useState('TEXT'); // 'TEXT', 'IMAGE', 'VIDEO'
 
-    const handleUpload = ({ file, onSuccess: uploadSuccess }: any) => {
+    const _handleUpload = ({ _file, onSuccess: uploadSuccess }: { _file: File; onSuccess: (msg: string) => void }) => {
         setTimeout(() => {
             uploadSuccess('ok');
         }, 0);
@@ -35,7 +36,7 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onCancel, on
         try {
             setLoading(true);
 
-            let media: any[] = [];
+            const media: { url: string; type: string }[] = [];
 
             // If there are files, we would ideally upload them first to a media server
             // For this implementation, we'll simulate the structure required by the API
@@ -71,23 +72,26 @@ const CreatePostModal: React.FC<CreatePostModalProps> = ({ visible, onCancel, on
                 onSuccess(response.data.data);
                 onCancel();
             }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             message.error('Failed to create post');
         } finally {
             setLoading(false);
         }
     };
 
-    const uploadProps = {
-        onRemove: (file: any) => {
-            setFileList((prev) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const uploadProps: any = {
+        onRemove: (file: { uid: string; type?: string; size?: number }) => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            setFileList((prev: any[]) => {
                 const index = prev.indexOf(file);
                 const newFileList = prev.slice();
                 newFileList.splice(index, 1);
                 return newFileList;
             });
         },
-        beforeUpload: (file: any) => {
+        beforeUpload: (file: { type: string; size: number }) => {
             const isJpgOrPng = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'video/mp4';
             if (!isJpgOrPng) {
                 message.error('You can only upload JPG/PNG images or MP4 videos!');

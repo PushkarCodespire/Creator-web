@@ -5,45 +5,64 @@
   min-height: 100vh;
   width: 100%;
   font-family: 'Inter', sans-serif;
+  background-color: #fbf7f4;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+/* --- Auth Card Wrapper --- */
+.auth-card {
+  display: flex;
+  width: 100%;
+  max-width: 1020px;
+  border-radius: 16px;
   overflow: hidden;
-  background-color: #f9fafb;
+  box-shadow: 0 20px 60px -20px rgba(0, 0, 0, 0.15),
+              0 0 0 1px rgba(0, 0, 0, 0.04);
 }
 
 /* --- Left Brand Panel --- */
 .brand-panel {
-  width: 40%;
+  width: 480px;
+  flex-shrink: 0;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 60px;
+  padding: 48px;
   color: white;
-  background: linear-gradient(135deg, #1268ff 0%, #0b3d99 100%);
+  background: linear-gradient(180deg, #1a0f0f 0%, #0a0505 100%);
   overflow: hidden;
 }
 
-/* Animated Gradient Mesh Effect */
+/* Subtle glow blobs */
 .brand-panel::before {
   content: '';
   position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.1), transparent 60%),
-    radial-gradient(circle at 80% 20%, rgba(18, 104, 255, 0.4), transparent 40%);
-  animation: rotateMesh 20s infinite linear;
+  top: -30%;
+  right: -20%;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 62, 72, 0.3) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
   z-index: 1;
 }
 
-@keyframes rotateMesh {
-  0% {
-    transform: rotate(0deg);
-  }
-
-  100% {
-    transform: rotate(360deg);
-  }
+.brand-panel::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  left: -15%;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 110, 60, 0.25) 0%, transparent 70%);
+  filter: blur(60px);
+  pointer-events: none;
+  z-index: 1;
 }
 
 .brand-content {
@@ -58,18 +77,18 @@
 }
 
 .brand-headline {
-  font-size: 2.5rem;
+  font-size: 2rem;
   font-weight: 700;
-  line-height: 1.1;
-  margin-bottom: 24px;
+  line-height: 1.15;
+  margin-bottom: 20px;
   letter-spacing: -0.02em;
 }
 
 .brand-subtext {
-  font-size: 1.1rem;
+  font-size: 0.95rem;
   line-height: 1.6;
-  opacity: 0.9;
-  margin-bottom: 40px;
+  opacity: 0.8;
+  margin-bottom: 32px;
 }
 
 .benefit-list {
@@ -153,7 +172,7 @@
 
 /* --- Right Form Panel --- */
 .form-panel {
-  width: 60%;
+  flex: 1;
   background-color: #ffffff;
   display: flex;
   flex-direction: column;
@@ -165,20 +184,21 @@
 
 .form-wrapper {
   width: 100%;
-  max-width: 440px;
+  max-width: 400px;
 }
 
 .form-header {
-  margin-bottom: 40px;
+  margin-bottom: 28px;
   text-align: left;
 }
 
 .form-title {
-  font-size: 1.75rem;
+  font-size: 1.5rem;
   font-weight: 700;
   color: #101828;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .form-subtitle {
@@ -188,7 +208,7 @@
 
 /* Form Fields */
 .input-group {
-  margin-bottom: 24px;
+  margin-bottom: 18px;
 }
 
 .input-label {
@@ -215,10 +235,10 @@
 
 .custom-input {
   width: 100%;
-  padding: 12px 16px 12px 48px;
+  padding: 10px 16px 10px 16px;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
-  font-size: 0.95rem;
+  font-size: 0.875rem;
   transition: all 0.2s;
   background-color: #fff;
   color: #101828;
@@ -226,8 +246,8 @@
 
 .custom-input:focus {
   outline: none;
-  border-color: #1268ff;
-  box-shadow: 0 0 0 4px rgba(18, 104, 255, 0.08);
+  border-color: #ff3e48;
+  box-shadow: 0 0 0 4px rgba(255, 62, 72, 0.08);
 }
 
 .password-toggle {
@@ -242,22 +262,22 @@
 /* Submit Button */
 .submit-btn {
   width: 100%;
-  height: 48px;
-  background: #1268ff;
+  height: 42px;
+  background: #ff3e48;
   color: white;
   border: none;
-  border-radius: 8px;
-  font-size: 1rem;
+  border-radius: 10px;
+  font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 12px;
+  margin-top: 8px;
   box-shadow: 0 1px 2px rgba(16, 24, 40, 0.05);
 }
 
 .submit-btn:hover {
-  background: #0f52cc;
-  box-shadow: 0 8px 16px rgba(18, 104, 255, 0.15);
+  background: #e63540;
+  box-shadow: 0 8px 16px rgba(255, 62, 72, 0.2);
 }
 
 .submit-btn:disabled {
@@ -321,33 +341,34 @@
 /* Responsive */
 @media (max-width: 900px) {
   .register-container {
+    padding: 24px 16px;
+  }
+
+  .auth-card {
     flex-direction: column;
-    overflow-y: auto;
+    max-width: 480px;
   }
 
   .brand-panel {
     width: 100%;
-    padding: 40px 24px;
-    min-height: 250px;
+    padding: 32px 24px;
+    min-height: auto;
     justify-content: center;
   }
 
   .brand-subtext,
-  .benefit-list,
-  .testimonial-card,
-  .trust-badges {
+  .testimonial-card {
     display: none;
   }
 
   .brand-headline {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
     text-align: center;
     margin-bottom: 0;
   }
 
   .form-panel {
-    width: 100%;
-    padding: 40px 24px;
+    padding: 32px 24px;
   }
 }
 
@@ -378,9 +399,9 @@
 }
 
 .account-type-card.selected {
-  border-color: #1268ff;
-  background-color: #f0f7ff;
-  box-shadow: 0 0 0 4px rgba(18, 104, 255, 0.1);
+  border-color: #ff3e48;
+  background-color: #fff5f5;
+  box-shadow: 0 0 0 4px rgba(255, 62, 72, 0.1);
   transform: translateY(-2px);
 }
 
@@ -398,7 +419,7 @@
 }
 
 .selected .type-icon {
-  background: #1268ff;
+  background: #ff3e48;
   color: #ffffff;
   transform: scale(1.05);
 }
@@ -418,7 +439,7 @@
 }
 
 .selected .type-info h4 {
-  color: #1268ff;
+  color: #ff3e48;
 }
 
 @media (max-width: 480px) {

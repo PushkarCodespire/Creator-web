@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Input, InputProps } from 'antd';
-import { colors, spacing, typography, borderRadius } from '../../../styles/tokens';
+import { colors, spacing, typography } from '../../../styles/tokens';
 
 export interface CustomInputProps extends InputProps {
     label?: string;

@@ -3,10 +3,9 @@
 // Share referral links and track referrals
 // ===========================================
 
-import { useState, useEffect } from 'react';
-import { Card, Button, Input, Statistic, List, Tag, message as antMessage } from 'antd';
+import { useState } from 'react';
+import { Button, Input, Statistic, List, message as antMessage } from 'antd';
 import { ShareAltOutlined, CopyOutlined, GiftOutlined, UserAddOutlined } from '@ant-design/icons';
-import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import CustomCard from '../common/Card/CustomCard';
@@ -22,7 +21,7 @@ interface ReferralStats {
 
 export const ReferralProgram: React.FC = () => {
   const { user } = useSelector((state: RootState) => state.auth);
-  const [stats, setStats] = useState<ReferralStats>({
+  const [stats, _setStats] = useState<ReferralStats>({
     totalReferrals: 0,
     activeReferrals: 0,
     rewardsEarned: 0,
@@ -36,7 +35,8 @@ export const ReferralProgram: React.FC = () => {
     try {
       await navigator.clipboard.writeText(referralUrl);
       antMessage.success('Referral link copied!');
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       antMessage.error('Failed to copy link');
     }
   };

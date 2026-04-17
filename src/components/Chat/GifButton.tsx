@@ -8,7 +8,6 @@ import { GifOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import GifPicker from './GifPicker';
 import CustomButton from '../common/Button/CustomButton';
-import { colors } from '../../styles/tokens';
 
 interface GifButtonProps {
   onGifSelect: (gifUrl: string) => void;

@@ -3,46 +3,15 @@
 // ===========================================
 
 import { useState, useEffect } from 'react';
-import {
-  Card,
-  Table,
-  Tag,
-  Button,
-  Select,
-  Modal,
-  Form,
-  Input,
-  Radio,
-  InputNumber,
-  Space,
-  Typography,
-  Row,
-  Col,
-  Statistic,
-  message,
-  Descriptions,
-  Timeline,
-  Tooltip,
-  Divider
-} from 'antd';
-import {
-  Shield,
-  Ban,
-  Trash2,
-  CheckCircle2,
-  Clock,
-  RotateCw,
-  Eye,
-  AlertTriangle,
-  Info,
-  ExternalLink
-} from 'lucide-react';
+import { Card, Table, Tag, Button, Select, Form, Input, Radio, InputNumber, Space, Typography, Row, Col, Statistic, message, Descriptions, Timeline, Tooltip, Divider } from 'antd';
+import { Shield, Ban, CheckCircle2, Clock, RotateCw, Eye, Info } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import { format } from 'date-fns';
-import { colors, spacing, shadows, borderRadius, typography } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
 import CustomModal from '../../components/common/Modal/CustomModal';
 import CustomButton from '../../components/common/Button/CustomButton';
 import '../../styles/AdminPanel.css';
+import { logger } from '../../utils/logger';
 
 const { Text, Title, Paragraph } = Typography;
 const { TextArea } = Input;
@@ -65,8 +34,8 @@ interface Report {
 
 interface ReportDetails {
   report: Report;
-  targetContext: any;
-  moderationHistory: any[];
+  targetContext: Record<string, unknown>;
+  moderationHistory: { id: string; action: string; reason?: string; moderator?: { name: string }; createdAt: string }[];
 }
 
 interface ModerationStats {
@@ -75,8 +44,8 @@ interface ModerationStats {
   resolvedToday: number;
   bannedUsers: number;
   suspendedUsers: number;
-  reportsByReason: any[];
-  actionsTaken: any[];
+  reportsByReason: { reason: string; count: number }[];
+  actionsTaken: { action: string; count: number }[];
 }
 
 const AdminModeration = () => {
@@ -100,14 +69,15 @@ const AdminModeration = () => {
   const loadReports = async () => {
     try {
       setLoading(true);
-      const params: any = {};
+      const params: Record<string, string> = {};
       if (statusFilter) params.status = statusFilter;
       if (priorityFilter) params.priority = priorityFilter;
       if (typeFilter) params.targetType = typeFilter;
 
       const response = await adminApi.getReports(params);
       setReports(response.data.data.reports || []);
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error: unknown) {
       message.error('Failed to load reports');
     } finally {
       setLoading(false);
@@ -118,8 +88,9 @@ const AdminModeration = () => {
     try {
       const response = await adminApi.getModerationStats();
       setStats(response.data.data);
-    } catch (error: any) {
-      console.error('Failed to load stats');
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error: unknown) {
+      logger.error('Failed to load stats');
     }
   };
 
@@ -129,26 +100,28 @@ const AdminModeration = () => {
       const response = await adminApi.getReportDetails(reportId);
       setSelectedReport(response.data.data);
       setIsModalVisible(true);
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error: unknown) {
       message.error('Failed to load report details');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleResolve = async (values: any) => {
+  const handleResolve = async (values: Record<string, unknown>) => {
     if (!selectedReport) return;
 
     try {
       setLoading(true);
-      await adminApi.resolveReport(selectedReport.report.id, values);
+      await adminApi.resolveReport(selectedReport.report.id, values as unknown as { action: string; reviewNotes: string; suspensionDays?: number });
       message.success('Report resolved successfully');
       setIsModalVisible(false);
       actionForm.resetFields();
       loadReports();
       loadStats();
-    } catch (error: any) {
-      message.error(error.response?.data?.error || 'Failed to resolve report');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      message.error(err.response?.data?.error || 'Failed to resolve report');
     } finally {
       setLoading(false);
     }
@@ -164,7 +137,8 @@ const AdminModeration = () => {
       setIsModalVisible(false);
       loadReports();
       loadStats();
-    } catch (error: any) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error: unknown) {
       message.error('Failed to dismiss report');
     } finally {
       setLoading(false);
@@ -231,7 +205,7 @@ const AdminModeration = () => {
       dataIndex: 'reporter',
       key: 'reporter',
       width: 150,
-      render: (reporter: any) => <div style={{ fontWeight: 500, color: colors.text.primary }}>{reporter ? reporter.name : 'Anonymous'}</div>
+      render: (reporter: { name: string } | null) => <div style={{ fontWeight: 500, color: colors.text.primary }}>{reporter ? reporter.name : 'Anonymous'}</div>
     },
     {
       title: 'Description',
@@ -475,7 +449,7 @@ const AdminModeration = () => {
                 >
                   {selectedReport.moderationHistory.length > 0 ? (
                     <Timeline style={{ marginTop: '16px' }}>
-                      {selectedReport.moderationHistory.map((log: any) => (
+                      {selectedReport.moderationHistory.map((log: { id: string; action: string; reason?: string; moderator?: { name: string }; createdAt: string }) => (
                         <Timeline.Item key={log.id} color={log.action.includes('BAN') ? colors.error.solid : colors.primary.solid}>
                           <Text strong style={{ color: colors.text.primary, fontSize: '13px' }}>{log.action.replace('_', ' ')}</Text>
                           <br />

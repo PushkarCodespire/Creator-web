@@ -4,15 +4,16 @@
 // ===========================================
 
 import { useState, useEffect } from 'react';
-import { Card, Statistic, Select, Spin, Empty } from 'antd';
+import { Statistic, Select, Spin, Empty } from 'antd';
 import { ThunderboltOutlined, WarningOutlined, CheckCircleOutlined } from '@ant-design/icons';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { monitoringApi } from '../../services/api';
 import CustomCard from '../common/Card/CustomCard';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 export const PerformanceDashboard: React.FC = () => {
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [stats, setStats] = useState<any>(null);
   const [hours, setHours] = useState<number>(24);
 
@@ -26,7 +27,7 @@ export const PerformanceDashboard: React.FC = () => {
       const response = await monitoringApi.getPerformanceStats({ hours });
       setStats(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch performance stats:', error);
+      logger.error('Failed to fetch performance stats:', error);
     } finally {
       setLoading(false);
     }

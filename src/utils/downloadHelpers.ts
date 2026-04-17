@@ -5,6 +5,7 @@
 
 import React from 'react';
 import { downloadFile } from './fileDownloadUtils';
+import { logger } from './logger';
 
 /**
  * Converts a display/upload URL to a download URL
@@ -68,7 +69,7 @@ export function createImageDownloadHandler(imageUrl: string, filename?: string) 
         try {
             await downloadDisplayedImage(imageUrl, filename);
         } catch (error) {
-            console.error('Failed to download image:', error);
+            logger.error('Failed to download image:', error);
             throw error;
         }
     };

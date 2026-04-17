@@ -3,19 +3,8 @@
 // ===========================================
 
 import { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, Spin, Tag, Typography, Button, Space, List, Avatar, Divider, Progress, Tabs } from 'antd';
-import {
-  Users,
-  User,
-  MessageSquare,
-  CircleDollarSign,
-  Store,
-  CheckCircle2,
-  TrendingUp,
-  ArrowRight,
-  Zap,
-  LayoutDashboard
-} from 'lucide-react';
+import { Row, Col, Statistic, Tag, Typography, Space, List, Avatar, Progress, Tabs } from 'antd';
+import { Users, User, CircleDollarSign, Store, CheckCircle2, TrendingUp, ArrowRight, Zap } from 'lucide-react';
 import { colors, spacing, shadows, typography } from '../../styles/tokens';
 import CustomCard from '../../components/common/Card/CustomCard';
 import CustomButton from '../../components/common/Button/CustomButton';
@@ -23,11 +12,13 @@ import { useNavigate } from 'react-router-dom';
 import { adminApi } from '../../services/api';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
 import '../../styles/AdminPanel.css';
+import { logger } from '../../utils/logger';
 
 const { Text, Title } = Typography;
 
 const AdminDashboard = () => {
-  const [dashboardData, setDashboardData] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dashboardData, setDashboardData] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
@@ -40,7 +31,7 @@ const AdminDashboard = () => {
       const response = await adminApi.getStats();
       setDashboardData(response.data.data);
     } catch (err) {
-      console.error('Failed to fetch stats:', err);
+      logger.error('Failed to fetch stats:', err);
     } finally {
       setLoading(false);
     }
@@ -163,7 +154,7 @@ const AdminDashboard = () => {
           <CustomCard title={<span style={{ color: colors.text.primary }}>Top Creators</span>} style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.creators || []}
-              renderItem={(item: any) => (
+              renderItem={(item: { name: string; earnings: number; dealCount: number }) => (
                 <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar style={{ backgroundColor: colors.gray[100], color: colors.primary.solid }}>{item.name[0]}</Avatar>}
@@ -180,7 +171,7 @@ const AdminDashboard = () => {
           <CustomCard title={<span style={{ color: colors.text.primary }}>Market Leaders</span>} style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.companies || []}
-              renderItem={(item: any) => (
+              renderItem={(item: { name: string; dealCount: number; totalValue: number }) => (
                 <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar icon={<Store size={14} />} style={{ backgroundColor: colors.gray[100], color: colors.warning.solid }} />}
@@ -197,7 +188,7 @@ const AdminDashboard = () => {
           <CustomCard title={<span style={{ color: colors.text.primary }}>Top Engaged Users</span>} style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.activeUsers || []}
-              renderItem={(item: any) => (
+              renderItem={(item: { name: string; email: string; messageCount: number }) => (
                 <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar style={{ backgroundColor: colors.gray[100], color: colors.orange }}>{item.name[0]}</Avatar>}
@@ -218,8 +209,8 @@ const AdminDashboard = () => {
             <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
               <List
                 itemLayout="horizontal"
-                dataSource={Array.from(growth).reverse()}
-                renderItem={(item: any) => (
+                dataSource={Array.from(growth as { week: string; deals: number; users: number; creators: number; companies: number }[]).reverse()}
+                renderItem={(item: { week: string; deals: number; users: number; creators: number; companies: number }) => (
                   <List.Item extra={<Tag color="success">+{item.deals} Deals</Tag>}>
                     <List.Item.Meta
                       avatar={<Avatar icon={<TrendingUp size={14} />} style={{ background: colors.success.subtle, color: colors.success.solid }} />}
@@ -242,7 +233,7 @@ const AdminDashboard = () => {
                   <List
                     size="small"
                     dataSource={recentActivity.deals || []}
-                    renderItem={(item: any) => (
+                    renderItem={(item: { company: string; creator: string; createdAt: string; amount: number }) => (
                       <List.Item>
                         <Space direction="vertical" size={0}>
                           <Text strong style={{ color: colors.text.primary }}>{item.company} & {item.creator}</Text>
@@ -261,7 +252,7 @@ const AdminDashboard = () => {
                   <List
                     size="small"
                     dataSource={recentActivity.users || []}
-                    renderItem={(item: any) => (
+                    renderItem={(item: { name: string; email: string; role: string; createdAt: string }) => (
                       <List.Item>
                         <Space direction="vertical" size={0}>
                           <Text strong style={{ color: colors.text.primary }}>{item.name}</Text>
@@ -280,7 +271,7 @@ const AdminDashboard = () => {
                   <List
                     size="small"
                     dataSource={recentActivity.verifications || []}
-                    renderItem={(item: any) => (
+                    renderItem={(item: { displayName: string; verifiedAt: string }) => (
                       <List.Item>
                         <Space align="center">
                           <CheckCircle2 size={16} color={colors.success.solid} />
@@ -302,7 +293,7 @@ const AdminDashboard = () => {
 
 // --- Helper Components ---
 
-const MetricCard = ({ title, value, icon, color, onClick }: any) => (
+const MetricCard = ({ title, value, icon, color, onClick }: { title: string; value: string | number; icon: React.ReactNode; color: string; onClick?: () => void }) => (
   <CustomCard
     onClick={onClick}
     hoverable
@@ -357,7 +348,7 @@ const MetricCard = ({ title, value, icon, color, onClick }: any) => (
   </CustomCard>
 );
 
-const Badge = ({ count }: any) => (
+const Badge = ({ count }: { count: number; color?: string }) => (
   <span className="admin-tag-primary" style={{
     borderRadius: '10px',
     padding: '2px 8px',

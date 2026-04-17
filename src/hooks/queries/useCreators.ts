@@ -8,7 +8,7 @@ import api from '../../services/api';
 import { message } from 'antd';
 
 // Get creators list with filters
-export const useCreators = (page: number = 1, filters?: any) => {
+export const useCreators = (page: number = 1, filters?: Record<string, unknown>) => {
   return useQuery({
     queryKey: queryKeys.creators.list(page, filters),
     queryFn: async () => {
@@ -77,6 +77,7 @@ export const useFollowCreator = () => {
 
       const previousCreator = queryClient.getQueryData(queryKeys.creators.byId(creatorId));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queryClient.setQueryData(queryKeys.creators.byId(creatorId), (old: any) => ({
         ...old,
         data: {
@@ -88,8 +89,8 @@ export const useFollowCreator = () => {
 
       return { previousCreator };
     },
-    onError: (err, creatorId, context: any) => {
-      queryClient.setQueryData(queryKeys.creators.byId(creatorId), context.previousCreator);
+    onError: (_err, creatorId, context) => {
+      queryClient.setQueryData(queryKeys.creators.byId(creatorId), context?.previousCreator);
       message.error('Failed to follow creator');
     },
     onSettled: (data, error, creatorId) => {
@@ -114,6 +115,7 @@ export const useUnfollowCreator = () => {
 
       const previousCreator = queryClient.getQueryData(queryKeys.creators.byId(creatorId));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queryClient.setQueryData(queryKeys.creators.byId(creatorId), (old: any) => ({
         ...old,
         data: {
@@ -125,8 +127,8 @@ export const useUnfollowCreator = () => {
 
       return { previousCreator };
     },
-    onError: (err, creatorId, context: any) => {
-      queryClient.setQueryData(queryKeys.creators.byId(creatorId), context.previousCreator);
+    onError: (_err, creatorId, context) => {
+      queryClient.setQueryData(queryKeys.creators.byId(creatorId), context?.previousCreator);
       message.error('Failed to unfollow creator');
     },
     onSettled: (data, error, creatorId) => {

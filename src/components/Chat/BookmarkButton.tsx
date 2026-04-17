@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { bookmarkApi } from '../../services/api';
 import { colors } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface BookmarkButtonProps {
   messageId: string;
@@ -48,9 +49,10 @@ export const BookmarkButton: React.FC<BookmarkButtonProps> = ({
         antMessage.success('Message bookmarked');
         if (onBookmarkChange) onBookmarkChange(true);
       }
-    } catch (error: any) {
-      console.error('Failed to toggle bookmark:', error);
-      antMessage.error(error.response?.data?.error || 'Failed to update bookmark');
+    } catch (error: unknown) {
+      logger.error('Failed to toggle bookmark:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to update bookmark');
     } finally {
       setLoading(false);
     }

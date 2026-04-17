@@ -2,13 +2,15 @@
 // SERVICE WORKER REGISTRATION
 // ===========================================
 
+import { logger } from './logger';
+
 export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/service-worker.js')
         .then((registration) => {
-          console.log('ServiceWorker registered:', registration);
+          logger.info('ServiceWorker registered:', registration);
 
           // Check for updates
           registration.addEventListener('updatefound', () => {
@@ -27,7 +29,7 @@ export function registerServiceWorker() {
           });
         })
         .catch((error) => {
-          console.error('ServiceWorker registration failed:', error);
+          logger.error('ServiceWorker registration failed:', error);
         });
 
       // Reload page when new service worker takes control
@@ -48,8 +50,9 @@ export function unregisterServiceWorker() {
       .then((registration) => {
         registration.unregister();
       })
-      .catch((error) => {
-        console.error(error.message);
+      .catch((error: unknown) => {
+        const msg = error instanceof Error ? error.message : 'Unknown error';
+        logger.error(msg);
       });
   }
 }
@@ -87,7 +90,7 @@ export async function subscribeToPushNotifications() {
 
       return subscription;
     } catch (error) {
-      console.error('Push subscription failed:', error);
+      logger.error('Push subscription failed:', error);
       return null;
     }
   }
@@ -112,14 +115,14 @@ function urlBase64ToUint8Array(base64String: string) {
 export function isStandalone() {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
-    (window.navigator as any).standalone ||
+    (window.navigator as unknown as { standalone?: boolean }).standalone ||
     document.referrer.includes('android-app://')
   );
 }
 
 // Show install prompt
-export function setupInstallPrompt(onInstallable: (prompt: any) => void) {
-  let deferredPrompt: any;
+export function setupInstallPrompt(onInstallable: (prompt: Event) => void) {
+  let deferredPrompt: Event | undefined;
 
   window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();

@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { Result, Button } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
+import { logger } from '../utils/logger';
 
 const PaymentSuccess = () => {
   const navigate = useNavigate();
@@ -15,7 +16,7 @@ const PaymentSuccess = () => {
   useEffect(() => {
     // Optional: Track payment success analytics
     if (orderId) {
-      console.log('Payment successful for order:', orderId);
+      logger.info('Payment successful for order:', orderId);
     }
   }, [orderId]);
 

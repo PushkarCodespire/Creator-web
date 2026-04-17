@@ -21,7 +21,8 @@ function getInitialDarkMode(): boolean {
   // interfere if this function is ever changed back.
   try {
     localStorage.removeItem("darkMode");
-  } catch (_) { /* SSR safety */ }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (__) { /* SSR safety */ }
   return false;
 }
 
@@ -49,10 +50,12 @@ export default function ThemeWrapper({ children }: Props) {
     };
 
     window.addEventListener("storage", handleDarkModeChange);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     window.addEventListener("darkModeChange" as any, handleDarkModeChange);
 
     return () => {
       window.removeEventListener("storage", handleDarkModeChange);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       window.removeEventListener("darkModeChange" as any, handleDarkModeChange);
     };
   }, []);

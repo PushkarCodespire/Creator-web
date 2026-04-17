@@ -4,8 +4,8 @@
 
 import React from 'react';
 import { Table, Tag, Tooltip, Empty, Typography } from 'antd';
-import { User, Info, Calendar } from 'lucide-react';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { User, Calendar } from 'lucide-react';
+import { colors, shadows } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
@@ -64,7 +64,7 @@ export const RetentionChart: React.FC<RetentionChartProps> = ({ data, loading = 
       width: 100,
       align: 'center' as const,
       render: (record: RetentionCohort) => {
-        const val = (record.retention as any)[wk];
+        const val = (record.retention as Record<string, number>)[wk];
         const style = getRetentionStyle(val);
         return (
           <Tooltip title={`${style.label} Retention: ${val}%`} overlayInnerStyle={{ borderRadius: '12px', background: colors.text.primary, border: `1px solid ${colors.gray[700]}` }}>

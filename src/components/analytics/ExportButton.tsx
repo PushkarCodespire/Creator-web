@@ -4,18 +4,12 @@
 
 import React, { useState } from 'react';
 import { Button, Dropdown, DatePicker, Modal, Checkbox, message, Space, Typography, Row, Col } from 'antd';
-import {
-  Download,
-  FileText,
-  FileJson,
-  Calendar,
-  CheckCircle2,
-  Info
-} from 'lucide-react';
+import { Download, FileText, FileJson, Info } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { format } from 'date-fns';
+// eslint-disable-next-line no-duplicate-imports
 import type { MenuProps } from 'antd';
-import { colors, shadows, spacing } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
 
 const { RangePicker } = DatePicker;
 const { Text, Title } = Typography;
@@ -76,7 +70,8 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
 
       message.success(`Analytics exported successfully as ${exportFormat.toUpperCase()}`);
       setIsModalVisible(false);
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       message.error('Failed to export analytics');
     } finally {
       setLoading(false);

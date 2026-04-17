@@ -16,14 +16,8 @@ import {
   Bar,
   Line
 } from 'recharts';
-import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
-  Info,
-  Zap
-} from 'lucide-react';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
+import { colors, shadows } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
@@ -66,7 +60,8 @@ export const RevenueChart: React.FC<RevenueChartProps> = ({ data, loading = fals
     }))
   ];
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any[] }) => {
     if (!active || !payload || payload.length === 0) return null;
     const d = payload[0].payload;
     const isHistorical = d.historical !== null;

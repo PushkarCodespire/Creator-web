@@ -10,7 +10,9 @@ import { subscriptionApi, paymentApi } from '../../services/api';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
+// eslint-disable-next-line no-duplicate-imports
 import { Typography } from 'antd';
 
 const { Title, Text } = Typography;
@@ -18,10 +20,13 @@ const { Title, Text } = Typography;
 const UserSubscription = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
-  const [subscription, setSubscription] = useState<any>(null);
-  const [usage, setUsage] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [subscription, setSubscription] = useState<Record<string, any> | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [usage, setUsage] = useState<Record<string, any> | null>(null);
   const [loading, setLoading] = useState(true);
   const [upgrading, setUpgrading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [plans, setPlans] = useState<any[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
 
@@ -37,7 +42,7 @@ const UserSubscription = () => {
       setSubscription(data.subscription || data);
       setUsage(data.usage || null);
     } catch (err) {
-      console.error('Failed to fetch subscription:', err);
+      logger.error('Failed to fetch subscription:', err);
     } finally {
       setLoading(false);
     }
@@ -55,7 +60,7 @@ const UserSubscription = () => {
           : [];
       setPlans(list);
     } catch (err) {
-      console.error('Failed to fetch plans:', err);
+      logger.error('Failed to fetch plans:', err);
     } finally {
       setPlansLoading(false);
     }
@@ -70,6 +75,7 @@ const UserSubscription = () => {
       const { orderId, amount, currency, keyId } = orderResponse.data.data;
 
       // Check if Razorpay script is loaded
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       if (!(window as any).Razorpay) {
         message.error('Payment gateway not loaded. Please refresh the page.');
         setUpgrading(false);
@@ -84,7 +90,7 @@ const UserSubscription = () => {
         name: 'AI Creator Platform',
         description: 'Premium Subscription - Unlimited Access',
         order_id: orderId,
-        handler: async function (response: any) {
+        handler: async function (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
           try {
             // Verify payment on backend
             const verifyResponse = await paymentApi.verifyPayment({
@@ -99,7 +105,7 @@ const UserSubscription = () => {
               fetchSubscription();
             }
           } catch (error) {
-            console.error('Payment verification failed:', error);
+            logger.error('Payment verification failed:', error);
             message.error('Payment verification failed');
             navigate('/payment-failure?error=Verification failed');
           } finally {
@@ -121,19 +127,21 @@ const UserSubscription = () => {
         }
       };
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rzp = new (window as any).Razorpay(options);
 
-      rzp.on('payment.failed', function (response: any) {
-        console.error('Payment failed:', response.error);
+      rzp.on('payment.failed', function (response: { error: { description: string } }) {
+        logger.error('Payment failed:', response.error);
         message.error('Payment failed: ' + response.error.description);
         navigate(`/payment-failure?error=${encodeURIComponent(response.error.description)}`);
         setUpgrading(false);
       });
 
       rzp.open();
-    } catch (error: any) {
-      console.error('Payment initialization failed:', error);
-      message.error(error.response?.data?.message || 'Failed to initialize payment');
+    } catch (error: unknown) {
+      logger.error('Payment initialization failed:', error);
+      const err = error as { response?: { data?: { message?: string } } };
+      message.error(err.response?.data?.message || 'Failed to initialize payment');
       setUpgrading(false);
     }
   };
@@ -147,7 +155,8 @@ const UserSubscription = () => {
           await subscriptionApi.cancel();
           message.success('Subscription cancelled');
           fetchSubscription();
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__err) {
           message.error('Failed to cancel subscription');
         }
       }
@@ -165,13 +174,13 @@ const UserSubscription = () => {
   const tokensPerMessage = tokenUsage?.perMessage;
   const tokenGrantedAt = tokenUsage?.grantedAt ?? subscription?.tokenGrantedAt;
   const isOutOfTokens = isPremium && tokenBalance !== undefined && tokenBalance !== null && Number(tokenBalance) <= 0;
-  const normalizePlanCode = (plan: any) => {
+  const normalizePlanCode = (plan: { plan?: string; code?: string; name?: string }) => {
     return (plan?.plan || plan?.code || plan?.name || '').toString().toUpperCase();
   };
   const currentPlanDetails = plans.find(plan => normalizePlanCode(plan) === subscription?.plan);
   const premiumPlan = plans.find(plan => normalizePlanCode(plan) === 'PREMIUM');
 
-  const formatPrice = (plan: any) => {
+  const formatPrice = (plan: { price?: number | string; amount?: number | string; monthlyPrice?: number | string; yearlyPrice?: number | string; currency?: string }) => {
     const amount = plan?.price ?? plan?.amount ?? plan?.monthlyPrice ?? plan?.yearlyPrice;
     if (amount === undefined || amount === null) return 'Price unavailable';
     const numeric = typeof amount === 'string' ? Number(amount) : amount;
@@ -184,7 +193,7 @@ const UserSubscription = () => {
     }
   };
 
-  const getIntervalLabel = (plan: any) => {
+  const getIntervalLabel = (plan: { interval?: string; period?: string; billingPeriod?: string }) => {
     const interval = plan?.interval || plan?.period || plan?.billingPeriod;
     if (!interval) return '';
     return `/${interval}`;

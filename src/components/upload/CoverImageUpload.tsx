@@ -3,7 +3,7 @@
 // ===========================================
 
 import React, { useState, useEffect } from 'react';
-import { Card, Spin, Button, message } from 'antd';
+import { Spin, Button, message } from 'antd';
 import { PictureOutlined, CameraOutlined } from '@ant-design/icons';
 import { ImageUpload } from './ImageUpload';
 import api, { getImageUrl } from '../../services/api';
@@ -52,7 +52,7 @@ export const CoverImageUpload: React.FC<CoverImageUploadProps> = ({
       }
 
       return { url };
-    } catch (error: any) {
+    } catch (error: unknown) {
       message.error('Failed to upload cover image');
       throw error;
     } finally {

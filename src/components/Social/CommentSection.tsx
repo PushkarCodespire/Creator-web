@@ -1,11 +1,12 @@
 
 import React, { useState, useEffect } from 'react';
-import { List, Avatar, Button, Input, message, Skeleton, Typography, Space } from 'antd';
-import { UserOutlined, LikeOutlined, LikeFilled, MessageOutlined, SendOutlined } from '@ant-design/icons';
+import { Avatar, Button, Input, message, Skeleton, Typography, Space } from 'antd';
+import { UserOutlined, MessageOutlined, SendOutlined } from '@ant-design/icons';
 import { formatDistanceToNow } from 'date-fns';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { commentApi } from '../../services/api';
+import { logger } from '../../utils/logger';
 
 const { Text } = Typography;
 const { TextArea } = Input;
@@ -51,7 +52,7 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, initialComments
                 setTotalComments(response.data.data.pagination.total);
             }
         } catch (error) {
-            console.error('Failed to fetch comments:', error);
+            logger.error('Failed to fetch comments:', error);
         } finally {
             setLoading(false);
         }
@@ -74,7 +75,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, initialComments
                 fetchComments(); // Refresh comments to show new one
                 setTotalComments(prev => prev + 1);
             }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             message.error('Failed to add comment');
         } finally {
             setSubmitting(false);
@@ -100,7 +102,8 @@ const CommentSection: React.FC<CommentSectionProps> = ({ postId, initialComments
                 }
                 return comment;
             }));
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             message.error('Failed to update like');
         }
     };

@@ -5,7 +5,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Card,
   Button,
   Table,
   Tag,
@@ -19,11 +18,8 @@ import {
   Col,
   Tooltip,
   Select,
-  Progress,
   Typography,
-  Alert,
   Grid,
-  InputNumber,
   Divider,
 } from 'antd';
 import {
@@ -35,34 +31,54 @@ import {
   HelpCircle,
   PlusCircle,
   Eye,
-  Filter,
   XCircle,
   ArrowUp,
   ArrowDown,
-  Zap,
-  Sparkles,
-  Search,
-  ChevronRight,
   Database,
   CloudLightning,
   Info,
   Link
 } from 'lucide-react';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
+import type { RootState } from '../../store';
 import { contentApi } from '../../services/api';
 import { connectSocket, getSocket } from '../../utils/socket';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
-import { motion, AnimatePresence } from 'framer-motion';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { motion } from 'framer-motion';
+import { logger } from '../../utils/logger';
 
 const { TextArea } = Input;
 const { useBreakpoint } = Grid;
 const { Text, Title } = Typography;
 
+interface ContentItem {
+  id: string;
+  title: string;
+  type: string;
+  status: string;
+  _count?: { chunks: number };
+  errorMessage?: string;
+  processedAt?: string;
+  progressPercentage?: number;
+  progressMessage?: string;
+  progressStage?: string;
+  createdAt: string;
+}
+
+interface ContentProcessingUpdate {
+  contentId: string;
+  status?: string;
+  chunksCount?: number;
+  errorMessage?: string;
+  processedAt?: string;
+  message?: string;
+  progress?: { percentage?: number; stage?: string };
+}
+
 const CreatorContent = () => {
   const navigate = useNavigate();
-  const [contents, setContents] = useState<any[]>([]);
-  const [allContents, setAllContents] = useState<any[]>([]);
+  const [_contents, setContents] = useState<ContentItem[]>([]);
+  const [allContents, setAllContents] = useState<ContentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalType, setModalType] = useState<'youtube' | 'manual' | 'faq' | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -85,8 +101,8 @@ const CreatorContent = () => {
     const authToken = token || localStorage.getItem('token') || undefined;
     const socket = connectSocket(authToken);
 
-    const handleUpdate = (update: any) => {
-      const updateItem = (item: any) => ({
+    const handleUpdate = (update: ContentProcessingUpdate) => {
+      const updateItem = (item: ContentItem): ContentItem => ({
         ...item,
         status: update.status || item.status,
         _count: {
@@ -174,8 +190,8 @@ const CreatorContent = () => {
         ...prev,
         total: response.data.data.pagination?.total || 0,
       }));
-    } catch (err) {
-      console.error('Failed to fetch content:', err);
+    } catch (err: unknown) {
+      logger.error('Failed to fetch content:', err);
       message.error('Failed to synchronize neural assets');
     } finally {
       setLoading(false);
@@ -194,22 +210,23 @@ const CreatorContent = () => {
     return filtered;
   }, [allContents, statusFilter, typeFilter, sortBy]);
 
-  const handleAddYouTube = async (values: any) => {
+  const handleAddYouTube = async (values: { url: string; title?: string }) => {
     setSubmitting(true);
     try {
-      const response = await contentApi.addYouTube(values.url, values.title);
+      await contentApi.addYouTube(values.url, values.title);
       message.success('YouTube vector added! Neural processing active.');
       setModalType(null);
       form.resetFields();
       setTimeout(() => fetchContent(), 1000);
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to ingest video');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to ingest video');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleAddManual = async (values: any) => {
+  const handleAddManual = async (values: { title: string; text: string }) => {
     setSubmitting(true);
     try {
       await contentApi.addManual(values.title, values.text);
@@ -217,17 +234,18 @@ const CreatorContent = () => {
       setModalType(null);
       form.resetFields();
       setTimeout(() => fetchContent(), 1000);
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to add knowledge');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to add knowledge');
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleAddFAQ = async (values: any) => {
+  const handleAddFAQ = async (values: { title: string; faqs: { question: string; answer: string }[] }) => {
     setSubmitting(true);
     try {
-      const questions = values.faqs.map((faq: any) => faq.question.toLowerCase().trim());
+      const questions = values.faqs.map((faq) => faq.question.toLowerCase().trim());
       const uniqueQuestions = new Set(questions);
       if (questions.length !== uniqueQuestions.size) {
         message.warning('Neural redundancy: Duplicate questions detected');
@@ -239,8 +257,9 @@ const CreatorContent = () => {
       setModalType(null);
       faqForm.resetFields();
       setTimeout(() => fetchContent(), 1000);
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to add FAQs');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to add FAQs');
     } finally {
       setSubmitting(false);
     }
@@ -251,12 +270,13 @@ const CreatorContent = () => {
       await contentApi.delete(id);
       message.success('Neural asset purged successfully');
       fetchContent();
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to purge asset');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to purge asset');
     }
   };
 
-  const getStatusBadge = (record: any) => {
+  const getStatusBadge = (record: ContentItem) => {
     const status = record.status;
     if (status === 'COMPLETED') {
       return (
@@ -330,7 +350,7 @@ const CreatorContent = () => {
       title: 'Neural Asset',
       dataIndex: 'title',
       key: 'title',
-      render: (text: string, record: any) => (
+      render: (text: string, record: ContentItem) => (
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <div style={{
             width: '40px',
@@ -369,14 +389,14 @@ const CreatorContent = () => {
       title: 'Current State',
       dataIndex: 'status',
       key: 'status',
-      render: (_: string, record: any) => getStatusBadge(record),
+      render: (_: string, record: ContentItem) => getStatusBadge(record),
     },
     {
       title: 'Intelligence Chunks',
       key: 'chunks',
-      render: (r: any) => (
+      render: (r: ContentItem) => (
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontWeight: 900, fontSize: '18px', color: r._count?.chunks > 0 ? colors.primary.solid : colors.text.tertiary }}>
+          <div style={{ fontWeight: 900, fontSize: '18px', color: (r._count?.chunks ?? 0) > 0 ? colors.primary.solid : colors.text.tertiary }}>
             {r._count?.chunks || 0}
           </div>
           <div style={{ fontSize: '10px', fontWeight: 700, textTransform: 'uppercase', color: colors.text.tertiary, letterSpacing: '0.05em' }}>Vectors</div>
@@ -392,7 +412,7 @@ const CreatorContent = () => {
     {
       title: 'Nexus Actions',
       key: 'actions',
-      render: (r: any) => (
+      render: (r: ContentItem) => (
         <Space size="middle">
           <Tooltip title="Neural Inspection">
             <Button
@@ -656,7 +676,7 @@ const CreatorContent = () => {
           <Form.Item
             name="url"
             label={<span style={{ fontWeight: 700, color: colors.text.secondary, textTransform: 'uppercase', fontSize: '11px', letterSpacing: '0.05em' }}>Video Stream URL</span>}
-            rules={[{ required: true, message: 'URL required' }, { pattern: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/.+$/, message: 'Invalid stream format' }]}
+            rules={[{ required: true, message: 'URL required' }, { pattern: /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be)\/[^\s]+$/, message: 'Invalid stream format' }]}
           >
             <Input
               prefix={<Link size={18} style={{ color: colors.text.tertiary, marginRight: '8px' }} />}

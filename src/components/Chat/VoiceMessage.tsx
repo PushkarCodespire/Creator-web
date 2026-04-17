@@ -8,6 +8,7 @@ import { Button, message as antMessage, Progress } from 'antd';
 import { AudioOutlined, StopOutlined, PlayCircleOutlined, PauseCircleOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface VoiceMessageProps {
   audioUrl?: string;
@@ -19,6 +20,7 @@ interface VoiceMessageProps {
 export const VoiceMessage: React.FC<VoiceMessageProps> = ({
   audioUrl,
   onRecordComplete,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onSend,
   disabled = false,
 }) => {
@@ -85,7 +87,7 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
         });
       }, 1000);
     } catch (error) {
-      console.error('Error starting recording:', error);
+      logger.error('Error starting recording:', error);
       antMessage.error('Failed to start recording. Please check microphone permissions.');
     }
   };

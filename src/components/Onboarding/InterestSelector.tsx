@@ -3,11 +3,12 @@
 // ===========================================
 
 import { useState, useEffect } from 'react';
-import { Card, Row, Col, Button, Tag, message as antMessage, Spin } from 'antd';
+import { Card, Row, Col, Button, message as antMessage, Spin } from 'antd';
 import { CheckOutlined, HeartOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { userApi } from '../../services/api';
 import { colors, spacing } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface InterestSelectorProps {
   title?: string;
@@ -49,7 +50,7 @@ export const InterestSelector: React.FC<InterestSelectorProps> = ({
       const response = await userApi.getCategories();
       setCategories(response.data.data.categories || []);
     } catch (error) {
-      console.error('Failed to fetch categories:', error);
+      logger.error('Failed to fetch categories:', error);
       antMessage.error('Failed to load categories');
     } finally {
       setLoading(false);
@@ -82,9 +83,10 @@ export const InterestSelector: React.FC<InterestSelectorProps> = ({
       if (onComplete) {
         onComplete(selectedInterests);
       }
-    } catch (error: any) {
-      console.error('Failed to save interests:', error);
-      antMessage.error(error.response?.data?.error || 'Failed to save interests');
+    } catch (error: unknown) {
+      logger.error('Failed to save interests:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to save interests');
     } finally {
       setSaving(false);
     }

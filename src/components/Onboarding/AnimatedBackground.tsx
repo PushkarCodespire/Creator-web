@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { motion } from 'framer-motion';
 
 export const AnimatedBackground: React.FC<{ children: React.ReactNode }> = ({ children }) => {

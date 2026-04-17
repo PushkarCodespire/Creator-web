@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Row, Col, Card, Statistic, List, Tag, Spin, Button, Avatar, Typography } from 'antd';
+import { Row, Col, Card, List, Tag, Spin, Button, Avatar, Typography } from 'antd';
 import { ShopOutlined, TeamOutlined, DollarOutlined, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { companyApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
+import { colors, shadows } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 
 const CompanyDashboard = () => {
   const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dashboard, setDashboard] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -21,7 +23,7 @@ const CompanyDashboard = () => {
       const response = await companyApi.getDashboard();
       setDashboard(response.data.data);
     } catch (err) {
-      console.error('Failed to fetch dashboard:', err);
+      logger.error('Failed to fetch dashboard:', err);
     } finally {
       setLoading(false);
     }
@@ -44,9 +46,9 @@ const CompanyDashboard = () => {
 
       <Row gutter={[24, 24]} style={{ marginBottom: '32px' }}>
         {[
-          { title: 'Active Opportunities', value: dashboard?.opportunities?.filter((o: any) => o.status === 'OPEN').length || 0, icon: <ShopOutlined />, color: colors.primary.solid },
-          { title: 'Total Applications', value: dashboard?.opportunities?.reduce((acc: number, o: any) => acc + (o._count?.applications || 0), 0) || 0, icon: <TeamOutlined />, color: colors.secondary?.solid || '#8B5CF6' },
-          { title: 'Active Deals', value: dashboard?.deals?.filter((d: any) => d.status === 'IN_PROGRESS').length || 0, icon: <DollarOutlined />, color: colors.success?.solid || '#10B981' }
+          { title: 'Active Opportunities', value: dashboard?.opportunities?.filter((o: { status: string }) => o.status === 'OPEN').length || 0, icon: <ShopOutlined />, color: colors.primary.solid },
+          { title: 'Total Applications', value: dashboard?.opportunities?.reduce((acc: number, o: { _count?: { applications?: number } }) => acc + (o._count?.applications || 0), 0) || 0, icon: <TeamOutlined />, color: colors.secondary?.solid || '#8B5CF6' },
+          { title: 'Active Deals', value: dashboard?.deals?.filter((d: { status: string }) => d.status === 'IN_PROGRESS').length || 0, icon: <DollarOutlined />, color: colors.success?.solid || '#10B981' }
         ].map((stat, idx) => (
           <Col xs={24} sm={8} key={idx}>
             <Card
@@ -103,7 +105,7 @@ const CompanyDashboard = () => {
           >
             <List
               dataSource={dashboard?.opportunities?.slice(0, 5) || []}
-              renderItem={(item: any, index: number) => (
+              renderItem={(item: { title: string; status: string; createdAt: string; _count?: { applications?: number } }, index: number) => (
                 <List.Item style={{ borderBottom: index === (dashboard?.opportunities?.slice(0, 5).length - 1) ? 'none' : `1px solid ${colors.gray[50]}`, padding: '20px 0' }}>
                   <List.Item.Meta
                     title={<Text style={{ color: colors.text.primary, fontWeight: 700, fontSize: '16px' }}>{item.title}</Text>}
@@ -141,7 +143,7 @@ const CompanyDashboard = () => {
           >
             <List
               dataSource={dashboard?.deals?.slice(0, 5) || []}
-              renderItem={(item: any, index: number) => (
+              renderItem={(item: { creator?: { profileImage?: string; displayName?: string }; application?: { opportunity?: { title?: string } }; status: string; amount: number }, index: number) => (
                 <List.Item style={{ borderBottom: index === (dashboard?.deals?.slice(0, 5).length - 1) ? 'none' : `1px solid ${colors.gray[50]}`, padding: '20px 0' }}>
                   <List.Item.Meta
                     avatar={<Avatar src={item.creator?.profileImage ? getImageUrl(item.creator.profileImage) : undefined} icon={<UserOutlined />} style={{ background: colors.gray[100], border: `1px solid ${colors.gray[200]}` }} />}

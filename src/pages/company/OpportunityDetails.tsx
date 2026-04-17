@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Card, Tag, Button, List, Avatar, Spin, Statistic, Row, Col, Modal, InputNumber, message, Descriptions, Typography } from 'antd';
-import { UserOutlined, ArrowLeftOutlined, CheckCircleOutlined, CloseCircleOutlined, CheckCircleFilled } from '@ant-design/icons';
+import { Card, Tag, Button, Avatar, Spin, Statistic, Row, Col, Modal, InputNumber, message, Descriptions, Typography } from 'antd';
+import { UserOutlined, ArrowLeftOutlined, CheckCircleOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { opportunityApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
+import { colors, shadows } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text, Paragraph } = Typography;
@@ -11,12 +12,14 @@ const { Title, Text, Paragraph } = Typography;
 const OpportunityDetails = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [opportunity, setOpportunity] = useState<any>(null);
     const [loading, setLoading] = useState(true);
 
     // Action states
     const [processingId, setProcessingId] = useState<string | null>(null);
     const [acceptModalOpen, setAcceptModalOpen] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [selectedApplication, setSelectedApplication] = useState<any>(null);
     const [dealAmount, setDealAmount] = useState<number>(0);
 
@@ -30,7 +33,7 @@ const OpportunityDetails = () => {
             const response = await opportunityApi.getById(id!);
             setOpportunity(response.data.data);
         } catch (err) {
-            console.error(err);
+            logger.error(err as string);
             message.error('Failed to load opportunity details');
         } finally {
             setLoading(false);
@@ -45,14 +48,15 @@ const OpportunityDetails = () => {
             await opportunityApi.rejectApplication(applicationId);
             message.success('Application rejected');
             fetchDetails(); // Refresh list
-        } catch (err: any) {
-            message.error(err.response?.data?.error || 'Failed to reject');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string } } };
+            message.error(e.response?.data?.error || 'Failed to reject');
         } finally {
             setProcessingId(null);
         }
     };
 
-    const openAcceptModal = (app: any) => {
+    const openAcceptModal = (app: { id: string; amount?: number; proposedBudget?: number }) => {
         setSelectedApplication(app);
         setDealAmount(Number(app.proposedBudget) || Number(opportunity?.budget) || 0);
         setAcceptModalOpen(true);
@@ -67,8 +71,9 @@ const OpportunityDetails = () => {
             message.success('Application accepted! Deal created.');
             setAcceptModalOpen(false);
             fetchDetails();
-        } catch (err: any) {
-            message.error(err.response?.data?.error || 'Failed to accept');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string } } };
+            message.error(e.response?.data?.error || 'Failed to accept');
         } finally {
             setProcessingId(null);
         }
@@ -146,6 +151,7 @@ const OpportunityDetails = () => {
                                 No applications received yet.
                             </div>
                         ) : (
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             applications.map((item: any) => (
                                 <Card
                                     key={item.id}

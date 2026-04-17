@@ -6,7 +6,6 @@
 import React from 'react';
 import { Button, ButtonProps } from 'antd';
 import { motion } from 'framer-motion';
-import { buttonTap, buttonHover } from '../../../styles/animations';
 import { colors, shadows } from '../../../styles/tokens';
 
 export interface CustomButtonProps extends Omit<ButtonProps, 'variant'> {
@@ -18,7 +17,9 @@ export interface CustomButtonProps extends Omit<ButtonProps, 'variant'> {
 
 const CustomButton: React.FC<CustomButtonProps> = ({
   variant = 'primary',
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   gradient = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   glow = false,
   children,
   style,

@@ -4,7 +4,7 @@
 // ===========================================
 
 import React from 'react';
-import { Avatar as AntAvatar, AvatarProps, Badge } from 'antd';
+import { Avatar as AntAvatar, AvatarProps } from 'antd';
 import { CheckCircleFilled } from '@ant-design/icons';
 import { colors } from '../../../styles/tokens';
 

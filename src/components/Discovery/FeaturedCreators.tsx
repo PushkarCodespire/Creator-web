@@ -10,6 +10,7 @@ import {
   LeftOutlined,
 } from '@ant-design/icons';
 import { creatorApi } from '../../services/api';
+import { logger } from '../../utils/logger';
 import { Creator } from '../../types';
 import { colors, spacing, typography, shadows } from '../../styles/tokens';
 import { CreatorCard } from './CreatorCard';
@@ -22,12 +23,13 @@ interface FeaturedCreatorsProps {
 }
 
 export const FeaturedCreators: React.FC<FeaturedCreatorsProps> = ({
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   limit = 8,
   category,
   viewMode = 'carousel',
   showHeading = false
 }) => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -53,7 +55,7 @@ export const FeaturedCreators: React.FC<FeaturedCreatorsProps> = ({
       });
       setCreators(sorted);
     } catch (error) {
-      console.error('Failed to fetch featured creators:', error);
+      logger.error('Failed to fetch featured creators:', error);
     } finally {
       setLoading(false);
     }

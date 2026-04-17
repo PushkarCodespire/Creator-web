@@ -4,24 +4,7 @@
 // ===========================================
 
 import { useState } from 'react';
-import { 
-  CheckCircleOutlined, 
-  ClockCircleOutlined, 
-  UserOutlined,
-  TeamOutlined,
-  ShopOutlined,
-  SettingOutlined,
-  RobotOutlined,
-  DollarOutlined,
-  DatabaseOutlined,
-  ApiOutlined,
-  FileTextOutlined,
-  BarChartOutlined,
-  ArrowRightOutlined,
-  CheckOutlined,
-  CloseOutlined,
-  MinusOutlined
-} from '@ant-design/icons';
+import { CheckCircleOutlined, ClockCircleOutlined, UserOutlined, TeamOutlined, ShopOutlined, SettingOutlined, RobotOutlined, DollarOutlined, DatabaseOutlined, ApiOutlined, FileTextOutlined, BarChartOutlined, ArrowRightOutlined, CheckOutlined, MinusOutlined } from '@ant-design/icons';
 
 const MVP1Presentation = () => {
   const [activeTab, setActiveTab] = useState(0);
@@ -38,7 +21,7 @@ const MVP1Presentation = () => {
   ];
 
   const mvp1Completion = 88;
-  const features = {
+  const _features = {
     complete: 23,
     total: 26,
     percentage: 88
@@ -850,7 +833,7 @@ const TechnicalArchitectureTab = () => (
   </div>
 );
 
-const MVP1StatusTab = ({ features, completion }: { features: any[], completion: number }) => {
+const MVP1StatusTab = ({ features, completion }: { features: { name: string; status: string; category: string }[], completion: number }) => {
   const completeCount = features.filter(f => f.status === 'complete').length;
   const pendingCount = features.filter(f => f.status === 'pending').length;
   const categories = Array.from(new Set(features.map(f => f.category)));
@@ -921,7 +904,7 @@ const MVP1StatusTab = ({ features, completion }: { features: any[], completion: 
 // STYLES
 // ===========================================
 
-const styles: any = {
+const styles: Record<string, React.CSSProperties> = {
   container: {
     width: '100vw',
     height: '100vh',

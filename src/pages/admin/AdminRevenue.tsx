@@ -4,20 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import { Row, Col, Statistic, Spin, Empty, Select, message, Tag, Typography, Progress, Space, List, Avatar } from 'antd';
-import {
-  TrendingUp,
-  CreditCard,
-  Users,
-  Wallet,
-  CheckCircle2,
-  RefreshCw,
-  AlertCircle,
-  Calendar,
-  ChevronRight,
-  ArrowRight
-} from 'lucide-react';
+import { TrendingUp, CreditCard, Users, Wallet, CheckCircle2, RefreshCw, AlertCircle, Calendar, ArrowRight } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import CustomTable from '../../components/common/Table/CustomTable';
 import CustomCard from '../../components/common/Card/CustomCard';
 import CustomButton from '../../components/common/Button/CustomButton';
@@ -26,8 +16,9 @@ const { Text, Title, Paragraph } = Typography;
 
 const AdminRevenue = () => {
   const [loading, setLoading] = useState(true);
-  const [revenueData, setRevenueData] = useState<any>(null);
-  const [transactions, setTransactions] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [revenueData, setRevenueData] = useState<Record<string, any> | null>(null);
+  const [transactions, setTransactions] = useState<Record<string, unknown>[]>([]);
   const [timeRange, setTimeRange] = useState('30days');
 
   useEffect(() => {
@@ -41,7 +32,7 @@ const AdminRevenue = () => {
       setRevenueData(response.data.data);
       setTransactions(response.data.data.transactions?.recent || []);
     } catch (err) {
-      console.error('Failed to fetch revenue data:', err);
+      logger.error('Failed to fetch revenue data:', err);
       message.error('Failed to load revenue data');
     } finally {
       setLoading(false);
@@ -126,11 +117,11 @@ const AdminRevenue = () => {
     return `${startDay} ${startMonth}-${endDay} ${endMonth}`;
   };
 
-  const getWeekLabel = (item: any) => {
+  const getWeekLabel = (item: Record<string, string | number | undefined>) => {
     if (item?.rangeLabel) return item.rangeLabel;
     const start = item?.startDate || item?.weekStart || item?.date;
     const end = item?.endDate || item?.weekEnd;
-    const label = formatWeeklyRange(start, end);
+    const label = formatWeeklyRange(start as string | undefined, end as string | undefined);
     return label || item?.date || '-';
   };
 
@@ -212,7 +203,7 @@ const AdminRevenue = () => {
               <List
                 itemLayout="horizontal"
                 dataSource={revenueData?.revenueTrend || []}
-                renderItem={(item: any) => (
+                renderItem={(item: { revenue: number; dealRevenue: number; rangeLabel?: string; startDate?: string; weekStart?: string; date?: string; endDate?: string; weekEnd?: string }) => (
                   <List.Item
                     extra={
                       <div style={{ textAlign: 'right' }}>
@@ -366,7 +357,7 @@ const AdminRevenue = () => {
         title={() => <Text strong style={{ color: colors.text.primary, fontSize: '16px' }}>Comprehensive Transaction Logs</Text>}
         dataSource={transactions}
         columns={transactionColumns}
-        rowKey={(record) => record.id || record.paymentId}
+        rowKey={(record) => (record.id || record.paymentId) as string}
         pagination={{
           pageSize: 5,
           showTotal: (total) => `Showing ${total} recent transactions`
@@ -378,7 +369,7 @@ const AdminRevenue = () => {
 };
 
 // Helper component for circle metrics
-const CircleMetric = ({ icon, label, value, percent, color }: any) => (
+const CircleMetric = ({ icon, label, value, percent, color }: { icon: React.ReactNode; label: string; value: number; percent: number; color: string }) => (
   <div style={{ padding: '8px' }}>
     <Space direction="vertical" align="center" size={0}>
       <div style={{ fontSize: '24px', marginBottom: '8px', display: 'flex', alignItems: 'center' }}>{icon}</div>
@@ -396,7 +387,7 @@ const CircleMetric = ({ icon, label, value, percent, color }: any) => (
   </div>
 );
 
-const MetricCard = ({ title, value, color, prefix, trend, isCurrency = true }: any) => (
+const MetricCard = ({ title, value, color, prefix, trend, isCurrency = true }: { title: string; value: number; color: string; prefix: React.ReactNode; trend?: string; isCurrency?: boolean }) => (
   <CustomCard hoverable style={{ height: '100%', borderRadius: '16px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
       <div style={{

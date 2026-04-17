@@ -3,6 +3,8 @@
 // Helper functions for demo mode features
 // ===========================================
 
+import { logger } from './logger';
+
 /**
  * Check if the application is running in demo mode
  * @returns true if VITE_DEMO_MODE environment variable is set to 'true'
@@ -37,7 +39,7 @@ export const showDemoTooltip = (feature: string, element?: HTMLElement): void =>
   if (!isDemoMode()) return;
 
   const message = getDemoMessage(feature);
-  console.log(`[DEMO MODE] ${feature}: ${message}`);
+  logger.info(`[DEMO MODE] ${feature}: ${message}`);
 
   if (element) {
     element.title = `🎬 DEMO MODE: ${message}`;
@@ -77,28 +79,10 @@ export const resetDemoBanner = (storageKey = 'demo-mode-banner-dismissed'): void
 export const logDemoInfo = (): void => {
   if (!isDemoMode()) return;
 
-  console.log('%c🎬 DEMO MODE ACTIVE', 'background: #ff9800; color: white; font-size: 16px; padding: 10px; font-weight: bold;');
-  console.log('%cFeatures Status:', 'font-weight: bold; font-size: 14px;');
-  console.log('✅ AI Chat: Fully functional (OpenAI GPT-4o mini)');
-  console.log('✅ Database: PostgreSQL with comprehensive demo data');
-  console.log('✅ Real-time: Socket.io for live updates');
-  console.log('✅ Analytics: Full analytics dashboard with charts');
-  console.log('🎬 Payments: Simulated (Razorpay integration ready)');
-  console.log('🎬 Emails: Console logs (SendGrid integration ready)');
-  console.log('🎬 Payouts: Simulated (Razorpay X integration ready)');
-  console.log('\n📊 Demo Data:');
-  console.log('   • 50 Creators across 7 categories');
-  console.log('   • 200 Users (100 Premium, 100 Free)');
-  console.log('   • 1000+ Conversations with realistic messages');
-  console.log('   • 50 Brand Opportunities');
-  console.log('   • 30 Completed Deals');
-  console.log('   • Realistic earnings distribution');
-  console.log('\n🔑 Test Accounts:');
-  console.log('   Admin:   admin@platform.com / admin123');
-  console.log('   User:    user1@test.com / user123 (Premium)');
-  console.log('   Creator: ranveer@creator.com / creator123');
-  console.log('   Company: tcs-tataconsultancyservices@company.com / company123');
-  console.log('\n💡 Tip: Check Admin > Email Preview to see all email templates');
+  logger.info('DEMO MODE ACTIVE');
+  logger.info('Features: AI Chat, Database, Real-time, Analytics all functional');
+  logger.info('Simulated: Payments, Emails, Payouts');
+  logger.info('Demo Data: 50 Creators, 200 Users, 1000+ Conversations, 50 Opportunities, 30 Deals');
 };
 
 // Auto-log demo info when module loads (if in demo mode)

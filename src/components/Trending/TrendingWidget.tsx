@@ -7,7 +7,8 @@ import { Card, Segmented, Skeleton, Empty } from 'antd';
 import { FireOutlined, TrophyOutlined, RiseOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { trendingApi } from '../../services/api';
-import { colors, spacing } from '../../styles/tokens';
+import { spacing } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface TrendingWidgetProps {
   type: 'posts' | 'creators';
@@ -31,6 +32,7 @@ export const TrendingWidget: React.FC<TrendingWidgetProps> = ({
   category,
 }) => {
   const [timeWindow, setTimeWindow] = useState<TimeWindow>(24);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,7 +55,7 @@ export const TrendingWidget: React.FC<TrendingWidgetProps> = ({
       const items = response.data.data[type] || [];
       setData(items);
     } catch (error) {
-      console.error('Failed to fetch trending data:', error);
+      logger.error('Failed to fetch trending data:', error);
       setData([]);
     } finally {
       setLoading(false);
@@ -133,7 +135,8 @@ export const TrendingWidget: React.FC<TrendingWidgetProps> = ({
 };
 
 interface TrendingItemProps {
-  item: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  item: Record<string, any>;
   type: 'posts' | 'creators';
   rank: number;
 }

@@ -13,6 +13,7 @@ import { Review, ReviewStats } from '../../types';
 import { connectSocket, getSocket } from '../../utils/socket';
 import CustomCard from '../common/Card/CustomCard';
 import { EmptyState } from '../common/EmptyState/EmptyState';
+import { logger } from '../../utils/logger';
 import { colors, spacing, typography } from '../../styles/tokens';
 
 interface CreatorReviewsProps {
@@ -81,7 +82,7 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
     if (!authToken) return;
     const socket = connectSocket(authToken, user?.id);
 
-    const handleReviewEvent = (payload: any) => {
+    const handleReviewEvent = (payload: { creatorId?: string; review?: { creatorId?: string }; data?: { creatorId?: string }; creator?: { id?: string } }) => {
       const eventCreatorId =
         payload?.creatorId ||
         payload?.review?.creatorId ||
@@ -91,7 +92,7 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
       fetchReviews();
     };
 
-    const handleRatingUpdate = (payload: any) => {
+    const handleRatingUpdate = (payload: { creatorId?: string; averageRating?: number; totalReviews?: number }) => {
       if (payload?.creatorId !== creatorId) return;
       setStats((prev) => ({
         averageRating: payload?.averageRating ?? prev?.averageRating ?? 0,
@@ -142,8 +143,8 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
           paginationData?.totalPages ??
           Math.max(1, Math.ceil((paginationData?.total ?? (Array.isArray(reviewsData) ? reviewsData.length : 0)) / prev.limit))
       }));
-    } catch (error: any) {
-      console.error('Failed to fetch reviews:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to fetch reviews:', error);
       setReviews([]);
     } finally {
       setLoading(false);
@@ -160,9 +161,10 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
         rating: review?.rating ?? 5,
         review: review?.review ?? ''
       });
-    } catch (error: any) {
-      if (error?.response?.status !== 404) {
-        console.error('Failed to fetch your review:', error);
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      if (err?.response?.status !== 404) {
+        logger.error('Failed to fetch your review:', error);
       }
       setMyReview(null);
       form.setFieldsValue({ rating: 5, review: '' });
@@ -181,9 +183,10 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
       }
       await fetchReviews();
       await fetchMyReview();
-    } catch (error: any) {
-      console.error('Failed to submit review:', error);
-      antMessage.error(error?.response?.data?.error || 'Failed to submit review');
+    } catch (error: unknown) {
+      logger.error('Failed to submit review:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err?.response?.data?.error || 'Failed to submit review');
     } finally {
       setSubmitting(false);
     }
@@ -196,9 +199,10 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
       setMyReview(null);
       form.setFieldsValue({ rating: 5, review: '' });
       await fetchReviews();
-    } catch (error: any) {
-      console.error('Failed to delete review:', error);
-      antMessage.error(error?.response?.data?.error || 'Failed to delete review');
+    } catch (error: unknown) {
+      logger.error('Failed to delete review:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err?.response?.data?.error || 'Failed to delete review');
     }
   };
 
@@ -248,7 +252,7 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
           </Col>
           <Col xs={24} md={16}>
             {[5, 4, 3, 2, 1].map((stars) => {
-              const count = Number((breakdown as any)[stars] ?? (breakdown as any)[String(stars)] ?? 0);
+              const count = Number((breakdown as Record<string, number>)[stars] ?? (breakdown as Record<string, number>)[String(stars)] ?? 0);
               const percent = displayStats.totalReviews
                 ? Math.round((count / displayStats.totalReviews) * 100)
                 : 0;

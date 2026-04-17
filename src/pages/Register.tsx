@@ -2,18 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  User,
-  Mail,
-  Lock,
-  CheckCircle,
-  ShieldCheck,
-  EyeOff,
-  Eye,
-  Loader2,
-  LayoutGrid,
-  Building2
-} from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { message } from 'antd';
 import { RootState, AppDispatch } from '../store';
 import { register, clearError } from '../store/slices/authSlice';
@@ -21,10 +10,10 @@ import '../styles/Auth.css';
 
 const TESTIMONIALS = [
   {
-    text: "AI Creator Platform helped me monetize my knowledge in ways I never imagined. The AI tools are incredible!",
-    name: "Sarah Jenkins",
-    role: "Digital Artist",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg"
+    text: "Creatorpal transformed how I organize my research. It's the first platform that understands the nuance of clinical pedagogy.",
+    name: "Dr. Elena Rodriguez",
+    role: "Clinical Curriculum Lead",
+    avatar: "https://randomuser.me/api/portraits/women/68.jpg"
   },
   {
     text: "The best community for creators. I've found amazing partnerships here that boosted my career.",
@@ -34,9 +23,9 @@ const TESTIMONIALS = [
   },
   {
     text: "Setting up my profile took minutes. Now I'm earning recurring revenue from my AI workshops.",
-    name: "Elena Rodriguez",
-    role: "AI Consultant",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg"
+    name: "Sarah Jenkins",
+    role: "Digital Artist",
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg"
   }
 ];
 
@@ -45,23 +34,18 @@ const Register = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, isLoading: authLoading, error, isProfileComplete } = useSelector((state: RootState) => state.auth);
 
-  // Form State
-  const [role, setRole] = useState<'USER' | 'CREATOR' | 'COMPANY'>('USER');
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    terms: false
-  });
-
-  // Validation State
-  const [emailStatus, setEmailStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
-  const [passwordStrength, setPasswordStrength] = useState(0);
+  const [role, setRole] = useState<'USER' | 'CREATOR'>('USER');
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [dateOfBirth, setDateOfBirth] = useState('');
+  const [location, setLocation] = useState('');
+  const [terms, setTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
-  // Rotate Testimonials
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
@@ -69,208 +53,78 @@ const Register = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Redirect if authenticated
   useEffect(() => {
     if (isAuthenticated) {
-      let path = '/dashboard';
-
       if (role === 'CREATOR') {
-        path = isProfileComplete ? '/creator-dashboard' : '/onboarding/creator';
-      } else if (role === 'COMPANY') {
-        path = '/company-dashboard';
+        navigate(isProfileComplete ? '/creator-dashboard' : '/onboarding/creator');
+      } else {
+        // Fan/User — go back to previous page
+        navigate(-1);
       }
-
-      navigate(path);
     }
   }, [isAuthenticated, role, navigate, isProfileComplete]);
 
-  // Handle API Errors
   useEffect(() => {
     if (error) {
-      // Parse error message for better UX
-      let errorMessage = error;
-
       if (error.includes('email') || error.includes('Email')) {
         setErrors({ email: 'This email is already registered' });
-        errorMessage = 'Email already exists';
-      } else if (error.includes('password') || error.includes('Password')) {
-        setErrors({ password: 'Password does not meet requirements' });
-        errorMessage = 'Invalid password format';
-      } else if (error.includes('name') || error.includes('Name')) {
-        setErrors({ name: 'Invalid name format' });
-        errorMessage = 'Invalid name format';
-      } else if (error.includes('validation')) {
-        errorMessage = 'Please check all fields and try again';
       }
-
-      message.error(errorMessage);
+      message.error(error);
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
-  // Real-time Email Validation (Simulated)
-  useEffect(() => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!formData.email) {
-      setEmailStatus('idle');
-      return;
-    }
-
-    if (emailRegex.test(formData.email)) {
-      setEmailStatus('checking');
-      const timer = setTimeout(() => {
-        // Simulate API check
-        setEmailStatus('available');
-      }, 800);
-      return () => clearTimeout(timer);
-    } else {
-      setEmailStatus('idle');
-    }
-  }, [formData.email]);
-
-  // Password Strength Calculation
-  useEffect(() => {
-    const pwd = formData.password;
-    let strength = 0;
-    if (pwd.length >= 8) strength += 25;
-    if (pwd.length >= 12) strength += 10;
-    if (/[A-Z]/.test(pwd)) strength += 25;
-    if (/[a-z]/.test(pwd)) strength += 20;
-    if (/[0-9]/.test(pwd)) strength += 20;
-    if (/[^A-Za-z0-9]/.test(pwd)) strength += 10;
-    setPasswordStrength(Math.min(strength, 100));
-  }, [formData.password]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-
-    // Trim whitespace for name and email fields
-    const processedValue = type === 'checkbox' ? checked :
-      (name === 'name' || name === 'email') ? value.trimStart() : value;
-
-    setFormData(prev => ({
-      ...prev,
-      [name]: processedValue
-    }));
-
-    // Clear error for this field when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
-
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-
-    // Name validation: 2-100 characters, letters and spaces only
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
-    } else if (formData.name.trim().length < 2 || formData.name.trim().length > 100) {
-      newErrors.name = "Name must be between 2 and 100 characters";
-    } else if (!/^[a-zA-Z\s]+$/.test(formData.name.trim())) {
-      newErrors.name = "Name can only contain letters and spaces";
-    }
-
-    // Email validation: Valid email format
-    if (!formData.email.trim()) {
-      newErrors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Invalid email format";
-    }
-
-    // Password validation: Minimum 8 characters with uppercase, lowercase, and number
-    if (!formData.password) {
-      newErrors.password = "Password is required";
-    } else if (formData.password.length < 8) {
-      newErrors.password = "Password must be at least 8 characters";
-    } else {
-      const hasUpperCase = /[A-Z]/.test(formData.password);
-      const hasLowerCase = /[a-z]/.test(formData.password);
-      const hasNumber = /[0-9]/.test(formData.password);
-
-      if (!hasUpperCase || !hasLowerCase || !hasNumber) {
-        newErrors.password = "Password must contain uppercase, lowercase, and a number";
-      }
-    }
-
-    // Terms validation
-    if (!formData.terms) {
-      newErrors.terms = "You must agree to the Terms of Service";
-    }
-
+    if (!firstName.trim()) newErrors.firstName = "First name is required";
+    if (!lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!email.trim()) newErrors.email = "Email is required";
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Invalid email";
+    if (!password) newErrors.password = "Password is required";
+    else if (password.length < 8) newErrors.password = "Min 8 characters";
+    if (!dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
+    if (!location.trim()) newErrors.location = "Location is required";
+    if (!terms) newErrors.terms = "You must agree to the terms";
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
-      const result = await dispatch(register({
-        email: formData.email.trim(),
-        password: formData.password,
-        name: formData.name.trim(),
-        role: role || 'USER'
+      await dispatch(register({
+        email: email.trim(),
+        password,
+        name: `${firstName.trim()} ${lastName.trim()}`,
+        role,
+        dateOfBirth: dateOfBirth || undefined,
+        location: location.trim() || undefined,
       })).unwrap();
-
-      // Success - show message and redirect
-      message.success('Account created successfully! Welcome to AI Creator Platform.');
-
-      // Redirect based on role
-      setTimeout(() => {
-        const path = role === 'CREATOR'
-          ? (isProfileComplete ? '/creator-dashboard' : '/onboarding/creator')
-          : role === 'COMPANY' ? '/company-dashboard' : '/dashboard';
-        navigate(path);
-      }, 500);
-    } catch (error: any) {
-      // Error handling is done in useEffect via Redux error state
-      // But we can add more specific error messages here if needed
-      if (error?.includes('already exists')) {
+      message.success('Account created successfully!');
+    } catch (err: unknown) {
+      if (typeof err === 'string' && err.includes('already exists')) {
         setErrors({ email: 'An account with this email already exists' });
       }
     }
   };
 
-  const getStrengthColor = () => {
-    if (passwordStrength < 40) return '#EF4444'; // Red
-    if (passwordStrength < 80) return '#F59E0B'; // Orange
-    return '#10B981'; // Green
-  };
-
   return (
     <div className="register-container">
+      <div className="auth-card">
       {/* Left Brand Panel */}
       <div className="brand-panel">
         <div className="brand-content">
-          <div className="brand-logo-container" style={{ marginBottom: '32px' }}>
-            <img src="/Logo.png" alt="CodeSpire" style={{ height: '56px', width: 'auto' }} />
+          <div style={{ marginBottom: 32 }}>
+            <img src="/website/figma/logo11.png" alt="CreatorPal" style={{ height: 30, width: 'auto' }} />
           </div>
           <h1 className="brand-headline">
-            Join 10,000+ creators <br />
-            monetizing their expertise
+            Join <strong>10,000+</strong> Creators monetizing their expertise
           </h1>
           <p className="brand-subtext">
-            The all-in-one platform for AI creators to build, sell, and grow their community.
+            The all-in-one platform for curriculum building, community management, and medical-grade data curation.
           </p>
-
-          <ul className="benefit-list">
-            <li className="benefit-item">
-              <span className="check-icon"><CheckCircle size={14} /></span>
-              Free to start, cancel anytime
-            </li>
-            <li className="benefit-item">
-              <span className="check-icon"><CheckCircle size={14} /></span>
-              No credit card required
-            </li>
-            <li className="benefit-item">
-              <span className="check-icon"><CheckCircle size={14} /></span>
-              Set up your profile in 2 minutes
-            </li>
-          </ul>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -280,6 +134,10 @@ const Register = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
               className="testimonial-card"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
             >
               <p className="testimonial-text">"{TESTIMONIALS[activeTestimonial].text}"</p>
               <div className="testimonial-user">
@@ -294,165 +152,138 @@ const Register = () => {
               </div>
             </motion.div>
           </AnimatePresence>
-
-          <div className="trust-badges">
-            <span><ShieldCheck size={14} /> SSL Secured</span>
-            <span>GDPR Compliant</span>
-            <span>Verified by Stripe</span>
-          </div>
         </div>
       </div>
 
       {/* Right Form Panel */}
       <div className="form-panel">
         <div className="form-wrapper">
-          <div className="form-header">
-            <h2 className="form-title">Create your account</h2>
-            <p className="form-subtitle">Choose how you want to use the platform</p>
+          <div className="form-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <div>
+              <h2 className="form-title">Create Account</h2>
+              <p className="form-subtitle">( Select Account Type )</p>
+            </div>
+            {/* Role toggle */}
+            <div style={{
+              display: 'flex',
+              borderRadius: 8,
+              overflow: 'hidden',
+              border: '1px solid #e5e7eb',
+              fontSize: 13,
+              fontWeight: 600,
+            }}>
+              <button
+                type="button"
+                onClick={() => setRole('USER')}
+                style={{
+                  padding: '8px 16px',
+                  background: role === 'USER' ? '#111827' : '#fff',
+                  color: role === 'USER' ? '#fff' : '#374151',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                Fan / User
+              </button>
+              <button
+                type="button"
+                onClick={() => setRole('CREATOR')}
+                style={{
+                  padding: '8px 16px',
+                  background: role === 'CREATOR' ? '#111827' : '#fff',
+                  color: role === 'CREATOR' ? '#fff' : '#374151',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                AI Creator
+              </button>
+            </div>
           </div>
 
           <form onSubmit={handleSubmit}>
-            {/* Account Type Selector */}
-            <div className="account-type-grid">
-              <div
-                className={`account-type-card ${role === 'USER' ? 'selected' : ''}`}
-                onClick={() => setRole('USER')}
-              >
-                <div className="type-icon"><User size={20} /></div>
-                <div className="type-info">
-                  <h4>Fan / User</h4>
-                  <p>Chat with AI creators</p>
-                </div>
+            {/* First + Last Name */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 20 }}>
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>First Name</label>
+                <input type="text" className={`custom-input ${errors.firstName ? 'error' : ''}`} style={{ paddingLeft: 16 }} placeholder="John" value={firstName} onChange={(e) => { setFirstName(e.target.value); setErrors(p => ({ ...p, firstName: '' })); }} />
+                {errors.firstName && <span className="error-message">{errors.firstName}</span>}
               </div>
-
-              <div
-                className={`account-type-card ${role === 'CREATOR' ? 'selected' : ''}`}
-                onClick={() => setRole('CREATOR')}
-              >
-                <div className="type-icon"><LayoutGrid size={20} /></div>
-                <div className="type-info">
-                  <h4>AI Creator</h4>
-                  <p>Monetize your expertise</p>
-                </div>
-              </div>
-
-              <div
-                className={`account-type-card ${role === 'COMPANY' ? 'selected' : ''}`}
-                onClick={() => setRole('COMPANY')}
-              >
-                <div className="type-icon"><Building2 size={20} /></div>
-                <div className="type-info">
-                  <h4>Company</h4>
-                  <p>Find partners & talent</p>
-                </div>
+              <div className="input-group" style={{ marginBottom: 0 }}>
+                <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Last Name</label>
+                <input type="text" className={`custom-input ${errors.lastName ? 'error' : ''}`} style={{ paddingLeft: 16 }} placeholder="Doe" value={lastName} onChange={(e) => { setLastName(e.target.value); setErrors(p => ({ ...p, lastName: '' })); }} />
+                {errors.lastName && <span className="error-message">{errors.lastName}</span>}
               </div>
             </div>
 
-            {/* Inputs */}
             <div className="input-group">
-              <label className="input-label">Full Name</label>
-              <div className="input-wrapper">
-                <User className="field-icon" size={18} />
-                <input
-                  type="text"
-                  name="name"
-                  className={`custom-input ${errors.name ? 'error' : ''}`}
-                  placeholder={role === 'COMPANY' ? "Company Name" : "John Doe"}
-                  value={formData.name}
-                  onChange={handleChange}
-                />
-              </div>
-              {errors.name && <span className="error-message">{errors.name}</span>}
-            </div>
-
-            <div className="input-group">
-              <label className="input-label">Email Address</label>
-              <div className="input-wrapper">
-                <Mail className="field-icon" size={18} />
-                <input
-                  type="email"
-                  name="email"
-                  className={`custom-input ${errors.email ? 'error' : emailStatus === 'available' ? 'success' : ''}`}
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-                {emailStatus === 'checking' && <Loader2 className="validation-icon animate-spin" size={16} />}
-                {emailStatus === 'available' && <CheckCircle className="validation-icon success" size={16} />}
-              </div>
+              <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Email Address</label>
+              <input type="email" className={`custom-input ${errors.email ? 'error' : ''}`} style={{ paddingLeft: 16 }} placeholder="john.doe@example.com" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }} />
               {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
 
             <div className="input-group">
-              <label className="input-label">Password</label>
+              <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Password</label>
               <div className="input-wrapper">
-                <Lock className="field-icon" size={18} />
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  className={`custom-input ${errors.password ? 'error' : ''}`}
-                  placeholder="••••••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
-                />
+                <input type={showPassword ? "text" : "password"} className={`custom-input ${errors.password ? 'error' : ''}`} style={{ paddingLeft: 16 }} placeholder="••••••••" value={password} onChange={(e) => { setPassword(e.target.value); setErrors(p => ({ ...p, password: '' })); }} />
                 <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                 </div>
               </div>
-
-              {formData.password && (
-                <div className="password-strength">
-                  <div className="strength-bar" style={{
-                    width: `${passwordStrength}%`,
-                    backgroundColor: getStrengthColor(),
-                    opacity: passwordStrength > 0 ? 1 : 0,
-                    transition: 'all 0.3s ease'
-                  }} />
-                  <div style={{ fontSize: '12px', color: '#6B7280', marginTop: '6px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    <span style={{ color: formData.password.length >= 8 ? '#10B981' : '#9CA3AF' }}>
-                      {formData.password.length >= 8 ? '✓' : '○'} 8+ characters
-                    </span>
-                    <span style={{ color: /[A-Z]/.test(formData.password) ? '#10B981' : '#9CA3AF' }}>
-                      {/[A-Z]/.test(formData.password) ? '✓' : '○'} Uppercase
-                    </span>
-                    <span style={{ color: /[a-z]/.test(formData.password) ? '#10B981' : '#9CA3AF' }}>
-                      {/[a-z]/.test(formData.password) ? '✓' : '○'} Lowercase
-                    </span>
-                    <span style={{ color: /[0-9]/.test(formData.password) ? '#10B981' : '#9CA3AF' }}>
-                      {/[0-9]/.test(formData.password) ? '✓' : '○'} Number
-                    </span>
-                  </div>
-                </div>
-              )}
               {errors.password && <span className="error-message">{errors.password}</span>}
             </div>
 
-            <div style={{ marginBottom: '24px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.9rem', color: '#4B5563' }}>
+            <div className="input-group" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+              <div>
+                <label className="input-label">Date of Birth</label>
                 <input
-                  type="checkbox"
-                  name="terms"
-                  checked={formData.terms}
-                  onChange={handleChange}
-                  style={{ width: '16px', height: '16px' }}
+                  type="date"
+                  className={`custom-input ${errors.dateOfBirth ? 'error' : ''}`}
+                  style={{ paddingLeft: 16, colorScheme: 'light' }}
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
                 />
-                I agree to the Terms of Service and Privacy Policy
+                {errors.dateOfBirth && <span className="error-message">{errors.dateOfBirth}</span>}
+              </div>
+              <div>
+                <label className="input-label">Location</label>
+                <input
+                  type="text"
+                  className={`custom-input ${errors.location ? 'error' : ''}`}
+                  style={{ paddingLeft: 16 }}
+                  placeholder="e.g. Mumbai, India"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                />
+                {errors.location && <span className="error-message">{errors.location}</span>}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: 24 }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', fontSize: 13, color: '#4B5563' }}>
+                <input type="checkbox" checked={terms} onChange={(e) => setTerms(e.target.checked)} style={{ width: 14, height: 14 }} />
+                I agree to the <a href="#terms" style={{ color: '#ff3e48', fontWeight: 500 }}>Terms of Service</a> and <a href="#privacy" style={{ color: '#ff3e48', fontWeight: 500 }}>Privacy Policy</a>.
               </label>
               {errors.terms && <span className="error-message">{errors.terms}</span>}
             </div>
 
-            <button type="submit" className="submit-btn" disabled={authLoading}>
-              {authLoading ? 'Creating account...' : 'Create Account →'}
+            <button type="submit" className="submit-btn" disabled={authLoading} style={{
+              background: '#ff3e48',
+              borderRadius: 10,
+            }}>
+              {authLoading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
 
-
-
-          <div style={{ textAlign: 'center', marginTop: '32px' }}>
-            <span style={{ color: '#6B7280' }}>Already have an account? </span>
-            <Link to="/login" style={{ color: '#667EEA', fontWeight: 600 }}>Log in</Link>
+          <div style={{ textAlign: 'center', marginTop: 28 }}>
+            <span style={{ color: '#6B7280', fontSize: 14 }}>Already have an account? </span>
+            <Link to="/login" style={{ color: '#ff3e48', fontWeight: 600, fontSize: 14 }}>Log In</Link>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );

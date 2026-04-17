@@ -3,15 +3,8 @@
 // Displays engagement metrics and stats
 // ===========================================
 
-import { Card, Row, Col, Progress, Tag, Tooltip } from 'antd';
-import {
-  MessageOutlined,
-  ClockCircleOutlined,
-  CheckCircleOutlined,
-  TrophyOutlined,
-  FireOutlined,
-} from '@ant-design/icons';
-import { motion } from 'framer-motion';
+import { Row, Col, Progress } from 'antd';
+import { MessageOutlined, ClockCircleOutlined, TrophyOutlined } from '@ant-design/icons';
 import { colors, spacing, typography } from '../../styles/tokens';
 import CustomCard from '../common/Card/CustomCard';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
@@ -28,6 +21,7 @@ interface CreatorStatsProps {
 
 export const CreatorStats: React.FC<CreatorStatsProps> = ({
   totalChats,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   totalMessages,
   rating,
   responseRate = 100,
@@ -109,6 +103,7 @@ export const CreatorStats: React.FC<CreatorStatsProps> = ({
                 cx="50%"
                 cy="50%"
                 labelLine={false}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 label={({ topic, percentage }: any) => `${topic} (${percentage}%)`}
                 outerRadius={80}
                 fill="#8884d8"

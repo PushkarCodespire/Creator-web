@@ -3,12 +3,13 @@
 // ===========================================
 
 import { useState } from 'react';
-import { Modal, Image, message } from 'antd';
+import { Image, message } from 'antd';
 import { PlayCircleOutlined, SoundOutlined, FileOutlined, DownloadOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { MediaFile } from '../../types';
 import { colors, spacing, typography } from '../../styles/tokens';
 import { downloadFromUrl } from '../../utils/fileDownloadUtils';
+import { logger } from '../../utils/logger';
 
 interface MediaMessageProps {
   media: MediaFile[];
@@ -219,7 +220,7 @@ export const MediaMessage: React.FC<MediaMessageProps> = ({ media }) => {
                 await downloadFromUrl(file.url, file.name);
                 message.success('Download started');
               } catch (error) {
-                console.error('Download failed:', error);
+                logger.error('Download failed:', error);
                 message.error('Failed to download file');
               }
             };

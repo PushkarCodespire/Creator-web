@@ -27,7 +27,8 @@ import {
     ExclamationCircleOutlined
 } from '@ant-design/icons';
 import { companyApi, milestoneApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 
@@ -66,7 +67,7 @@ const MilestoneTimeline = ({ dealId, dealStatus }: MilestoneTimelineProps) => {
             const res = await milestoneApi.list(dealId);
             setMilestones(res.data?.data?.milestones || []);
         } catch (err) {
-            console.error('Failed to load milestones', err);
+            logger.error('Failed to load milestones', err);
         } finally {
             setLoading(false);
         }
@@ -76,7 +77,7 @@ const MilestoneTimeline = ({ dealId, dealStatus }: MilestoneTimelineProps) => {
         load();
     }, [load]);
 
-    const handleAdd = async (values: any) => {
+    const handleAdd = async (values: { title: string; description?: string; dueDate?: { toISOString: () => string } }) => {
         setAdding(true);
         try {
             await milestoneApi.create(dealId, {
@@ -88,10 +89,11 @@ const MilestoneTimeline = ({ dealId, dealStatus }: MilestoneTimelineProps) => {
             form.resetFields();
             setShowAddForm(false);
             load();
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string | { message?: string } } } };
+            const errData = e.response?.data?.error;
             message.error(
-                err.response?.data?.error?.message ||
-                    err.response?.data?.error ||
+                (typeof errData === 'object' ? (errData as { message?: string })?.message : errData) ||
                     'Failed to add milestone'
             );
         } finally {
@@ -105,10 +107,11 @@ const MilestoneTimeline = ({ dealId, dealStatus }: MilestoneTimelineProps) => {
             await milestoneApi.complete(id);
             message.success('Milestone marked as completed');
             load();
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string | { message?: string } } } };
+            const errData = e.response?.data?.error;
             message.error(
-                err.response?.data?.error?.message ||
-                    err.response?.data?.error ||
+                (typeof errData === 'object' ? (errData as { message?: string })?.message : errData) ||
                     'Failed to complete milestone'
             );
         } finally {
@@ -122,10 +125,11 @@ const MilestoneTimeline = ({ dealId, dealStatus }: MilestoneTimelineProps) => {
             await milestoneApi.delete(id);
             message.success('Milestone deleted');
             load();
-        } catch (err: any) {
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string | { message?: string } } } };
+            const errData = e.response?.data?.error;
             message.error(
-                err.response?.data?.error?.message ||
-                    err.response?.data?.error ||
+                (typeof errData === 'object' ? (errData as { message?: string })?.message : errData) ||
                     'Failed to delete milestone'
             );
         } finally {
@@ -407,6 +411,7 @@ const MilestoneTimeline = ({ dealId, dealStatus }: MilestoneTimelineProps) => {
 // MAIN PAGE — deals table with expandable milestone panels
 // ===========================================
 const CompanyDeals = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [deals, setDeals] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
@@ -421,7 +426,7 @@ const CompanyDeals = () => {
             const response = await companyApi.getDeals({ limit: 50 });
             setDeals(response.data.data.deals || []);
         } catch (err) {
-            console.error(err);
+            logger.error(err as string);
             message.error('Failed to load deals');
         } finally {
             setLoading(false);
@@ -434,8 +439,9 @@ const CompanyDeals = () => {
             await companyApi.completeDeal(dealId);
             message.success('Deal completed successfully!');
             fetchDeals();
-        } catch (err: any) {
-            message.error(err.response?.data?.error || 'Failed to complete deal');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { error?: string } } };
+            message.error(e.response?.data?.error || 'Failed to complete deal');
         } finally {
             setProcessingId(null);
         }
@@ -473,7 +479,7 @@ const CompanyDeals = () => {
                     pagination={{ pageSize: 10, showSizeChanger: false }}
                     rowClassName="premium-table-row"
                     expandable={{
-                        expandedRowRender: (record: any) => (
+                        expandedRowRender: (record: { id: string; status: string }) => (
                             <MilestoneTimeline dealId={record.id} dealStatus={record.status} />
                         ),
                         rowExpandable: () => true
@@ -488,7 +494,7 @@ const CompanyDeals = () => {
                         {
                             title: 'Creator',
                             key: 'creator',
-                            render: (row: any) => (
+                            render: (row: { creator?: { profileImage?: string; displayName?: string } }) => (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                     <Avatar src={row.creator?.profileImage ? getImageUrl(row.creator.profileImage) : undefined} icon={<UserOutlined />} style={{ background: colors.gray[100], border: `1px solid ${colors.gray[200]}` }} />
                                     <Text style={{ fontWeight: 700, color: colors.text.primary, fontSize: '15px' }}>{row.creator?.displayName}</Text>
@@ -505,8 +511,8 @@ const CompanyDeals = () => {
                             title: 'Amount',
                             dataIndex: 'amount',
                             key: 'amount',
-                            render: (a: any) => {
-                                const n = a != null ? Number(a) : null;
+                            render: (a: string | number | null) => {
+                                const n = a !== null ? Number(a) : null;
                                 return n && !Number.isNaN(n)
                                     ? <Text style={{ color: colors.primary.solid, fontWeight: 800, fontSize: '16px' }}>₹{n.toLocaleString('en-IN')}</Text>
                                     : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>—</Text>;
@@ -531,7 +537,7 @@ const CompanyDeals = () => {
                         {
                             title: 'Actions',
                             key: 'actions',
-                            render: (row: any) => (
+                            render: (row: { id: string; status: string }) => (
                                 row.status === 'IN_PROGRESS' && (
                                     <Popconfirm
                                         title="Complete this deal?"

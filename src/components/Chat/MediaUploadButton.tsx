@@ -3,13 +3,13 @@
 // ===========================================
 
 import { useState, useRef } from 'react';
-import { Upload, message as antMessage, Tooltip, Modal } from 'antd';
-import { PictureOutlined, VideoCameraOutlined, AudioOutlined, CloseOutlined, LoadingOutlined } from '@ant-design/icons';
-import type { UploadFile } from 'antd/es/upload/interface';
+import { message as antMessage, Tooltip, Modal } from 'antd';
+import { PictureOutlined, VideoCameraOutlined, AudioOutlined, CloseOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { chatApi } from '../../services/api';
 import CustomButton from '../common/Button/CustomButton';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import { MediaFile } from '../../types';
 
 interface MediaUploadButtonProps {
@@ -98,9 +98,10 @@ export const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({ onMediaUpl
       setSelectedFiles([]);
       setPreviewVisible(false);
       antMessage.success(`${selectedFiles.length} file(s) uploaded successfully`);
-    } catch (error: any) {
-      console.error('Failed to upload media:', error);
-      antMessage.error(error.response?.data?.error || 'Failed to upload files');
+    } catch (error: unknown) {
+      logger.error('Failed to upload media:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to upload files');
     } finally {
       setUploading(false);
     }

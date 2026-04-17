@@ -22,6 +22,7 @@ import { Info, Radio, Hand, Bot } from 'lucide-react';
 import { creatorApi, getImageUrl } from '../../services/api';
 import socketService from '../../services/socket';
 import '../../pages/ChatInterface.css';
+import { logger } from '../../utils/logger';
 
 type ConversationMode = 'AI' | 'MANUAL';
 type MsgRole = 'USER' | 'ASSISTANT' | 'CREATOR' | 'SYSTEM';
@@ -42,7 +43,7 @@ interface ConversationDetailMessage {
   id: string;
   role: MsgRole;
   content: string;
-  media: any;
+  media: { url: string; type: string }[] | null;
   createdAt: string;
 }
 
@@ -120,7 +121,7 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
         }
       }
     } catch (err) {
-      console.error('Failed to load creator conversations', err);
+      logger.error('Failed to load creator conversations', err);
     } finally {
       setLoadingList(false);
     }
@@ -140,7 +141,7 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
         setMessages(res.data.data.messages || []);
       }
     } catch (err) {
-      console.error('Failed to load conversation details', err);
+      logger.error('Failed to load conversation details', err);
     } finally {
       setLoadingDetail(false);
     }
@@ -165,7 +166,7 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
         );
       }
     } catch (err) {
-      console.error('Failed to toggle mode', err);
+      logger.error('Failed to toggle mode', err);
       antMessage.error('Failed to change mode');
     } finally {
       setTogglingMode(false);
@@ -196,10 +197,11 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
         });
         antMessage.success('AI reply generated');
       }
-    } catch (err: any) {
-      console.error('Failed to generate AI reply', err);
+    } catch (err: unknown) {
+      logger.error('Failed to generate AI reply', err);
+      const e = err as { response?: { data?: { error?: { message?: string } } } };
       antMessage.error(
-        err?.response?.data?.error?.message || 'Failed to generate AI reply'
+        e?.response?.data?.error?.message || 'Failed to generate AI reply'
       );
     } finally {
       setGeneratingAi(false);
@@ -248,9 +250,10 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
           return [updated, ...prev.filter((_, i) => i !== idx)];
         });
       }
-    } catch (err: any) {
-      console.error('Failed to send manual reply', err);
-      antMessage.error(err?.response?.data?.error?.message || 'Failed to send message');
+    } catch (err: unknown) {
+      logger.error('Failed to send manual reply', err);
+      const e = err as { response?: { data?: { error?: { message?: string } } } };
+      antMessage.error(e?.response?.data?.error?.message || 'Failed to send message');
     } finally {
       setSendingManual(false);
     }
@@ -258,6 +261,7 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
 
   useEffect(() => {
     loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -284,7 +288,7 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
         id: string;
         role: 'USER' | 'ASSISTANT' | 'SYSTEM';
         content: string;
-        media?: any;
+        media?: { url: string; type: string }[] | null;
         createdAt: string;
       };
       creatorId: string;
@@ -370,6 +374,7 @@ const CreatorChatView = ({ currentCreator, currentUser }: Props) => {
       socket.off('connect', handleConnect);
       socket.off('disconnect', handleDisconnect);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

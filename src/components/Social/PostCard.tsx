@@ -22,7 +22,7 @@ const { Text, Paragraph } = Typography;
 interface Post {
     id: string;
     content: string;
-    media?: any[];
+    media?: { url: string; type: string }[];
     type: string; // 'TEXT', 'IMAGE', 'VIDEO'
     createdAt: string;
     updatedAt: string;
@@ -70,7 +70,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelete, onUp
                 setLikesCount(prev => prev + 1);
             }
             setIsLiked(!isLiked);
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             message.error('Failed to update like status');
         }
     };
@@ -81,7 +82,8 @@ const PostCard: React.FC<PostCardProps> = ({ post, currentUserId, onDelete, onUp
             await postApi.deletePost(post.id);
             message.success('Post deleted');
             onDelete(post.id);
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             message.error('Failed to delete post');
         }
     };

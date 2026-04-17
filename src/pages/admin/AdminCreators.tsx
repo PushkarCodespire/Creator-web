@@ -3,37 +3,21 @@
 // ===========================================
 
 import { useEffect, useState, useCallback } from 'react';
-import {
-  Table,
-  Tag,
-  Card,
-  Button,
-  Space,
-  message,
-  Tooltip,
-  Tabs,
-  Input,
-  Select,
-  Row,
-  Col,
-  Badge,
-  Typography,
-  Spin,
-  Statistic
-} from 'antd';
-import { Eye, Search, Filter, RefreshCcw, Users, ShieldCheck, Clock, UserCheck } from 'lucide-react';
+import { Tag, Space, message, Tooltip, Tabs, Input, Select, Row, Col, Badge, Typography, Spin, Statistic } from 'antd';
+import { Eye, Search, RefreshCcw, Users, ShieldCheck, Clock, UserCheck } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import CreatorDetailModal from '../../components/admin/CreatorDetailModal';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import CustomTable from '../../components/common/Table/CustomTable';
 import CustomCard from '../../components/common/Card/CustomCard';
-import CustomInput from '../../components/common/Form/CustomInput';
 import CustomButton from '../../components/common/Button/CustomButton';
 
 const { Text } = Typography;
 
 const AdminCreators = () => {
   const [activeTab, setActiveTab] = useState('all');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [creators, setCreators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
@@ -94,7 +78,7 @@ const AdminCreators = () => {
       setPendingCount(pendingRes.data.data.pagination?.total || 0);
 
     } catch (err) {
-      console.error('Failed to fetch creators:', err);
+      logger.error('Failed to fetch creators:', err);
       message.error('Failed to load creators');
     } finally {
       setLoading(false);
@@ -105,7 +89,7 @@ const AdminCreators = () => {
     fetchCreators();
   }, [fetchCreators]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const _handleFilterChange = (key: string, value: string | undefined) => {
     setFilters(prev => ({ ...prev, [key]: value }));
     setPagination(prev => ({ ...prev, current: 1 }));
   };
@@ -127,7 +111,7 @@ const AdminCreators = () => {
     {
       title: 'Email',
       key: 'email',
-      render: (record: any) => record.user?.email || '-'
+      render: (record: { user?: { email?: string } }) => record.user?.email || '-'
     },
     {
       title: 'Category',
@@ -142,7 +126,7 @@ const AdminCreators = () => {
     {
       title: 'Status',
       key: 'status',
-      render: (record: any) => (
+      render: (record: { isVerified: boolean; isActive: boolean }) => (
         <Space size="small">
           {record.isVerified ? (
             <Tag className="admin-tag-success">Verified</Tag>
@@ -166,7 +150,7 @@ const AdminCreators = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: any) => (
+      render: (record: { id: string }) => (
         <Tooltip title="View Details">
           <CustomButton
             variant="ghost"

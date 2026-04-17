@@ -1,443 +1,390 @@
-// ===========================================
-// CREATOR ANALYTICS PAGE - Premium Light Theme
-// ===========================================
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { creatorApi, contentApi, programApi } from '../../services/api';
+import { Sparkles, HelpCircle, MessageSquare, CheckCircle, ArrowRight, Mic, Package, FileText, Star, Share2 } from 'lucide-react';
 
-import { useEffect, useState, useMemo } from 'react';
-import { Row, Col, Spin, Tag, Grid, Typography } from 'antd';
-import {
-  MessageSquare,
-  TrendingUp,
-  DollarSign,
-  Activity,
-  LayoutDashboard,
-  BarChart3,
-  Filter,
-  Users,
-  Grid3X3,
-  Calendar,
-  Zap,
-  ArrowRight
-} from 'lucide-react';
-import {
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from 'recharts';
-import { motion, AnimatePresence } from 'framer-motion';
-import { creatorApi } from '../../services/api';
-import { RetentionChart } from '../../components/analytics/RetentionChart';
-import { RevenueChart } from '../../components/analytics/RevenueChart';
-import { ActivityHeatmapComponent } from '../../components/analytics/ActivityHeatmap';
-import { ComparisonChart } from '../../components/analytics/ComparisonChart';
-import { ExportButton } from '../../components/analytics/ExportButton';
-import CompetitiveAnalysis from '../../components/analytics/CompetitiveAnalysis';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../store';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
-
-const { Title, Text } = Typography;
-const { useBreakpoint } = Grid;
+const card: React.CSSProperties = {
+  background: '#ffffff',
+  border: '1px solid #ede8e3',
+  borderRadius: 16,
+  padding: 24,
+};
 
 const CreatorAnalytics = () => {
-  const [activeTab, setActiveTab] = useState('overview');
-  const [analytics, setAnalytics] = useState<any>(null);
-  const [engagementTrend, setEngagementTrend] = useState<any[]>([]);
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-
-  // Advanced analytics states
-  const [retentionData, setRetentionData] = useState<any>(null);
-  const [forecastData, setForecastData] = useState<any>(null);
-  const [activityData, setActivityData] = useState<any>(null);
-  const [funnelData, setFunnelData] = useState<any>(null);
-  const [comparisonData, setComparisonData] = useState<any>(null);
-
-  const { user } = useSelector((state: RootState) => state.auth);
-  const screens = useBreakpoint();
-  const isMobile = !screens.md;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [data, setData] = useState<any>(null);
+  const [hasVoice, setHasVoice] = useState(false);
+  const [programCount, setProgramCount] = useState(0);
 
   useEffect(() => {
-    fetchAllData();
+    (async () => {
+      try {
+        const [dashRes, voiceRes, progRes] = await Promise.allSettled([
+          creatorApi.getDashboard(),
+          contentApi.getVoiceClone(),
+          programApi.getAll(),
+        ]);
+        if (dashRes.status === 'fulfilled') setData(dashRes.value.data.data);
+        if (voiceRes.status === 'fulfilled') setHasVoice(voiceRes.value.data.data?.status === 'READY');
+        if (progRes.status === 'fulfilled') setProgramCount((progRes.value.data.data || []).length);
+      } catch {}
+      finally { setLoading(false); }
+    })();
   }, []);
 
-  const fetchAllData = async () => {
-    setLoading(true);
-    try {
-      const [
-        overviewRes,
-        engagementRes,
-        forecastRes,
-        activityRes,
-        funnelRes,
-        comparisonRes,
-        retentionRes
-      ] = await Promise.all([
-        creatorApi.getAnalytics(),
-        creatorApi.getEngagementTrend(7),
-        creatorApi.getRevenueForecast(),
-        creatorApi.getActivityHeatmap(),
-        creatorApi.getConversionFunnel(),
-        creatorApi.getComparativeAnalytics(30),
-        creatorApi.getRetentionAnalytics()
-      ]);
-
-      setAnalytics(overviewRes.data.data);
-      setEngagementTrend(engagementRes.data.data.trend);
-      setForecastData(forecastRes.data.data);
-      setActivityData(activityRes.data.data);
-      setFunnelData(funnelRes.data.data);
-      setComparisonData(comparisonRes.data.data);
-      setRetentionData(retentionRes.data.data);
-    } catch (err) {
-      console.error('Failed to fetch analytics:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const menuItems = [
-    { id: 'overview', label: 'Overview', icon: <LayoutDashboard size={18} /> },
-    { id: 'engagement', label: 'Engagement', icon: <TrendingUp size={18} /> },
-    { id: 'revenue', label: 'Revenue', icon: <DollarSign size={18} /> },
-    { id: 'activity', label: 'Heatmap', icon: <Activity size={18} /> },
-    { id: 'funnel', label: 'Funnel', icon: <Filter size={18} /> },
-    { id: 'comparison', label: 'Comparison', icon: <Grid3X3 size={18} /> },
-    { id: 'competitive', label: 'Competitive', icon: <BarChart3 size={18} /> },
-  ];
-
-  const chartData = useMemo(() => {
-    return (analytics?.chatsByDate ? Object.entries(analytics.chatsByDate) : [])
-      .map(([date, count]) => ({
-        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-        count: count as number
-      }))
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .slice(-30);
-  }, [analytics]);
-
-  const velocityData = useMemo(() => {
-    return engagementTrend.map(item => ({
-      day: new Date(item.date).toLocaleDateString('en-US', { weekday: 'short' }),
-      count: item.count
-    }));
-  }, [engagementTrend]);
-
   if (loading) {
-    return (
-      <div style={{ height: '80vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <Spin size="large" tip={<span style={{ color: colors.text.tertiary, marginTop: '20px', display: 'block', fontWeight: 600 }}>Analyzing neural patterns...</span>} />
-      </div>
-    );
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#9ca3af', fontSize: 15 }}>Loading analytics...</div>;
   }
 
-  return (
-    <div style={{ padding: isMobile ? spacing[3] : spacing[8], minHeight: '100vh', background: colors.background }}>
-      {/* Header Section */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        style={{ marginBottom: spacing[10] }}
-      >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '24px' }}>
-          <div>
-            <Title level={isMobile ? 3 : 1} style={{ color: colors.text.primary, margin: 0, fontWeight: 800, letterSpacing: '-0.03em', lineHeight: 1.1 }}>
-              Intelligence <span style={{ color: colors.primary.solid }}>Studio</span>
-            </Title>
-            <Text style={{ color: colors.text.secondary, fontSize: isMobile ? '14px' : '16px', fontWeight: 500, marginTop: '12px', display: 'block' }}>
-              Strategic performance tracking for {user?.name}
-            </Text>
-          </div>
-          <ExportButton creatorName={user?.name || 'Creator'} />
-        </div>
-      </motion.div>
+  const totalAiAnswers = data?.stats?.totalAiAnswers || data?.totalChats || 0;
+  const totalChats = data?.totalChats || 0;
+  const followersCount = data?.followers?.count || 0;
+  const topQuestions: { question: string; count: number }[] = data?.topQuestions || [];
+  const contents = data?.contents || [];
+  const reviewRating = data?.reviews?.summary?.averageRating || 0;
+  const totalReviews = data?.reviews?.summary?.totalReviews || 0;
 
-      {/* Premium Tab Selection */}
-      <div style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: spacing[10],
-        padding: '8px',
-        background: '#FFFFFF',
-        borderRadius: '20px',
-        overflowX: 'auto',
-        scrollbarWidth: 'none',
-        border: `1px solid ${colors.gray[100]}`,
-        boxShadow: shadows.md
-      }}>
-        {menuItems.map((item) => (
-          <motion.div
-            key={item.id}
-            whileHover={{ y: -2 }}
-            whileTap={{ scale: 0.96 }}
-            onClick={() => setActiveTab(item.id)}
-            style={{
-              padding: '12px 24px',
-              borderRadius: '14px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              background: activeTab === item.id ? colors.primary.solid : 'transparent',
-              color: activeTab === item.id ? '#FFFFFF' : colors.text.secondary,
-              whiteSpace: 'nowrap',
-              fontWeight: 600,
-              fontSize: '14px',
-              boxShadow: activeTab === item.id ? shadows.md : 'none'
-            }}
-          >
-            {item.icon}
-            {item.label}
-          </motion.div>
-        ))}
+  // Engagement rate = (total AI answers / total chats) — how many chats get responses
+  const engagementRate = totalChats > 0 ? Math.min(100, Math.round((totalAiAnswers / Math.max(totalChats, 1)) * 100)) : 0;
+
+  // Conversion rate = (followers / total unique users who chatted) — approximation
+  const conversionRate = totalChats > 0 ? Math.min(100, Math.round((followersCount / Math.max(totalChats, 1)) * 100)) : 0;
+
+  // Top Creator Voices — derive from content + stats
+  const voiceItems = [
+    ...(contents.filter((c: { type: string; title: string }) => c.type === 'YOUTUBE_VIDEO').slice(0, 2).map((c: { type: string; title: string }) => ({
+      label: c.title,
+      type: 'YouTube',
+      color: '#ff3e48',
+      bg: '#fff5f5',
+    }))),
+    ...(contents.filter((c: { type: string; title: string }) => c.type === 'MANUAL_TEXT').slice(0, 2).map((c: { type: string; title: string }) => ({
+      label: c.title,
+      type: 'Guide',
+      color: '#3b82f6',
+      bg: '#eff6ff',
+    }))),
+    ...(contents.filter((c: { type: string; title: string }) => c.type === 'FAQ').slice(0, 1).map((c: { type: string; title: string }) => ({
+      label: c.title,
+      type: 'FAQ',
+      color: '#d97706',
+      bg: '#fef3c7',
+    }))),
+  ].slice(0, 5);
+
+  const formatNum = (n: number) => {
+    if (!n) return '0';
+    if (n >= 1000) return `${(n / 1000).toFixed(1)}k`;
+    return n.toString();
+  };
+
+  return (
+    <div>
+      {/* Header */}
+      <div style={{ marginBottom: 20 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Audience Insights</h1>
+        <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 4 }}>Track your audience growth and engagement</p>
       </div>
 
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -20 }}
-          transition={{ duration: 0.4, ease: [0.4, 0, 0.2, 1] }}
-        >
-          {activeTab === 'overview' && (
-            <>
-              {/* Perspective Stats Grid */}
-              <Row gutter={[24, 24]} style={{ marginBottom: spacing[10] }}>
-                {[
-                  { title: 'Total Revenue', value: analytics?.overview?.totalEarnings || 0, prefix: '₹', color: colors.warning.solid, bg: colors.warning.subtle, icon: <DollarSign size={20} /> },
-                  { title: 'Active Chats', value: analytics?.overview?.totalChats || 0, color: colors.primary.solid, bg: colors.primary.subtle, icon: <MessageSquare size={20} /> },
-                  { title: 'Avg Interaction', value: analytics?.avgMessagesPerConversation || 0, units: 'msgs', color: colors.success.solid, bg: colors.success.subtle, icon: <Activity size={20} /> },
-                  { title: '30D Velocity', value: analytics?.totalConversationsLast30Days || 0, color: '#ec4899', bg: '#fdf2f8', icon: <Calendar size={20} /> }
-                ].map((stat, i) => (
-                  <Col xs={12} lg={6} key={i}>
-                    <div style={{
-                      background: '#FFFFFF',
-                      padding: '32px',
-                      borderRadius: '24px',
-                      border: `1px solid ${colors.gray[100]}`,
-                      boxShadow: shadows.md,
-                      height: '100%',
-                      position: 'relative',
-                    }}>
-                      <div style={{
-                        color: colors.text.tertiary,
-                        fontWeight: 800,
-                        fontSize: '11px',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                        marginBottom: '20px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px'
-                      }}>
-                        <div style={{
-                          background: stat.bg,
-                          padding: '8px',
-                          borderRadius: '10px',
-                          color: stat.color,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center'
-                        }}>{stat.icon}</div>
-                        {stat.title}
-                      </div>
-                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px' }}>
-                        <div style={{ fontSize: '32px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em' }}>
-                          {stat.prefix}{typeof stat.value === 'number' ? stat.value.toLocaleString() : stat.value}
-                        </div>
-                        {stat.units && <span style={{ color: colors.text.tertiary, fontWeight: 700, fontSize: '14px' }}>{stat.units}</span>}
-                      </div>
-                    </div>
-                  </Col>
-                ))}
-              </Row>
-
-              {/* Trajectory Analytics */}
-              <div style={{
-                background: '#FFFFFF',
-                padding: isMobile ? '32px' : '48px',
-                borderRadius: '24px',
-                border: `1px solid ${colors.gray[100]}`,
-                boxShadow: shadows.md,
-              }}>
-                <div style={{ marginBottom: '48px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700, letterSpacing: '-0.01em' }}>Conversion Trajectory</Title>
-                    <Text style={{ color: colors.text.secondary, fontWeight: 500 }}>Active interaction growth for the last 30 days</Text>
-                  </div>
-                  {!isMobile && (
-                    <Tag bordered={false} style={{ background: colors.success.subtle, color: colors.success.solid, fontWeight: 800, borderRadius: '8px', padding: '6px 16px' }}>
-                      +14.2% Growth
-                    </Tag>
-                  )}
-                </div>
-                <ResponsiveContainer width="100%" height={400}>
-                  <AreaChart data={chartData}>
-                    <defs>
-                      <linearGradient id="studioGradient" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stopColor={colors.primary.solid} stopOpacity={0.15} />
-                        <stop offset="100%" stopColor={colors.primary.solid} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gray[100]} />
-                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} dy={15} />
-                    <YAxis axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} dx={-10} />
-                    <Tooltip
-                      contentStyle={{ background: '#FFFFFF', border: `1px solid ${colors.gray[200]}`, borderRadius: '16px', boxShadow: shadows.lg }}
-                      itemStyle={{ color: colors.text.primary, fontWeight: 800 }}
-                    />
-                    <Area type="monotone" dataKey="count" stroke={colors.primary.solid} strokeWidth={4} fill="url(#studioGradient)" dot={{ r: 6, fill: colors.primary.solid, strokeWidth: 3, stroke: '#FFFFFF' }} activeDot={{ r: 8, strokeWidth: 0 }} />
-                  </AreaChart>
-                </ResponsiveContainer>
+      {/* Row 1: Stats + Creator Voices */}
+      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 16, alignItems: 'stretch' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* 3 Stat Cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12 }}>
+            <div style={card}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Questions Answered</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{formatNum(totalAiAnswers)}</div>
+              <div style={{ fontSize: 11, color: '#10b981', marginTop: 6, fontWeight: 600 }}>
+                {data?.stats?.aiAnswersToday ? `+${data.stats.aiAnswersToday} today` : 'All time'}
               </div>
-            </>
-          )}
+            </div>
+            <div style={card}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Engagement Rate</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{engagementRate}%</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                Responses per chat
+              </div>
+            </div>
+            <div style={card}>
+              <div style={{ fontSize: 9, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 6 }}>Conversion Rate</div>
+              <div style={{ fontSize: 28, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{conversionRate}%</div>
+              <div style={{ fontSize: 11, color: '#6b7280', marginTop: 6 }}>
+                Chat to follower
+              </div>
+            </div>
+          </div>
 
-          {activeTab === 'engagement' && (
-            <Row gutter={[24, 24]}>
-              <Col xs={24} lg={16}>
-                <div style={{
-                  background: '#FFFFFF',
-                  padding: '48px',
-                  borderRadius: '24px',
-                  border: `1px solid ${colors.gray[100]}`,
-                  boxShadow: shadows.md,
-                  height: '100%'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '48px', alignItems: 'center' }}>
-                    <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 700 }}>Engagement Velocity</Title>
-                    <Tag bordered={false} style={{ background: colors.primary.subtle, color: colors.primary.solid, borderRadius: '8px', fontWeight: 800, padding: '4px 16px' }}>ROLLING 7-DAY TREND</Tag>
+          {/* Top Questions of the Week */}
+          <div style={{ ...card, flex: 1 }}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: '0 0 14px' }}>Top Questions of the Week</h3>
+            {topQuestions.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#9ca3af', fontSize: 13 }}>
+                <HelpCircle size={20} style={{ marginBottom: 6, opacity: 0.4 }} />
+                <p style={{ margin: 0 }}>No questions this week yet</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {topQuestions.map((q, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', background: '#fafaf8', borderRadius: 10 }}>
+                    <span style={{ fontSize: 14, fontWeight: 700, color: '#ff3e48', minWidth: 24 }}>#{i + 1}</span>
+                    <span style={{ fontSize: 13, color: '#374151', flex: 1, lineHeight: 1.4 }}>{q.question}</span>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af', flexShrink: 0 }}>{q.count}x</span>
                   </div>
-                  <ResponsiveContainer width="100%" height={340}>
-                    <AreaChart data={velocityData}>
-                      <defs>
-                        <linearGradient id="velocityGrad" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="0%" stopColor={colors.primary.solid} stopOpacity={0.1} />
-                          <stop offset="100%" stopColor={colors.primary.solid} stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={colors.gray[100]} />
-                      <XAxis dataKey="day" axisLine={false} tickLine={false} tick={{ fill: colors.text.tertiary, fontSize: 12, fontWeight: 700 }} />
-                      <Tooltip contentStyle={{ background: '#FFFFFF', border: `1px solid ${colors.gray[200]}`, borderRadius: '16px', boxShadow: shadows.lg }} />
-                      <Area type="stepAfter" dataKey="count" stroke={colors.primary.solid} strokeWidth={4} fill="url(#velocityGrad)" />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </Col>
-              <Col xs={24} lg={8}>
-                <div style={{
-                  background: colors.primary.gradient,
-                  padding: '48px',
-                  borderRadius: '24px',
-                  height: '100%',
-                  color: '#FFFFFF',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'center',
-                  boxShadow: shadows.lg,
-                  position: 'relative',
-                  overflow: 'hidden'
-                }}>
-                  <div style={{ position: 'absolute', top: '-10px', right: '-10px', width: 150, height: 150, background: 'rgba(255,255,255,0.1)', borderRadius: '50%', filter: 'blur(40px)' }} />
-                  <div style={{
-                    background: 'rgba(255,255,255,0.2)',
-                    width: '56px',
-                    height: '56px',
-                    borderRadius: '16px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    marginBottom: '32px'
-                  }}>
-                    <Zap size={32} />
-                  </div>
-                  <div style={{ fontSize: '28px', fontWeight: 800, marginBottom: '16px', letterSpacing: '-0.02em', lineHeight: 1.2 }}>Peak Momentum</div>
-                  <div style={{ fontSize: '16px', opacity: 0.9, lineHeight: 1.7, fontWeight: 500 }}>
-                    Your creator velocity is up by 12% compared to last week. Your resonance peak occurs during afternoon windows.
-                  </div>
-                  <div style={{ marginTop: '32px', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 700, cursor: 'pointer' }}>
-                    Analyze Deep Patterns <ArrowRight size={18} />
-                  </div>
-                </div>
-              </Col>
-            </Row>
-          )}
-
-          {activeTab === 'revenue' && (
-            <RevenueChart data={forecastData} />
-          )}
-
-          {activeTab === 'activity' && (
-            <ActivityHeatmapComponent data={activityData} />
-          )}
-
-          {activeTab === 'comparison' && (
-            <ComparisonChart data={comparisonData} />
-          )}
-
-          {activeTab === 'competitive' && (
-            <CompetitiveAnalysis creatorId={user?.id || ''} />
-          )}
-
-          {activeTab === 'funnel' && funnelData && (
-            <div style={{
-              background: '#FFFFFF',
-              padding: isMobile ? '40px' : '64px',
-              borderRadius: '24px',
-              border: `1px solid ${colors.gray[100]}`,
-              boxShadow: shadows.md,
-            }}>
-              <Title level={3} style={{ color: colors.text.primary, marginBottom: '56px', fontWeight: 800, textAlign: 'center', letterSpacing: '-0.02em' }}>Life Cycle Synchrony</Title>
-              <Row gutter={[48, 48]} justify="center">
-                {[
-                  { label: 'Views', value: funnelData.profileViews, rate: 'INIT', color: colors.primary.solid, bg: colors.primary.subtle },
-                  { label: 'Chats', value: funnelData.chatStarts, rate: `${funnelData.conversionRate.viewToChat}%`, color: colors.success.solid, bg: colors.success.subtle },
-                  { label: 'Retention', value: funnelData.returning, rate: `${funnelData.conversionRate.chatToReturn}%`, color: colors.warning.solid, bg: colors.warning.subtle },
-                  { label: 'Subs', value: funnelData.subscribed, rate: `${funnelData.conversionRate.returnToSubscribe}%`, color: '#ec4899', bg: '#fdf2f8' }
-                ].map((step, i) => (
-                  <Col xs={24} sm={12} lg={6} key={i}>
-                    <motion.div
-                      whileHover={{ y: -8 }}
-                      style={{ textAlign: 'center', position: 'relative' }}
-                    >
-                      <div style={{
-                        width: '120px',
-                        height: '120px',
-                        margin: '0 auto 24px',
-                        borderRadius: '30%',
-                        background: step.bg,
-                        border: `1px solid ${step.color}15`,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: `0 8px 16px ${step.color}08`,
-                        transform: 'rotate(-5deg)'
-                      }}>
-                        <div style={{ transform: 'rotate(5deg)' }}>
-                          <div style={{ color: step.color, fontWeight: 900, fontSize: '24px', letterSpacing: '-0.02em' }}>{step.value.toLocaleString()}</div>
-                          <div style={{ color: colors.text.tertiary, fontSize: '10px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '4px' }}>{step.label}</div>
-                        </div>
-                      </div>
-                      <div style={{ color: colors.text.primary, fontWeight: 800, fontSize: '22px', letterSpacing: '-0.01em' }}>{step.rate}</div>
-                      <Text style={{ color: colors.text.tertiary, fontWeight: 600, fontSize: '12px' }}>CONV. RATE</Text>
-                      {i < 3 && !isMobile && (
-                        <div style={{ position: 'absolute', top: '50px', right: '-40px', fontSize: '24px', color: colors.gray[200] }}>
-                          <ArrowRight size={24} />
-                        </div>
-                      )}
-                    </motion.div>
-                  </Col>
                 ))}
-              </Row>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Top Creator Voices */}
+        <div style={card}>
+          <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: '0 0 14px' }}>Top Creator Voices</h3>
+          <p style={{ fontSize: 12, color: '#9ca3af', margin: '0 0 16px' }}>Your most impactful training content</p>
+          {voiceItems.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 13 }}>
+              <MessageSquare size={20} style={{ marginBottom: 6, opacity: 0.4 }} />
+              <p style={{ margin: 0 }}>Add content to your AI to see your top voices</p>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {voiceItems.map((v, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: '#fafaf8', borderRadius: 12, border: '1px solid #f3f0ec' }}>
+                  <div style={{ width: 36, height: 36, borderRadius: 10, background: v.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', color: v.color, fontSize: 13, fontWeight: 700, flexShrink: 0 }}>
+                    {v.type.charAt(0)}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{v.label}</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af' }}>{v.type}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
-        </motion.div>
-      </AnimatePresence>
+
+          {/* Mini stats below */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16, paddingTop: 16, borderTop: '1px solid #f3f0ec' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{followersCount}</div>
+              <div style={{ fontSize: 11, color: '#9ca3af' }}>Followers</div>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 18, fontWeight: 700, color: '#111827' }}>{reviewRating ? reviewRating.toFixed(1) : '—'}</div>
+              <div style={{ fontSize: 11, color: '#9ca3af' }}>Avg Rating</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Row 2: AI Smart Recommendations */}
+      {(() => {
+        const hasFaqs = contents.some((c: { type: string }) => c.type === 'FAQ');
+        const hasContent = contents.length > 0;
+
+        // Build recommendations based on actual creator state
+        const recommendations: { icon: React.ReactNode; title: string; desc: string; action: string; path: string; done: boolean; color: string }[] = [
+          {
+            icon: <FileText size={16} />, title: 'Add training content',
+            desc: 'Upload YouTube videos, guides, or documents to train your AI',
+            action: 'Add Content', path: '/creator-dashboard/your-ai',
+            done: hasContent, color: '#ff3e48',
+          },
+          {
+            icon: <HelpCircle size={16} />, title: 'Add FAQs',
+            desc: 'Creators with FAQs get more accurate AI responses',
+            action: 'Add FAQs', path: '/creator-dashboard/your-ai',
+            done: hasFaqs, color: '#ff3e48',
+          },
+          {
+            icon: <Mic size={16} />, title: 'Clone your voice',
+            desc: 'Let your AI respond in your own voice for a personal touch',
+            action: 'Upload Voice', path: '/creator-dashboard/your-ai',
+            done: hasVoice, color: '#ff3e48',
+          },
+          {
+            icon: <Package size={16} />, title: 'Create a program or product',
+            desc: 'Monetize your expertise with fitness programs or product recommendations',
+            action: 'Add Program', path: '/creator-dashboard/products',
+            done: programCount > 0, color: '#ff3e48',
+          },
+          {
+            icon: <Share2 size={16} />, title: 'Share your CreatorPal link',
+            desc: 'Drive traffic by sharing your AI chatbot link on social media',
+            action: 'Get Link', path: '/creator-dashboard/settings',
+            done: totalAiAnswers > 10, color: '#ff3e48',
+          },
+          {
+            icon: <Star size={16} />, title: 'Get your first review',
+            desc: 'Ask fans to leave a review to boost your credibility',
+            action: 'View Profile', path: `/creator/${data?.id || ''}`,
+            done: totalReviews > 0, color: '#ff3e48',
+          },
+        ];
+
+        const pending = recommendations.filter(r => !r.done);
+        const completed = recommendations.filter(r => r.done);
+        const completedCount = completed.length;
+        const totalCount = recommendations.length;
+        const progressPct = Math.round((completedCount / totalCount) * 100);
+
+        return (
+          <div style={{ ...card, marginBottom: 16 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: '#ff3e48', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(255,62,72,0.25)' }}>
+                  <Sparkles size={20} color="#fff" />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>AI Smart Recommendations</h3>
+                  <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Personalized tips to grow your CreatorPal</p>
+                </div>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: progressPct === 100 ? '#10b981' : '#ff3e48' }}>{progressPct}%</span>
+                <p style={{ fontSize: 11, color: '#9ca3af', margin: 0 }}>{completedCount}/{totalCount} done</p>
+              </div>
+            </div>
+
+            {/* Progress bar */}
+            <div style={{ height: 6, background: '#f3f4f6', borderRadius: 3, marginBottom: 20, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${progressPct}%`, background: progressPct === 100 ? '#10b981' : 'linear-gradient(90deg, #ff5b1f, #ff3e48)', borderRadius: 3, transition: 'width 0.5s ease' }} />
+            </div>
+
+            {/* Pending recommendations */}
+            {pending.length > 0 && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: completed.length > 0 ? 16 : 0 }}>
+                {pending.map((r, i) => (
+                  <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 16px', background: '#fafaf8', borderRadius: 12, border: '1px solid #f3f0ec' }}>
+                    <div style={{ width: 34, height: 34, borderRadius: 10, background: `${r.color}15`, display: 'flex', alignItems: 'center', justifyContent: 'center', color: r.color, flexShrink: 0 }}>
+                      {r.icon}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{r.title}</div>
+                      <div style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.4 }}>{r.desc}</div>
+                    </div>
+                    <button type="button" onClick={() => navigate(r.path)} style={{
+                      display: 'flex', alignItems: 'center', gap: 4, padding: '7px 16px', borderRadius: 8,
+                      background: r.color, color: '#fff', fontSize: 12, fontWeight: 600,
+                      border: 'none', cursor: 'pointer', flexShrink: 0, whiteSpace: 'nowrap',
+                    }}>
+                      {r.action} <ArrowRight size={12} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Completed items */}
+            {completed.length > 0 && (
+              <div>
+                <p style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Completed</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  {completed.map((r, i) => (
+                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', opacity: 0.6 }}>
+                      <CheckCircle size={16} style={{ color: '#10b981', flexShrink: 0 }} />
+                      <span style={{ fontSize: 13, color: '#6b7280', textDecoration: 'line-through' }}>{r.title}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {progressPct === 100 && (
+              <div style={{ textAlign: 'center', padding: '16px 0 0', borderTop: '1px solid #f3f0ec', marginTop: 16 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: '#10b981', margin: 0 }}>You're all set! Keep engaging and consider creating new programs.</p>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Row 3: Locations + Age Group */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+      {/* Audience Locations */}
+      {(() => {
+        const locations: { location: string; count: number; percentage: number }[] = data?.locationBreakdown || [];
+        const hasLocData = locations.length > 0;
+        const LOC_COLORS = ['#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48'];
+
+        return (
+          <div style={card}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Audience Locations</h3>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: '-8px 0 16px' }}>Where your fans are located</p>
+            {!hasLocData ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#9ca3af', fontSize: 13 }}>
+                No location data yet. Location is collected when users sign up.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                {locations.map((l, i) => (
+                  <div key={l.location} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{ width: 8, height: 8, borderRadius: '50%', background: LOC_COLORS[i % LOC_COLORS.length], flexShrink: 0 }} />
+                    <span style={{ flex: 1, fontSize: 13, color: '#374151', fontWeight: 500 }}>{l.location}</span>
+                    <div style={{ width: 100, height: 6, background: '#f3f4f6', borderRadius: 3, overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${l.percentage}%`, background: LOC_COLORS[i % LOC_COLORS.length], borderRadius: 3 }} />
+                    </div>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#111827', width: 36, textAlign: 'right' }}>{l.percentage}%</span>
+                    <span style={{ fontSize: 11, color: '#9ca3af', width: 24, textAlign: 'right' }}>{l.count}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })()}
+
+      {/* Age Group Breakdown */}
+      {(() => {
+        const ageData: { label: string; count: number; percentage: number }[] = data?.ageBreakdown || [];
+        const hasAgeData = ageData.some(a => a.count > 0);
+        const BAR_COLORS = ['#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48', '#ff3e48'];
+
+        return (
+          <div style={card}>
+            <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Age Group Breakdown</h3>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: '-8px 0 16px' }}>Based on fans who provided their date of birth</p>
+            {!hasAgeData ? (
+              <div style={{ textAlign: 'center', padding: '24px 0', color: '#9ca3af', fontSize: 13 }}>
+                No age data yet. Age is collected when users sign up.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 24 }}>
+                {/* Bar chart */}
+                <div style={{ flex: 1, display: 'flex', alignItems: 'flex-end', justifyContent: 'center', gap: 16, height: 160, paddingBottom: 24 }}>
+                  {ageData.map((a, i) => {
+                    const maxPct = Math.max(...ageData.map(x => x.percentage), 1);
+                    const barH = a.percentage > 0 ? Math.max(16, (a.percentage / maxPct) * 110) : 6;
+                    return (
+                      <div key={a.label} style={{ width: 48, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: '#111827' }}>{a.percentage}%</span>
+                        <div style={{
+                          width: 36, height: barH, borderRadius: 8,
+                          background: BAR_COLORS[i % BAR_COLORS.length],
+                          transition: 'height 0.4s ease',
+                        }} />
+                        <span style={{ fontSize: 10, color: '#6b7280', fontWeight: 600 }}>{a.label}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                {/* Legend */}
+                <div style={{ width: 140, display: 'flex', flexDirection: 'column', gap: 6, justifyContent: 'center' }}>
+                  {ageData.filter(a => a.count > 0).map((a, _i) => (
+                    <div key={a.label} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: 3, background: BAR_COLORS[ageData.indexOf(a) % BAR_COLORS.length], flexShrink: 0 }} />
+                      <span style={{ fontSize: 12, color: '#374151' }}>{a.label}</span>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: '#111827', marginLeft: 'auto' }}>{a.count}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })()}
+      </div>
     </div>
   );
 };

@@ -1,89 +1,85 @@
-// ===========================================
-// CREATOR ONBOARDING WIZARD
-// Flagship 7-step onboarding flow with Socials & Media
-// ===========================================
-
-import { useState, useEffect } from 'react';
-import { Steps, Button, Card, Form, Input, Select, message as antMessage, Space, Divider, Alert, Tooltip, Modal, Avatar, Switch, InputNumber } from 'antd';
-import {
-  User,
-  FileText,
-  CircleDollarSign,
-  Bot,
-  Rocket,
-  CheckCircle,
-  Youtube,
-  Plus,
-  Trash2,
-  Info,
-  Globe,
-  Zap,
-  Instagram,
-  Twitter,
-  Share2,
-  Image,
-  Camera
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useState, useEffect, useRef } from 'react';
+import { Form, Input, Select, message as antMessage, Switch, InputNumber } from 'antd';
+import { User, FileText, CircleDollarSign, Bot, Rocket, CheckCircle, Youtube, Plus, Camera } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import CustomButton from '../common/Button/CustomButton';
-import CustomCard from '../common/Card/CustomCard';
-import CustomModal from '../common/Modal/CustomModal';
-import CustomInput from '../common/Form/CustomInput';
-import { colors, spacing, shadows, borderRadius, typography } from '../../styles/tokens';
-import api, { creatorApi, contentApi, getImageUrl } from '../../services/api';
+import api, { creatorApi, contentApi } from '../../services/api';
 import { RootState } from '../../store';
 import { updateUser, setProfileComplete } from '../../store/slices/authSlice';
 import OnboardingProcessing from './OnboardingProcessing';
-import { ImageUpload } from '../upload/ImageUpload';
-import { CoverImageUpload } from '../upload/CoverImageUpload';
-import AnimatedBackground from './AnimatedBackground';
+import '../../styles/Auth.css';
 
-const { Step } = Steps;
 const { TextArea } = Input;
 const { Option } = Select;
 
-interface WizardStep {
-  title: string;
-  icon: React.ReactNode;
-}
-
-const steps: WizardStep[] = [
-  { title: 'Identity', icon: <User size={20} /> },
-  { title: 'Knowledge', icon: <FileText size={20} /> },
-  { title: 'Economics', icon: <CircleDollarSign size={20} /> },
-  { title: 'Intelligence', icon: <Bot size={20} /> },
-  { title: 'Launch', icon: <Rocket size={20} /> },
+const TABS = [
+  { key: 'identity', label: 'Identity', icon: <User size={16} /> },
+  { key: 'knowledge', label: 'Knowledge', icon: <FileText size={16} /> },
+  { key: 'economics', label: 'Economics', icon: <CircleDollarSign size={16} /> },
+  { key: 'intelligence', label: 'Intelligence', icon: <Bot size={16} /> },
+  { key: 'launch', label: 'Launch', icon: <Rocket size={16} /> },
 ];
+
+const labelStyle: React.CSSProperties = { fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#374151' };
+const inputStyle: React.CSSProperties = { height: 40, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 14, paddingLeft: 16 };
+const textareaStyle: React.CSSProperties = { ...inputStyle, height: 'auto', padding: '10px 16px' };
 
 export const CreatorOnboardingWizard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { user } = useSelector((state: RootState) => state.auth);
 
-  const [current, setCurrent] = useState(0);
+  const [activeTab, setActiveTab] = useState('identity');
   const [processingStatus, setProcessingStatus] = useState<'none' | 'processing' | 'training' | 'completed'>('none');
   const [form] = Form.useForm();
-  const [socialForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  // Modal states
-  const [isSocialModalVisible, setIsSocialModalVisible] = useState(false);
-  const [isMediaModalVisible, setIsMediaModalVisible] = useState(false);
-
-  // Content state
   const [youtubeUrls, setYoutubeUrls] = useState<string[]>(['']);
-  const [manualText, setManualText] = useState({ title: '', text: '' });
+  const [youtubeTranscripts, setYoutubeTranscripts] = useState<Record<number, { text: string; loading: boolean; error: string }>>({});
+  const [manualTexts, setManualTexts] = useState<{ title: string; text: string }[]>([{ title: '', text: '' }]);
+  const [completedTabs, setCompletedTabs] = useState<Set<string>>(new Set());
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.creator?.profileImage || user?.avatar || null);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAvatar(true);
+    try {
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const res = await api.post('/upload/avatar', formData);
+      if (res.data.success) {
+        const url = res.data.data.url;
+        await creatorApi.updateProfile({ profileImage: url });
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        dispatch(updateUser({ avatar: url, creator: { ...user?.creator, profileImage: url } } as any));
+        setAvatarPreview(url);
+        antMessage.success('Profile photo uploaded!');
+      }
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      antMessage.error(e?.response?.data?.error || 'Failed to upload');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
 
   useEffect(() => {
     if (user && !isInitialized) {
+      // Check for prefilled data from "Customize your profile" form
+      let prefill: Record<string, string> = {};
+      try {
+        const raw = sessionStorage.getItem('creatorPrefill');
+        if (raw) { prefill = JSON.parse(raw); sessionStorage.removeItem('creatorPrefill'); }
+      } catch {}
+
       form.setFieldsValue({
-        displayName: user.creator?.displayName || user.name,
-        bio: user.creator?.bio,
-        tagline: user.creator?.tagline,
-        category: user.creator?.category,
+        displayName: user.creator?.displayName || prefill.name || user.name,
+        bio: user.creator?.bio || prefill.about || '',
+        tagline: user.creator?.tagline || prefill.expertise || '',
+        category: user.creator?.category || (prefill.topics?.split(',')?.[0]?.trim()) || '',
         aiPersonality: user.creator?.aiPersonality,
         aiTone: user.creator?.aiTone,
         welcomeMessage: user.creator?.welcomeMessage,
@@ -94,64 +90,63 @@ export const CreatorOnboardingWizard: React.FC = () => {
         pricePerMessage: user.creator?.pricePerMessage || 50,
         firstMessageFree: user.creator?.firstMessageFree ?? true,
         discountFirstFive: user.creator?.discountFirstFive || 0,
-        tags: user.creator?.tags || [],
-      });
-      socialForm.setFieldsValue({
-        youtubeUrl: user.creator?.youtubeUrl,
-        instagramUrl: user.creator?.instagramUrl,
-        twitterUrl: user.creator?.twitterUrl,
-        websiteUrl: user.creator?.websiteUrl,
+        tags: user.creator?.tags || (prefill.topics ? prefill.topics.split(',').map((t: string) => t.trim()).filter(Boolean) : []),
       });
       setIsInitialized(true);
     }
-  }, [user, form, socialForm, isInitialized]);
+  }, [user, form, isInitialized]);
 
-  const handleNext = async () => {
+  const handleSave = async () => {
     try {
       setLoading(true);
-      if (current === 0) {
+      if (activeTab === 'identity') {
         const values = await form.validateFields(['displayName', 'category', 'tagline', 'bio', 'tags']);
         await creatorApi.updateProfile(values);
-        // We logicially update the creator part of the user
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         dispatch(updateUser({ creator: { ...user?.creator, ...values } } as any));
-        antMessage.success({ content: 'Identity Decoded', icon: <CheckCircle size={16} /> });
-      } else if (current === 1) {
+        antMessage.success('Identity saved');
+        setCompletedTabs(prev => new Set(prev).add('identity'));
+      } else if (activeTab === 'knowledge') {
         const validYoutube = youtubeUrls.filter(url => url.trim() !== '');
+        let youtubeErrors = 0;
         for (const url of validYoutube) {
-          await contentApi.addYouTube(url);
+          try {
+            await contentApi.addYouTube(url);
+          } catch {
+            youtubeErrors++;
+          }
         }
-        if (manualText.text.length >= 10) {
-          await contentApi.addManual(manualText.title || 'Untitled Knowledge', manualText.text);
+        if (youtubeErrors > 0) {
+          antMessage.warning(`${youtubeErrors} YouTube video(s) couldn't be processed. You can add content manually instead.`);
         }
-        antMessage.success({ content: 'Knowledge Base Synced', icon: <FileText size={16} /> });
-      } else if (current === 2) {
-        // Economics - Pricing & Bank Details
+        for (const mt of manualTexts) {
+          if (mt.text.length >= 10) await contentApi.addManual(mt.title || 'Untitled', mt.text);
+        }
+        antMessage.success('Knowledge saved');
+        setCompletedTabs(prev => new Set(prev).add('knowledge'));
+      } else if (activeTab === 'economics') {
         const pricingValues = await form.validateFields(['pricePerMessage', 'firstMessageFree', 'discountFirstFive']);
         const bankValues = await form.validateFields(['bankName', 'accountHolderName', 'accountNumber', 'ifscCode']);
-
-        // Update top-level creator fields (pricing)
         await creatorApi.updateProfile(pricingValues);
-
-        // Update nested bank account
         await api.put('/creators/profile', { bankAccount: bankValues });
-
-        dispatch(updateUser({
-          creator: {
-            ...user?.creator,
-            ...pricingValues,
-            bankAccount: bankValues
-          }
-        } as any));
-        antMessage.success({ content: 'Economics Synchronized', icon: <CircleDollarSign size={16} /> });
-      } else if (current === 3) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        dispatch(updateUser({ creator: { ...user?.creator, ...pricingValues, bankAccount: bankValues } } as any));
+        antMessage.success('Economics saved');
+        setCompletedTabs(prev => new Set(prev).add('economics'));
+      } else if (activeTab === 'intelligence') {
         const values = await form.validateFields(['aiPersonality', 'aiTone', 'welcomeMessage']);
         await creatorApi.updateProfile(values);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         dispatch(updateUser({ creator: { ...user?.creator, ...values } } as any));
-        antMessage.success({ content: 'Intelligence Configured', icon: <Bot size={16} /> });
+        antMessage.success('Intelligence configured');
+        setCompletedTabs(prev => new Set(prev).add('intelligence'));
       }
-      setCurrent(current + 1);
-    } catch (error: any) {
-      antMessage.error(error.response?.data?.error || 'Validation failed');
+      // Auto-advance to next tab
+      const idx = TABS.findIndex(t => t.key === activeTab);
+      if (idx < TABS.length - 1) setActiveTab(TABS[idx + 1].key);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Please fill all required fields');
     } finally {
       setLoading(false);
     }
@@ -160,568 +155,434 @@ export const CreatorOnboardingWizard: React.FC = () => {
   const handleFinish = async () => {
     try {
       setLoading(true);
-      // Formalize onboarding completion on backend
       await creatorApi.updateProfile({ isProfileComplete: true });
-
       setProcessingStatus('processing');
-      setTimeout(() => {
-        setProcessingStatus('training');
-        setTimeout(() => {
-          setProcessingStatus('completed');
-        }, 5000);
-      }, 4000);
-    } catch (error: any) {
-      antMessage.error(error.response?.data?.error || 'Failed to finalize profile protocol');
+      setTimeout(() => { setProcessingStatus('training'); setTimeout(() => { setProcessingStatus('completed'); }, 5000); }, 4000);
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to finalize');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSocialSave = async () => {
-    try {
-      setLoading(true);
-      const values = await socialForm.validateFields();
-      await creatorApi.updateProfile(values);
-      dispatch(updateUser({ creator: { ...user?.creator, ...values } } as any));
-      antMessage.success('Social connectivity updated');
-      setIsSocialModalVisible(false);
-    } catch (error) {
-      // Handled by antd
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleAvatarUpload = async (croppedImage: Blob, fileName: string) => {
-    try {
-      setLoading(true);
-      const formData = new FormData();
-      // Using 'avatar' as the field name as expected by the backend routes
-      formData.append('avatar', croppedImage, fileName);
-
-      // CRITICAL: Do not set Content-Type manually with Axios & FormData
-      const response = await api.post('/upload/avatar', formData);
-
-      if (response.data.success) {
-        const url = response.data.data.url;
-        // Synchronize both user.avatar and creator.profileImage
-        await creatorApi.updateProfile({ profileImage: url });
-        dispatch(updateUser({
-          avatar: url,
-          creator: { ...user?.creator, profileImage: url }
-        } as any));
-        antMessage.success('Neural avatar mapping successful');
-
-        // Auto-close if both visuals are now established
-        if (user?.creator?.coverImage) {
-          setTimeout(() => setIsMediaModalVisible(false), 800);
-        }
-      }
-      return response.data;
-    } catch (error: any) {
-      antMessage.error(error.response?.data?.error || 'Avatar upload failed');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleCoverUploadSuccess = async (url: string) => {
-    // The CoverImageUpload component already does the POST /upload/cover
-    // and it uses 'cover' as the field name. 
-    // We just need to sync the state here.
-    dispatch(updateUser({
-      creator: { ...user?.creator, coverImage: url }
-    } as any));
-    antMessage.success('Cover Identity Established');
-
-    // Auto-close if both visuals are now established
-    if (user?.creator?.profileImage || user?.avatar) {
-      setTimeout(() => setIsMediaModalVisible(false), 800);
-    }
-  };
-
-  const glassStyle: React.CSSProperties = {
-    background: '#ffffff',
-    borderRadius: '24px',
-    color: colors.text.primary,
-    boxShadow: shadows.lg,
-    border: `1px solid ${colors.gray[100]}`,
-  };
-
-  const inputStyle: React.CSSProperties = {
-    height: '48px',
-    borderRadius: '10px',
-    border: `1px solid ${colors.gray[200]}`,
-    color: colors.text.primary,
-    background: '#ffffff', // Force white background
-    boxShadow: '0 2px 4px rgba(0,0,0,0.01)',
-  };
-
-  const renderStepContent = () => {
-    const profileImg = user?.creator?.profileImage || user?.avatar;
-
-    switch (current) {
-      case 0:
-        return (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
-            <div style={{ marginBottom: spacing[6] }}>
-              <h2 style={{ fontSize: '32px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em', marginBottom: spacing[2] }}>Establish Identity</h2>
-              <p style={{ color: colors.text.secondary, fontSize: '16px' }}>Define your digital persona and reach.</p>
-            </div>
-
-            <Form form={form} layout="vertical" requiredMark={false}>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6], marginBottom: spacing[6] }}>
-                <Form.Item name="displayName" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Public Identity</span>} rules={[{ required: true }]}>
-                  <Input size="large" placeholder="Name" style={inputStyle} prefix={<User size={18} style={{ color: colors.primary.solid }} />} />
-                </Form.Item>
-                <Form.Item name="category" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Knowledge Domain</span>} rules={[{ required: true }]}>
-                  <Select size="large" placeholder="Select niche" className="premium-select" style={{ height: '48px' }}>
-                    <Option value="Technology">Technology</Option>
-                    <Option value="Fitness">Fitness</Option>
-                    <Option value="Business">Business</Option>
-                    <Option value="Lifestyle">Lifestyle</Option>
-                    <Option value="Education">Education</Option>
-                  </Select>
-                </Form.Item>
-              </div>
-
-              <Form.Item name="tagline" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Brand Tagline</span>} rules={[{ required: true }]}>
-                <Input size="large" placeholder="Your mission statement" style={inputStyle} />
-              </Form.Item>
-
-              <Form.Item name="bio" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Persona Biography</span>} rules={[{ required: true }]}>
-                <TextArea rows={4} placeholder="Tell your fans who you are..." style={{ ...inputStyle, height: 'auto', padding: '12px 16px' }} />
-              </Form.Item>
-
-              <Form.Item name="tags" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Search Tags</span>}>
-                <Select mode="tags" className="premium-select" style={{ width: '100%', height: '48px' }} placeholder="Add tags (e.g. Cooking, Chef, Healthy)" tokenSeparators={[',']}>
-                </Select>
-              </Form.Item>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6], marginTop: spacing[6] }}>
-                <motion.div
-                  whileHover={{ y: -4, boxShadow: shadows.md }}
-                  onClick={() => setIsMediaModalVisible(true)}
-                  style={{ background: '#fff', padding: spacing[5], cursor: 'pointer', borderRadius: '16px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
-                    <div style={{ position: 'relative' }}>
-                      <Avatar
-                        size={56}
-                        src={profileImg ? getImageUrl(profileImg) : undefined}
-                        icon={<User style={{ color: colors.gray[400] }} />}
-                        style={{ background: colors.gray[50], border: `2px solid ${colors.gray[100]}` }}
-                      />
-                      <div style={{ position: 'absolute', bottom: -2, right: -2, background: (profileImg && user?.creator?.coverImage) ? colors.success.solid : colors.primary.solid, borderRadius: '50%', width: 24, height: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', border: '2px solid #fff', boxShadow: shadows.sm }}>
-                        {(profileImg && user?.creator?.coverImage) ? <CheckCircle size={14} /> : <Camera size={14} />}
-                      </div>
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        Visual Assets {(profileImg && user?.creator?.coverImage) && <CheckCircle size={16} style={{ color: colors.success.solid }} />}
-                      </div>
-                      <div style={{ fontSize: '13px', color: colors.text.tertiary }}>Configure Avatar & Cover</div>
-                    </div>
-                  </div>
-                </motion.div>
-
-                <motion.div
-                  whileHover={{ y: -4, boxShadow: shadows.md }}
-                  onClick={() => setIsSocialModalVisible(true)}
-                  style={{ background: '#fff', padding: spacing[5], cursor: 'pointer', borderRadius: '16px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: spacing[4] }}>
-                    <div style={{ background: colors.primary.subtle, width: 56, height: 56, borderRadius: '14px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.primary.solid }}>
-                      {(user?.creator?.youtubeUrl || user?.creator?.instagramUrl || user?.creator?.twitterUrl || user?.creator?.websiteUrl) ? <CheckCircle size={24} style={{ color: colors.success.solid }} /> : <Share2 size={24} />}
-                    </div>
-                    <div>
-                      <div style={{ fontSize: '15px', fontWeight: 700, color: colors.text.primary, display: 'flex', alignItems: 'center', gap: 6 }}>
-                        Social Matrix {(user?.creator?.youtubeUrl || user?.creator?.instagramUrl || user?.creator?.twitterUrl || user?.creator?.websiteUrl) && <CheckCircle size={16} style={{ color: colors.success.solid }} />}
-                      </div>
-                      <div style={{ fontSize: '13px', color: colors.text.tertiary }}>Connect Profiles</div>
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            </Form>
-
-            <CustomModal
-              title="Social Connectivity Matrix"
-              open={isSocialModalVisible}
-              onCancel={() => setIsSocialModalVisible(false)}
-              footer={null}
-              centered
-              width={500}
-              icon={<Share2 />}
-            >
-              <Form form={socialForm} layout="vertical">
-                <Form.Item name="youtubeUrl" label={<span style={{ color: colors.text.secondary }}><Youtube size={16} style={{ marginRight: 8 }} /> YouTube</span>}><Input placeholder="URL" style={inputStyle} /></Form.Item>
-                <Form.Item name="instagramUrl" label={<span style={{ color: colors.text.secondary }}><Instagram size={16} style={{ marginRight: 8 }} /> Instagram</span>}><Input placeholder="URL" style={inputStyle} /></Form.Item>
-                <Form.Item name="twitterUrl" label={<span style={{ color: colors.text.secondary }}><Twitter size={16} style={{ marginRight: 8 }} /> Twitter (X)</span>}><Input placeholder="URL" style={inputStyle} /></Form.Item>
-                <Form.Item name="websiteUrl" label={<span style={{ color: colors.text.secondary }}><Globe size={16} style={{ marginRight: 8 }} /> Website</span>}><Input placeholder="URL" style={inputStyle} /></Form.Item>
-                <CustomButton variant="primary" onClick={handleSocialSave} loading={loading} style={{ width: '100%', marginTop: spacing[4] }}>Save Connections</CustomButton>
-              </Form>
-            </CustomModal>
-
-            <CustomModal
-              title="Visual Identity protocol"
-              open={isMediaModalVisible}
-              onCancel={() => setIsMediaModalVisible(false)}
-              footer={null}
-              centered
-              width={680}
-              icon={<Image />}
-            >
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
-                <div>
-                  <h4 style={{ color: colors.text.primary, marginBottom: spacing[3], display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <Image size={18} /> Profile cover {user?.creator?.coverImage && <CheckCircle style={{ color: colors.success.solid, fontSize: '14px' }} />}
-                  </h4>
-                  <CoverImageUpload currentCover={user?.creator?.coverImage} onUploadSuccess={handleCoverUploadSuccess} height={160} />
-                </div>
-                <Divider style={{ borderColor: colors.gray[200], margin: 0 }} />
-                <div style={{ display: 'flex', alignItems: 'center', gap: spacing[6] }}>
-                  <div style={{ flex: 1 }}>
-                    <h4 style={{ color: colors.text.primary, marginBottom: spacing[1], display: 'flex', alignItems: 'center', gap: 8 }}>
-                      Avatar Image {profileImg && <CheckCircle size={18} style={{ color: colors.success.solid }} />}
-                    </h4>
-                    <p style={{ color: colors.text.tertiary, fontSize: '13px', marginBottom: spacing[4] }}>Headshot for your AI digital twin.</p>
-                    <ImageUpload onUpload={handleAvatarUpload} cropShape="round" aspectRatio={1}>
-                      <Button icon={<Camera size={16} />} type="primary" size="large" style={{ borderRadius: '8px' }}>Upload headshot</Button>
-                    </ImageUpload>
-                  </div>
-                  <Avatar
-                    size={100}
-                    src={profileImg ? getImageUrl(profileImg) : undefined}
-                    icon={<User size={40} style={{ color: colors.gray[400] }} />}
-                    style={{ border: `3px solid ${colors.primary.light}`, boxShadow: shadows.sm, background: colors.gray[50] }}
-                  />
-                </div>
-              </div>
-            </CustomModal>
-          </motion.div>
-        );
-      case 1:
-        return (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <h2 style={{ fontSize: '32px', fontWeight: 800, color: colors.text.primary, marginBottom: spacing[4] }}>Knowledge Ingestion</h2>
-            <CustomCard depth={1} style={{ marginBottom: spacing[4] }}>
-              <h4 style={{ color: colors.text.primary, marginBottom: spacing[4], fontWeight: 700 }}>Content Streams (YouTube)</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[3] }}>
-                {youtubeUrls.map((url, idx) => (
-                  <Input key={idx} value={url} onChange={e => { const u = [...youtubeUrls]; u[idx] = e.target.value; setYoutubeUrls(u); }} placeholder="Paste video link" style={inputStyle} prefix={<Youtube size={16} style={{ color: colors.gray[400] }} />} />
-                ))}
-              </div>
-              <Button type="dashed" block icon={<Plus size={16} />} onClick={() => setYoutubeUrls([...youtubeUrls, ''])} style={{ marginTop: spacing[3], height: '44px', borderRadius: '8px', borderStyle: 'dashed' }}>Link Another Stream</Button>
-            </CustomCard>
-            <TextArea value={manualText.text} onChange={e => setManualText({ ...manualText, text: e.target.value })} rows={6} placeholder="Paste articles or scripts here..." style={{ ...inputStyle, height: 'auto', padding: '12px 16px' }} />
-          </motion.div>
-        );
-      case 2:
-        return (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <div style={{ marginBottom: spacing[6] }}>
-              <h2 style={{ fontSize: '32px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em', marginBottom: spacing[2] }}>Monetization Matrix</h2>
-              <p style={{ color: colors.text.secondary, fontSize: '16px' }}>Configure your bank identity for seamless payouts.</p>
-            </div>
-
-            <Form form={form} layout="vertical" requiredMark={false}>
-              <CustomCard depth={1} style={{ marginBottom: spacing[6] }}>
-                <h4 style={{ color: colors.text.primary, marginBottom: spacing[4], display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
-                  <Zap size={18} style={{ color: colors.primary.solid }} /> Pricing Strategy
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6] }}>
-                  <Form.Item name="pricePerMessage" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Price Per Message (₹)</span>} rules={[{ required: true }]}>
-                    <InputNumber size="large" style={{ ...inputStyle, width: '100%' }} min={0} placeholder="100" />
-                  </Form.Item>
-                  <Form.Item name="discountFirstFive" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>First 5 Msgs Discount (%)</span>}>
-                    <InputNumber size="large" style={{ ...inputStyle, width: '100%' }} min={0} max={100} placeholder="15.5" />
-                  </Form.Item>
-                </div>
-                <Form.Item name="firstMessageFree" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>First Message Free</span>} valuePropName="checked" style={{ marginBottom: 0 }}>
-                  <Switch />
-                </Form.Item>
-              </CustomCard>
-
-              <div style={{ marginBottom: spacing[4] }}>
-                <h4 style={{ color: colors.text.primary, marginBottom: spacing[4], display: 'flex', alignItems: 'center', gap: 8, fontWeight: 700 }}>
-                  <Globe size={18} style={{ color: colors.primary.solid }} /> Settlement Details
-                </h4>
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: spacing[6], marginBottom: spacing[4] }}>
-                  <Form.Item name="bankName" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Bank Name</span>} rules={[{ required: true }]}>
-                    <Input size="large" placeholder="e.g. HDFC Bank" style={inputStyle} />
-                  </Form.Item>
-                  <Form.Item name="accountHolderName" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Account Holder</span>} rules={[{ required: true }]}>
-                    <Input size="large" placeholder="Full legal name" style={inputStyle} />
-                  </Form.Item>
-                </div>
-              </div>
-
-              <Form.Item name="accountNumber" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Account Number</span>} rules={[{ required: true }]}>
-                <Input size="large" placeholder="0000 0000 0000" style={inputStyle} type="password" />
-              </Form.Item>
-
-              <Form.Item name="ifscCode" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>IFSC Code</span>} rules={[{ required: true }]}>
-                <Input size="large" placeholder="IFSC0001234" style={inputStyle} />
-              </Form.Item>
-
-              <Alert
-                message={<span style={{ color: '#fff', fontWeight: 700 }}>Security Protocol Active</span>}
-                description={<span style={{ color: 'rgba(255,255,255,0.9)', fontSize: '13px' }}>Your bank credentials are encrypted with AES-256 and never stored in plain text.</span>}
-                type="info"
-                showIcon
-                icon={<Zap size={18} style={{ color: '#fff' }} />}
-                style={{
-                  background: colors.primary.solid,
-                  border: 'none',
-                  borderRadius: '16px',
-                  padding: '16px 20px',
-                  boxShadow: '0 4px 12px rgba(18, 104, 255, 0.2)'
-                }}
-              />
-            </Form>
-          </motion.div>
-        );
-      case 3:
-        return (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <div style={{ marginBottom: spacing[6] }}>
-              <h2 style={{ fontSize: '32px', fontWeight: 800, color: colors.text.primary, letterSpacing: '-0.02em', marginBottom: spacing[2] }}>Neural Configuration</h2>
-              <p style={{ color: colors.text.secondary, fontSize: '16px' }}>Calibrate your AI digital twin's persona and core logic.</p>
-            </div>
-
-            <Form form={form} layout="vertical" requiredMark={false}>
-              <Form.Item name="aiTone" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Communication Tone</span>} rules={[{ required: true }]}>
-                <Select size="large" placeholder="Select AI frequency" style={{ ...inputStyle, height: '48px' }}>
-                  <Option value="friendly">Friendly & Approachable</Option>
-                  <Option value="professional">Professional & Authoritative</Option>
-                  <Option value="casual">Casual & Genuine</Option>
-                  <Option value="inspiring">Inspiring & High-Energy</Option>
-                  <Option value="educational">Educational & Methodical</Option>
-                </Select>
-              </Form.Item>
-
-              <Form.Item name="aiPersonality" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Personality Core (System Prompt)</span>} rules={[{ required: true }]}>
-                <TextArea
-                  rows={4}
-                  placeholder="Describe your AI persona... (e.g., 'You are a tech expert who explains complex topics with simple metaphors.')"
-                  style={{ ...inputStyle, height: 'auto', padding: '12px 16px' }}
-                />
-              </Form.Item>
-
-              <Form.Item name="welcomeMessage" label={<span style={{ color: colors.gray[600], fontWeight: 700, fontSize: '11px', textTransform: 'uppercase' }}>Genesis Message</span>} rules={[{ required: true }]}>
-                <Input size="large" placeholder="The first thing your AI says to new fans" style={inputStyle} />
-              </Form.Item>
-            </Form>
-          </motion.div>
-        );
-      case 4:
-        return (
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ textAlign: 'center' }}>
-            <div style={{ marginBottom: spacing[8] }}>
-              <motion.div
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 2, repeat: Infinity }}
-                style={{ fontSize: '64px', color: colors.success.solid, marginBottom: spacing[4] }}
-              >
-                <Rocket size={64} />
-              </motion.div>
-              <h2 style={{ fontSize: '40px', fontWeight: 900, color: colors.text.primary, letterSpacing: '-0.03em' }}>Genesis Protocol Ready</h2>
-              <p style={{ color: colors.text.secondary, fontSize: '18px', maxWidth: '600px', margin: '0 auto' }}>
-                Your digital twin has been successfully encoded with your knowledge and visual identity.
-              </p>
-            </div>
-
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: spacing[4], marginBottom: spacing[8] }}>
-              {[
-                { label: 'Identity', color: '#6366f1', status: 'Established' },
-                { label: 'Knowledge', color: '#a855f7', status: 'Ingested' },
-                { label: 'Intelligence', color: '#3b82f6', status: 'Calibrated' }
-              ].map((item, idx) => (
-                <div key={idx} style={{ background: colors.surface, padding: spacing[4], borderRadius: '16px', textAlign: 'center', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
-                  <div style={{ color: item.color, fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', marginBottom: 4 }}>{item.label}</div>
-                  <div style={{ color: colors.text.primary, fontWeight: 700 }}>{item.status}</div>
-                </div>
-              ))}
-            </div>
-
-            <Alert
-              message="Final Deployment"
-              description="Hitting 'Complete' will finalize your ingestion into the network. Your AI twin will be live and ready for interactions."
-              type="success"
-              showIcon
-              style={{ background: colors.success.light, border: `1px solid ${colors.success.light}`, color: colors.success.solid, borderRadius: '16px', textAlign: 'left' }}
-            />
-          </motion.div>
-        );
-      default: return null;
     }
   };
 
   if (processingStatus !== 'none') {
     return (
-      <AnimatedBackground>
-        <div style={{ width: '100%', maxWidth: '800px', padding: '0 20px' }}>
-          <CustomCard depth={3}>
-            <OnboardingProcessing
-              status={processingStatus === 'completed' ? 'completed' : (processingStatus === 'training' ? 'training' : 'processing')}
-              onComplete={() => {
-                dispatch(setProfileComplete(true));
-                navigate('/creator-dashboard');
-              }}
-            />
-          </CustomCard>
+      <div style={{ minHeight: '100vh', background: '#fbf7f4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <div style={{ width: '100%', maxWidth: 600, background: '#fff', borderRadius: 16, padding: 40, boxShadow: '0 20px 60px -20px rgba(0,0,0,0.15)' }}>
+          <OnboardingProcessing
+            status={processingStatus === 'completed' ? 'completed' : (processingStatus === 'training' ? 'training' : 'processing')}
+            onComplete={() => { dispatch(setProfileComplete(true)); navigate('/creator-dashboard'); }}
+          />
         </div>
-      </AnimatedBackground>
+      </div>
     );
   }
 
-  return (
-    <AnimatedBackground>
-      <div style={{ width: '100%', maxWidth: '960px', display: 'flex', flexDirection: 'column', gap: spacing[10], padding: '60px 20px' }}>
-        <CustomCard depth={3} style={{ border: 'none' }}>
-          <div style={{ padding: `${spacing[8]} ${spacing[10]}` }}>
-            <Steps
-              size="small"
-              current={current}
-              className="flagship-steps"
-              style={{ marginBottom: spacing[12] }}
-              labelPlacement="vertical"
-            >
-              {steps.map((item, idx) => (
-                <Step
-                  key={idx}
-                  title={<span style={{ fontWeight: 700, fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>{item.title}</span>}
-                  icon={item.icon}
-                />
-              ))}
-            </Steps>
-
-            <AnimatePresence mode="wait">
-              <div key={current} style={{ minHeight: '520px' }}>
-                {renderStepContent() || <div style={{ color: colors.text.primary, textAlign: 'center', padding: '100px' }}>Configuring Protocol...</div>}
+  const renderTab = () => {
+    switch (activeTab) {
+      case 'identity':
+        return (
+          <Form form={form} layout="vertical" requiredMark={false}>
+            {/* Profile Photo */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 18 }}>
+              <div style={{ position: 'relative' }}>
+                <div style={{
+                  width: 64, height: 64, borderRadius: '50%', overflow: 'hidden',
+                  background: '#ff3e48', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', fontSize: 24, fontWeight: 700, border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                }}>
+                  {avatarPreview ? (
+                    <img src={avatarPreview.startsWith('http') ? avatarPreview : `/api${avatarPreview}`} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    (user?.name?.[0] || 'C').toUpperCase()
+                  )}
+                </div>
+                <button type="button" onClick={() => avatarInputRef.current?.click()} disabled={uploadingAvatar} style={{
+                  position: 'absolute', bottom: -2, right: -2, width: 24, height: 24, borderRadius: '50%',
+                  background: '#111827', border: '2px solid #fff', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  cursor: 'pointer', color: '#fff',
+                }}>
+                  <Camera size={11} />
+                </button>
+                <input ref={avatarInputRef} type="file" accept="image/*" onChange={handleAvatarUpload} style={{ display: 'none' }} />
               </div>
-            </AnimatePresence>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{uploadingAvatar ? 'Uploading...' : 'Profile Photo'}</div>
+                <div style={{ fontSize: 11, color: '#9ca3af' }}>Click the camera icon to upload</div>
+              </div>
+            </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: `1px solid ${colors.gray[100]}`, paddingTop: spacing[8], marginTop: spacing[6] }}>
-              <CustomButton
-                variant="secondary"
-                disabled={current === 0 || loading}
-                onClick={() => setCurrent(current - 1)}
-                size="large"
-                style={{ borderRadius: '12px', height: '52px', width: '130px', fontWeight: 600 }}
-              >
-                Back
-              </CustomButton>
-              {current < steps.length - 1 ? (
-                <CustomButton variant="primary" onClick={handleNext} loading={loading} size="large" style={{ width: '240px', height: '52px', borderRadius: '12px', fontSize: '16px' }}>Save & Continue →</CustomButton>
-              ) : (
-                <CustomButton variant="primary" onClick={handleFinish} loading={loading} size="large" style={{ width: '280px', height: '52px', borderRadius: '12px', fontSize: '16px' }}>Finalize & Launch</CustomButton>
-              )}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Form.Item name="displayName" label={<span style={labelStyle}>Display Name</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                <Input placeholder="Your name" style={inputStyle} />
+              </Form.Item>
+              <Form.Item name="category" label={<span style={labelStyle}>Category</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                <Select placeholder="Select" style={{ width: '100%' }} size="middle">
+                  <Option value="Fat Loss">Fat Loss</Option>
+                  <Option value="Muscle Gain">Muscle Gain</Option>
+                  <Option value="PCOS">PCOS</Option>
+                  <Option value="Gut Health">Gut Health</Option>
+                  <Option value="Yoga">Yoga</Option>
+                  <Option value="Nutrition">Nutrition</Option>
+                  <Option value="Strength Training">Strength Training</Option>
+                  <Option value="Calisthenics">Calisthenics</Option>
+                  <Option value="CrossFit">CrossFit</Option>
+                  <Option value="Sports Performance">Sports Performance</Option>
+                  <Option value="Mental Wellness">Mental Wellness</Option>
+                  <Option value="Women's Fitness">Women's Fitness</Option>
+                </Select>
+              </Form.Item>
+            </div>
+            <Form.Item name="tagline" label={<span style={labelStyle}>Tagline</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+              <Input placeholder="Your mission in one line" style={inputStyle} />
+            </Form.Item>
+            <Form.Item name="bio" label={<span style={labelStyle}>Bio</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+              <TextArea rows={3} placeholder="Tell your fans who you are..." style={textareaStyle} />
+            </Form.Item>
+            <Form.Item name="tags" label={<span style={labelStyle}>Tags</span>} style={{ marginBottom: 0 }}>
+              <Select mode="tags" style={{ width: '100%' }} placeholder="Add tags" tokenSeparators={[',']} />
+            </Form.Item>
+          </Form>
+        );
+      case 'knowledge':
+        return (
+          <div>
+            {/* YouTube Videos */}
+            <div style={{ marginBottom: 20 }}>
+              <span style={labelStyle}>YouTube Videos</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 6 }}>
+                {youtubeUrls.map((url, idx) => (
+                  <div key={idx}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Input
+                        value={url}
+                        onChange={e => { const u = [...youtubeUrls]; u[idx] = e.target.value; setYoutubeUrls(u); }}
+                        placeholder="Paste YouTube URL"
+                        style={{ ...inputStyle, flex: 1 }}
+                        prefix={<Youtube size={14} style={{ color: '#999' }} />}
+                      />
+                      <button
+                        type="button"
+                        disabled={!url.trim() || youtubeTranscripts[idx]?.loading}
+                        onClick={async () => {
+                          setYoutubeTranscripts(prev => ({ ...prev, [idx]: { text: '', loading: true, error: '' } }));
+                          try {
+                            const res = await contentApi.previewYouTube(url);
+                            const data = res.data.data;
+                            setYoutubeTranscripts(prev => ({ ...prev, [idx]: { text: data.transcript || '', loading: false, error: '' } }));
+                          } catch (err: unknown) {
+                            const e = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
+                            setYoutubeTranscripts(prev => ({ ...prev, [idx]: { text: '', loading: false, error: e?.response?.data?.error?.message || e?.message || 'Failed to fetch' } }));
+                          }
+                        }}
+                        style={{
+                          padding: '0 16px', borderRadius: 8, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap',
+                          background: youtubeTranscripts[idx]?.loading ? '#d1d5db' : '#ff3e48', color: '#fff',
+                          border: 'none', cursor: youtubeTranscripts[idx]?.loading || !url.trim() ? 'not-allowed' : 'pointer',
+                        }}
+                      >
+                        {youtubeTranscripts[idx]?.loading ? 'Fetching...' : youtubeTranscripts[idx]?.text ? '✓ Fetched' : 'Fetch Transcript'}
+                      </button>
+                    </div>
+                    {/* Transcript preview */}
+                    {youtubeTranscripts[idx]?.error && (
+                      <div style={{ marginTop: 6, padding: '8px 12px', borderRadius: 8, background: '#fef2f2', border: '1px solid #fecaca', color: '#dc2626', fontSize: 12 }}>
+                        {youtubeTranscripts[idx].error}
+                      </div>
+                    )}
+                    {youtubeTranscripts[idx]?.text && (
+                      <div style={{ marginTop: 6, padding: '10px 12px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: 12, color: '#374151', maxHeight: 120, overflowY: 'auto', lineHeight: 1.5 }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: 4 }}>
+                          Transcript Preview ({youtubeTranscripts[idx].text.length} chars)
+                        </div>
+                        {youtubeTranscripts[idx].text}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setYoutubeUrls([...youtubeUrls, ''])} style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#ff3e48', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
+                <Plus size={14} /> Add another video
+              </button>
+            </div>
+
+            {/* Manual Content (multiple) */}
+            <div>
+              <span style={labelStyle}>Manual Content</span>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 6 }}>
+                {manualTexts.map((mt, idx) => (
+                  <div key={idx} style={{ padding: 14, borderRadius: 10, border: '1px solid #ede8e3', background: '#fafaf8' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: '#9ca3af' }}>Content {idx + 1}</span>
+                      {manualTexts.length > 1 && (
+                        <button type="button" onClick={() => setManualTexts(prev => prev.filter((_, i) => i !== idx))} style={{ fontSize: 11, color: '#ff3e48', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Remove</button>
+                      )}
+                    </div>
+                    <Input
+                      placeholder="Title (e.g. Fitness Training Guide)"
+                      value={mt.title}
+                      onChange={e => { const m = [...manualTexts]; m[idx] = { ...m[idx], title: e.target.value }; setManualTexts(m); }}
+                      style={{ ...inputStyle, marginBottom: 8 }}
+                    />
+                    <TextArea
+                      rows={3}
+                      placeholder="Paste articles, scripts, or notes..."
+                      value={mt.text}
+                      onChange={e => { const m = [...manualTexts]; m[idx] = { ...m[idx], text: e.target.value }; setManualTexts(m); }}
+                      style={textareaStyle}
+                    />
+                    {mt.text && <div style={{ fontSize: 10, color: '#9ca3af', marginTop: 4 }}>{mt.text.length} characters</div>}
+                  </div>
+                ))}
+              </div>
+              <button type="button" onClick={() => setManualTexts([...manualTexts, { title: '', text: '' }])} style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#ff3e48', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer' }}>
+                <Plus size={14} /> Add another content
+              </button>
             </div>
           </div>
-        </CustomCard>
+        );
+      case 'economics':
+        return (
+          <Form form={form} layout="vertical" requiredMark={false}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Form.Item name="pricePerMessage" label={<span style={labelStyle}>Price / Message (₹)</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                <InputNumber style={{ ...inputStyle, width: '100%' }} min={0} placeholder="100" />
+              </Form.Item>
+              <Form.Item name="discountFirstFive" label={<span style={labelStyle}>First 5 Discount (%)</span>} style={{ marginBottom: 12 }}>
+                <InputNumber style={{ ...inputStyle, width: '100%' }} min={0} max={100} placeholder="15" />
+              </Form.Item>
+            </div>
+            <Form.Item name="firstMessageFree" label={<span style={labelStyle}>First Message Free</span>} valuePropName="checked" style={{ marginBottom: 14 }}>
+              <Switch />
+            </Form.Item>
+            <div style={{ borderTop: '1px solid #e5e7eb', paddingTop: 14, marginBottom: 12 }}>
+              <span style={{ ...labelStyle, fontSize: 13, marginBottom: 12, display: 'block' }}>Bank Details</span>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Form.Item name="bankName" label={<span style={labelStyle}>Bank Name</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                <Input placeholder="e.g. HDFC Bank" style={inputStyle} />
+              </Form.Item>
+              <Form.Item name="accountHolderName" label={<span style={labelStyle}>Account Holder</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
+                <Input placeholder="Full legal name" style={inputStyle} />
+              </Form.Item>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+              <Form.Item name="accountNumber" label={<span style={labelStyle}>Account Number</span>} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+                <Input placeholder="0000 0000 0000" style={inputStyle} type="password" />
+              </Form.Item>
+              <Form.Item name="ifscCode" label={<span style={labelStyle}>IFSC Code</span>} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+                <Input placeholder="IFSC0001234" style={inputStyle} />
+              </Form.Item>
+            </div>
+          </Form>
+        );
+      case 'intelligence':
+        return (
+          <Form form={form} layout="vertical" requiredMark={false}>
+            <Form.Item name="aiTone" label={<span style={labelStyle}>Communication Tone</span>} rules={[{ required: true }]} style={{ marginBottom: 14 }}>
+              <Select placeholder="Select tone" size="middle">
+                <Option value="friendly">Friendly & Approachable</Option>
+                <Option value="professional">Professional</Option>
+                <Option value="casual">Casual & Genuine</Option>
+                <Option value="inspiring">Inspiring & High-Energy</Option>
+                <Option value="educational">Educational</Option>
+              </Select>
+            </Form.Item>
+            <Form.Item name="aiPersonality" label={<span style={labelStyle}>AI Personality (System Prompt)</span>} rules={[{ required: true }]} style={{ marginBottom: 14 }}>
+              <TextArea rows={4} placeholder="Describe your AI persona..." style={textareaStyle} />
+            </Form.Item>
+            <Form.Item name="welcomeMessage" label={<span style={labelStyle}>Welcome Message</span>} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+              <Input placeholder="First thing your AI says to new fans" style={inputStyle} />
+            </Form.Item>
+          </Form>
+        );
+      case 'launch':
+        return (
+          <div style={{ textAlign: 'center', padding: '20px 0' }}>
+            <Rocket size={48} style={{ color: '#ff3e48', marginBottom: 16 }} />
+            <h3 style={{ fontSize: 22, fontWeight: 700, color: '#111827', marginBottom: 8 }}>Ready to Launch</h3>
+            <p style={{ color: '#6b7280', fontSize: 14, maxWidth: 400, margin: '0 auto 24px' }}>
+              Your AI creator profile is configured. Hit launch to go live and start receiving chats.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+              {['Identity', 'Knowledge', 'Intelligence'].map((label, i) => (
+                <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
+                  <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#ff3e48', marginBottom: 2 }}>{label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
+                    {completedTabs.has(label.toLowerCase()) ? '✓ Done' : 'Pending'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      default: return null;
+    }
+  };
+
+  const stepInfo: Record<string, { title: string; subtitle: string }> = {
+    identity: { title: 'Establish Your Identity', subtitle: 'Define your creator profile and brand' },
+    knowledge: { title: 'Train Your AI', subtitle: 'Feed your knowledge to power your AI clone' },
+    economics: { title: 'Set Up Monetization', subtitle: 'Configure pricing and payment details' },
+    intelligence: { title: 'Configure AI Brain', subtitle: 'Customize how your AI communicates' },
+    launch: { title: 'Ready to Launch', subtitle: 'Review and go live' },
+  };
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#fbf7f4', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ width: '100%', maxWidth: 680, borderRadius: 20, overflow: 'hidden', boxShadow: '0 25px 60px -15px rgba(0,0,0,0.15), 0 0 0 1px rgba(0,0,0,0.03)' }}>
+
+        {/* Header with gradient */}
+        <div style={{
+          background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)',
+          padding: '28px 36px 20px',
+          position: 'relative',
+          overflow: 'hidden',
+        }}>
+          {/* Subtle glow */}
+          <div style={{ position: 'absolute', top: -40, right: -40, width: 160, height: 160, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,62,72,0.2) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'rgba(255,62,72,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {TABS.find(t => t.key === activeTab)?.icon}
+              </div>
+              <h2 style={{ color: '#fff', fontSize: 20, fontWeight: 700, margin: 0, letterSpacing: '-0.01em' }}>
+                {stepInfo[activeTab]?.title}
+              </h2>
+            </div>
+            <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, margin: 0, paddingLeft: 42 }}>
+              {stepInfo[activeTab]?.subtitle}
+            </p>
+          </div>
+        </div>
+
+        {/* Pill Tabs */}
+        <div style={{ background: '#fff', padding: '16px 36px 0' }}>
+          <div style={{ position: 'relative', display: 'flex', background: '#f3f4f6', borderRadius: 12, padding: 3 }}>
+            <div style={{
+              position: 'absolute',
+              top: 3,
+              left: `calc(${TABS.findIndex(t => t.key === activeTab)} * ${100 / TABS.length}% + 3px)`,
+              width: `calc(${100 / TABS.length}% - 6px)`,
+              height: 'calc(100% - 6px)',
+              background: '#ffffff',
+              borderRadius: 10,
+              boxShadow: '0 1px 6px rgba(0,0,0,0.08)',
+              transition: 'left 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              zIndex: 0,
+            }} />
+            {TABS.map((tab) => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key)}
+                style={{
+                  flex: 1,
+                  position: 'relative',
+                  zIndex: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 5,
+                  padding: '9px 4px',
+                  fontSize: 10.5,
+                  fontWeight: 700,
+                  color: activeTab === tab.key ? '#111827' : completedTabs.has(tab.key) ? '#10b981' : '#9ca3af',
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'color 0.2s ease',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.04em',
+                  borderRadius: 10,
+                }}
+              >
+                {completedTabs.has(tab.key) && activeTab !== tab.key ? <CheckCircle size={12} /> : tab.icon}
+                <span className="hide-mobile">{tab.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Step progress */}
+          <div style={{ display: 'flex', gap: 4, marginTop: 12 }}>
+            {TABS.map((tab) => (
+              <div key={tab.key} style={{
+                flex: 1,
+                height: 3,
+                borderRadius: 2,
+                background: completedTabs.has(tab.key) ? '#10b981' : activeTab === tab.key ? '#ff3e48' : '#e5e7eb',
+                transition: 'background 0.3s ease',
+              }} />
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{ background: '#fff', padding: '20px 36px 16px' }}>
+          {renderTab()}
+        </div>
+
+        {/* Footer */}
+        <div style={{ background: '#fff', display: 'flex', justifyContent: 'space-between', padding: '0 36px 28px', gap: 12 }}>
+          <button
+            type="button"
+            disabled={activeTab === 'identity' || loading}
+            onClick={() => { const idx = TABS.findIndex(t => t.key === activeTab); if (idx > 0) setActiveTab(TABS[idx - 1].key); }}
+            style={{
+              padding: '11px 28px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fff',
+              color: activeTab === 'identity' ? '#d1d5db' : '#374151', fontSize: 14, fontWeight: 600,
+              cursor: activeTab === 'identity' ? 'not-allowed' : 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            Back
+          </button>
+          {activeTab === 'launch' ? (
+            <button
+              type="button"
+              onClick={handleFinish}
+              disabled={loading}
+              style={{
+                padding: '11px 36px', borderRadius: 10, border: 'none', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%)', color: '#fff',
+                fontSize: 14, fontWeight: 600, boxShadow: '0 4px 12px rgba(255,62,72,0.3)',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {loading ? 'Launching...' : '🚀 Launch My AI'}
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={loading}
+              style={{
+                padding: '11px 32px', borderRadius: 10, background: '#111827', color: '#fff',
+                fontSize: 14, fontWeight: 600, border: 'none', cursor: 'pointer',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              {loading ? 'Saving...' : 'Save & Continue →'}
+            </button>
+          )}
+        </div>
       </div>
+
       <style>{`
-        .flagship-steps .ant-steps-item-icon { 
-          background: #fcfdfe !important; 
-          border-color: ${colors.gray[200]} !important; 
-          width: 44px !important; 
-          height: 44px !important; 
-          line-height: 44px !important; 
-          transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          color: ${colors.text.tertiary} !important;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .flagship-steps .ant-steps-item-active .ant-steps-item-icon { 
-          background: ${colors.primary.gradient} !important; 
-          border-color: transparent !important; 
-          box-shadow: 0 8px 16px rgba(18, 104, 255, 0.2);
-          transform: scale(1.15); 
-          color: #fff !important;
-        }
-        .flagship-steps .ant-steps-item-finish .ant-steps-item-icon {
-          background: ${colors.success.subtle} !important;
-          border-color: ${colors.success.solid} !important;
-          color: ${colors.success.solid} !important;
-        }
-        .flagship-steps .ant-steps-item-finish .ant-steps-icon {
-          color: ${colors.success.solid} !important;
-        }
-        .flagship-steps .ant-steps-item-active .ant-steps-icon {
-          color: #fff !important;
-        }
-        .flagship-steps .ant-steps-item-title {
-          color: ${colors.text.tertiary} !important;
-          margin-top: 8px !important;
-        }
-        .flagship-steps .ant-steps-item-active .ant-steps-item-title {
-          color: ${colors.primary.solid} !important;
-        }
-        .flagship-steps .ant-steps-item-finish .ant-steps-item-title {
-          color: ${colors.success.solid} !important;
-        }
         .ant-input, .ant-input-affix-wrapper, .ant-input-number, .ant-input-number-input, .ant-select-selector {
           background-color: #ffffff !important;
-          border-color: ${colors.gray[200]} !important;
-          color: ${colors.text.primary} !important;
-        }
-        .ant-select-selection-item {
-          color: ${colors.text.primary} !important;
-          font-weight: 500 !important;
-        }
-        .ant-select-selection-placeholder {
-          color: ${colors.text.tertiary} !important;
+          border-color: #e5e7eb !important;
+          border-radius: 8px !important;
         }
         .ant-input:focus, .ant-input-affix-wrapper-focused, .ant-input-number-focused, .ant-select-focused .ant-select-selector {
-          border-color: ${colors.primary.solid} !important;
-          box-shadow: 0 0 0 4px rgba(18, 104, 255, 0.1) !important;
+          border-color: #ff3e48 !important;
+          box-shadow: 0 0 0 3px rgba(255, 62, 72, 0.08) !important;
         }
-        .ant-select-dropdown {
-          background-color: #ffffff !important;
-          border-radius: 12px !important;
-          padding: 8px !important;
-          box-shadow: ${shadows.lg} !important;
-          border: 1px solid ${colors.gray[100]} !important;
-        }
-        .ant-select-item {
-          border-radius: 8px !important;
-          margin-bottom: 4px !important;
-          padding: 8px 12px !important;
-          transition: all 0.2s ease !important;
-          color: ${colors.text.primary} !important;
-        }
-        .ant-select-item-option-active {
-          background-color: ${colors.gray[50]} !important;
-        }
-        .ant-select-item-option-selected {
-          background-color: ${colors.primary.subtle} !important;
-          color: ${colors.primary.solid} !important;
-          font-weight: 600 !important;
-        }
-        .ant-form-item-label > label {
-          color: ${colors.text.secondary} !important;
-          font-weight: 600 !important;
-          font-size: 13px !important;
-        }
-        .premium-select .ant-select-selector { 
-          border: 1px solid ${colors.gray[200]} !important; 
-          border-radius: 10px !important; 
-          height: 48px !important;
-          display: flex;
-          align-items: center;
-          background: #fff !important;
-        }
-        .hover-glow:hover { 
-          transform: translateY(-4px); 
-          box-shadow: ${shadows.lg} !important; 
-          border-color: ${colors.primary.solid} !important; 
-        }
+        .ant-select-selector { height: 40px !important; display: flex; align-items: center; }
+        .ant-form-item-label > label { font-size: 11px !important; }
       `}</style>
-    </AnimatedBackground>
+    </div>
   );
 };
 

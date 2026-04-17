@@ -5,15 +5,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  CheckCircleFilled,
-  CloseCircleFilled,
-  LoadingOutlined,
-  SafetyCertificateFilled,
-  ArrowRightOutlined,
-  MailOutlined,
-  RocketOutlined
-} from '@ant-design/icons';
+import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, SafetyCertificateFilled, ArrowRightOutlined, RocketOutlined } from '@ant-design/icons';
 import { message, Spin } from 'antd';
 import api from '../services/api';
 import '../styles/Auth.css';
@@ -77,10 +69,11 @@ const VerifyEmail = () => {
           setError(null);
           setSuccessMessage(response.data.message || 'Email verified successfully.');
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
+        const e = err as { response?: { data?: { error?: string; message?: string } } };
         const apiMessage =
-          err.response?.data?.error ||
-          err.response?.data?.message ||
+          e.response?.data?.error ||
+          e.response?.data?.message ||
           'Verification failed. The link may be invalid or expired.';
 
         if (typeof apiMessage === 'string' && apiMessage.toLowerCase().includes('already verified')) {
@@ -112,10 +105,11 @@ const VerifyEmail = () => {
         setResendStatus('error');
         setResendMessage(response.data?.message || 'Unable to resend verification email.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string; message?: string } } };
       const apiMessage =
-        err.response?.data?.error ||
-        err.response?.data?.message ||
+        e.response?.data?.error ||
+        e.response?.data?.message ||
         'Unable to resend verification email. Please log in and try again.';
       setResendStatus('error');
       setResendMessage(apiMessage);

@@ -6,7 +6,6 @@
 import React from 'react';
 import { Card, CardProps } from 'antd';
 import { motion } from 'framer-motion';
-import { cardHover } from '../../../styles/animations';
 import { colors, shadows, borderRadius } from '../../../styles/tokens';
 
 export interface CustomCardProps extends CardProps {
@@ -19,7 +18,9 @@ export interface CustomCardProps extends CardProps {
 
 const CustomCard: React.FC<CustomCardProps> = ({
   depth = 1,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   gradient = false,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   gradientBorder = false,
   hoverable = false,
   children,

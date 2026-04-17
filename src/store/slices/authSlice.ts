@@ -4,7 +4,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { authApi } from '../../services/api';
-import { User } from '../../types';
+import type { User } from '../../types';
 
 interface AuthState {
   user: User | null;
@@ -41,15 +41,16 @@ export const login = createAsyncThunk(
         localStorage.setItem('isProfileComplete', String(isProfileComplete));
       }
       return { user, token, isProfileComplete };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Login failed');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Login failed');
     }
   }
 );
 
 export const register = createAsyncThunk(
   'auth/register',
-  async (data: { email: string; password: string; name: string; role?: string }, { rejectWithValue }) => {
+  async (data: { email: string; password: string; name: string; role?: string; dateOfBirth?: string; location?: string }, { rejectWithValue }) => {
     try {
       const response = await authApi.register(data);
 
@@ -65,11 +66,12 @@ export const register = createAsyncThunk(
       localStorage.setItem('token', token);
       localStorage.setItem('isProfileComplete', 'false');
       return { user, token };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string; message?: string } }; message?: string };
       // Handle different error response formats
-      const errorMessage = error.response?.data?.error ||
-        error.response?.data?.message ||
-        error.message ||
+      const errorMessage = err.response?.data?.error ||
+        err.response?.data?.message ||
+        err.message ||
         'Registration failed. Please try again.';
       return rejectWithValue(errorMessage);
     }
@@ -87,10 +89,11 @@ export const fetchCurrentUser = createAsyncThunk(
         localStorage.setItem('isProfileComplete', String(isProfileComplete));
       }
       return { user, isProfileComplete };
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
       localStorage.removeItem('user');
       localStorage.removeItem('token');
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch user');
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch user');
     }
   }
 );

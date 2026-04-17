@@ -62,6 +62,7 @@ export const useLikePost = () => {
 
       const previousPost = queryClient.getQueryData(queryKeys.posts.byId(postId));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queryClient.setQueryData(queryKeys.posts.byId(postId), (old: any) => ({
         ...old,
         data: {
@@ -73,9 +74,9 @@ export const useLikePost = () => {
 
       return { previousPost };
     },
-    onError: (err, postId, context: any) => {
+    onError: (_err, postId, context) => {
       // Rollback on error
-      queryClient.setQueryData(queryKeys.posts.byId(postId), context.previousPost);
+      queryClient.setQueryData(queryKeys.posts.byId(postId), context?.previousPost);
       message.error('Failed to like post');
     },
     onSettled: (data, error, postId) => {
@@ -100,6 +101,7 @@ export const useUnlikePost = () => {
 
       const previousPost = queryClient.getQueryData(queryKeys.posts.byId(postId));
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       queryClient.setQueryData(queryKeys.posts.byId(postId), (old: any) => ({
         ...old,
         data: {
@@ -111,8 +113,8 @@ export const useUnlikePost = () => {
 
       return { previousPost };
     },
-    onError: (err, postId, context: any) => {
-      queryClient.setQueryData(queryKeys.posts.byId(postId), context.previousPost);
+    onError: (_err, postId, context) => {
+      queryClient.setQueryData(queryKeys.posts.byId(postId), context?.previousPost);
       message.error('Failed to unlike post');
     },
     onSettled: (data, error, postId) => {

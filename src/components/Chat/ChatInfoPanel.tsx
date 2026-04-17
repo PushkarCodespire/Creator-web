@@ -1,19 +1,7 @@
 import { Avatar, Button, Divider, List, Space, Tag, Typography } from 'antd';
-import {
-    CheckCircleFilled,
-    GlobalOutlined,
-    MessageOutlined,
-    StarFilled,
-    TeamOutlined,
-    ShareAltOutlined,
-    UserAddOutlined,
-    QuestionCircleOutlined,
-    PlayCircleOutlined,
-    FileTextOutlined
-} from '@ant-design/icons';
+import { CheckCircleFilled, ShareAltOutlined, UserAddOutlined, QuestionCircleOutlined, PlayCircleOutlined, FileTextOutlined } from '@ant-design/icons';
 import { Creator } from '../../types';
 import { getImageUrl } from '../../services/api';
-import { colors } from '../../styles/tokens';
 
 const { Text, Title, Paragraph } = Typography;
 

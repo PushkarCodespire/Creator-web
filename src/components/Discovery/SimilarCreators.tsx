@@ -8,6 +8,7 @@ import { UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { recommendationApi } from '../../services/api';
 import { colors, spacing } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface SimilarCreatorsProps {
   creatorId: string;
@@ -22,6 +23,7 @@ export const SimilarCreators: React.FC<SimilarCreatorsProps> = ({
   limit = 4,
   layout = 'grid',
 }) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [creators, setCreators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,7 +37,7 @@ export const SimilarCreators: React.FC<SimilarCreatorsProps> = ({
       const response = await recommendationApi.getSimilarCreators(creatorId, limit);
       setCreators(response.data.data.similar || []);
     } catch (error) {
-      console.error('Failed to fetch similar creators:', error);
+      logger.error('Failed to fetch similar creators:', error);
       setCreators([]);
     } finally {
       setLoading(false);

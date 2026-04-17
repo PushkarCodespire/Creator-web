@@ -6,7 +6,8 @@ import { RootState } from '../../store';
 import { followApi, getImageUrl } from '../../services/api';
 import { motion } from 'framer-motion';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 
@@ -14,6 +15,7 @@ const UserFollowing = () => {
     const { user } = useSelector((state: RootState) => state.auth);
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [following, setFollowing] = useState<any[]>([]);
 
     useEffect(() => {
@@ -28,7 +30,7 @@ const UserFollowing = () => {
             const response = await followApi.getFollowing(user?.id || '');
             setFollowing(response.data.data.following || []);
         } catch (err) {
-            console.error('Failed to fetch following:', err);
+            logger.error('Failed to fetch following:', err);
         } finally {
             setLoading(false);
         }
@@ -39,7 +41,7 @@ const UserFollowing = () => {
             await followApi.unfollowCreator(creatorId);
             setFollowing(prev => prev.filter(c => c.id !== creatorId));
         } catch (err) {
-            console.error('Failed to unfollow:', err);
+            logger.error('Failed to unfollow:', err);
         }
     };
 

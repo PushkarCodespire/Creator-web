@@ -13,6 +13,7 @@ import { RootState } from '../../store';
 import { followApi } from '../../services/api';
 import CustomButton from '../common/Button/CustomButton';
 import { buttonHover, buttonTap } from '../../styles/animations';
+import { logger } from '../../utils/logger';
 import { colors } from '../../styles/tokens';
 
 export interface FollowButtonProps {
@@ -52,7 +53,7 @@ const FollowButton: React.FC<FollowButtonProps> = ({
           const response = await followApi.checkFollowing(creatorId);
           setIsFollowing(response.data.data.isFollowing);
         } catch (error) {
-          console.error('Error checking follow status:', error);
+          logger.error('Error checking follow status:', error);
         }
       }
     };
@@ -94,15 +95,16 @@ const FollowButton: React.FC<FollowButtonProps> = ({
       if (onFollowChange) {
         onFollowChange(newFollowing, newCount);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Revert optimistic update on error
       setIsFollowing(previousFollowing);
       setFollowerCount(previousCount);
 
-      const errorMessage = error.response?.data?.error || 'Failed to update follow status';
+      const err = error as { response?: { data?: { error?: string } } };
+      const errorMessage = err.response?.data?.error || 'Failed to update follow status';
       message.error(errorMessage);
 
-      console.error('Error toggling follow:', error);
+      logger.error('Error toggling follow:', error);
     } finally {
       setIsLoading(false);
     }

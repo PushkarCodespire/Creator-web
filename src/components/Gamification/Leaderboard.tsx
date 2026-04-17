@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Avatar, Tabs, Typography, Spin } from 'antd';
-import { TrophyOutlined, FireOutlined, RiseOutlined, CrownOutlined, ArrowUpOutlined } from '@ant-design/icons';
+import { Card, Avatar, Tabs, Typography } from 'antd';
+import { TrophyOutlined, CrownOutlined, ArrowUpOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { gamificationApi, getImageUrl } from '../../services/api';
 import DashboardContentLoader from '../common/DashboardContentLoader';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 const { TabPane } = Tabs;
@@ -28,7 +29,7 @@ const Leaderboard = () => {
       setUsers(usersRes.data.data);
       setCreators(creatorsRes.data.data);
     } catch (error) {
-      console.error('Failed to fetch leaderboard:', error);
+      logger.error('Failed to fetch leaderboard:', error);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,8 @@ const Leaderboard = () => {
     }
   };
 
-  const renderEntry = (entry: any, index: number) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const renderEntry = (entry: Record<string, any>, index: number) => {
     const rank = index + 1;
     const isTopThree = rank <= 3;
     const style = getRankStyle(rank);

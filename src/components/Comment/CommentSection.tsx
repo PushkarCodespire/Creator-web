@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../store';
 import { commentApi } from '../../services/api';
+import { logger } from '../../utils/logger';
 import CommentComposer from './CommentComposer';
 import CommentItem from './CommentItem';
 import CustomButton from '../common/Button/CustomButton';
@@ -63,7 +64,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, initialC
       setTotalComments(pagination.total);
       setHasMore(currentPage < pagination.totalPages);
     } catch (error) {
-      console.error('Failed to fetch comments:', error);
+      logger.error('Failed to fetch comments:', error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -107,7 +108,7 @@ export const CommentSection: React.FC<CommentSectionProps> = ({ postId, initialC
   };
 
   // Handle reply added
-  const handleReplyAdded = (parentId: string, reply: Comment) => {
+  const handleReplyAdded = (parentId: string, _reply: Comment) => {
     setTotalComments((prev) => prev + 1);
     // Update parent comment's reply count if needed
     setComments(

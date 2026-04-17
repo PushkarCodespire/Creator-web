@@ -5,31 +5,15 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Layout, Menu, Button, Dropdown, Avatar, Space, Drawer, Input } from 'antd';
-import {
-  User,
-  LogOut,
-  LayoutDashboard,
-  Menu as MenuIcon,
-  X,
-  Twitter,
-  Linkedin,
-  Github,
-  Mail,
-  ShieldCheck,
-  Lock,
-  Bell,
-  Search,
-  Sparkles
-} from 'lucide-react';
+import { User, LogOut, LayoutDashboard, Menu as MenuIcon, X, Twitter, Linkedin, Github } from 'lucide-react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import DemoModeBanner from '../DemoModeBanner';
 import MobileNav from './MobileNav';
 import { NotificationCenter } from '../notifications';
-import ErrorBoundary from '../common/ErrorBoundary';
 import { getImageUrl } from '../../services/api';
-import { colors, shadows, borderRadius, typography } from '../../styles/tokens';
+import { colors } from '../../styles/tokens';
 
 const { Header, Content, Footer } = Layout;
 

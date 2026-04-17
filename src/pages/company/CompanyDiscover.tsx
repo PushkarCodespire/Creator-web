@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Row, Col, Card, Avatar, Select, Spin, Empty, Pagination, Tag, Button, Typography } from 'antd';
-import { MessageOutlined, CheckCircleFilled, UserOutlined, ArrowRightOutlined } from '@ant-design/icons';
+import { MessageOutlined, CheckCircleFilled, UserOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { companyApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
+import { colors, shadows } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
 
 const CompanyDiscover = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [creators, setCreators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ const CompanyDiscover = () => {
       setCreators(response.data.data.creators || []);
       setTotal(response.data.data.pagination?.total || 0);
     } catch (err) {
-      console.error('Failed to fetch creators:', err);
+      logger.error('Failed to fetch creators:', err);
     } finally {
       setLoading(false);
     }

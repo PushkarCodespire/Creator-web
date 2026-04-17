@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Card, Empty, Typography, Button, Row, Col, Select, Input, DatePicker, Avatar, Tag, Space } from 'antd';
-import { DeleteOutlined, BookOutlined, SearchOutlined, FilterOutlined, StarFilled, CheckCircleFilled } from '@ant-design/icons';
+import { Card, Empty, Typography, Button, Row, Col, Select, Input, DatePicker, Avatar } from 'antd';
+import { DeleteOutlined, BookOutlined, SearchOutlined, FilterOutlined, CheckCircleFilled } from '@ant-design/icons';
 import { bookmarkApi, getImageUrl } from '../../services/api';
 import { motion } from 'framer-motion';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
 import { useNavigate } from 'react-router-dom';
-import dayjs from 'dayjs';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 const { Option } = Select;
@@ -16,15 +16,18 @@ const { Search } = Input;
 const UserBookmarks = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [bookmarks, setBookmarks] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [recommendations, setRecommendations] = useState<any[]>([]);
-    const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+    const [_loadingRecommendations, setLoadingRecommendations] = useState(false);
 
     // Filter states
     const [search, setSearch] = useState('');
     const [creatorFilter, setCreatorFilter] = useState<string | undefined>(undefined);
     const [conversationFilter, setConversationFilter] = useState<string | undefined>(undefined);
-    const [dateRange, setDateRange] = useState<[any, any] | null>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [dateRange, setDateRange] = useState<any>(null);
     const [showFilters, setShowFilters] = useState(false);
 
     // Get unique creators and conversations for filters
@@ -48,7 +51,7 @@ const UserBookmarks = () => {
     const fetchBookmarks = async () => {
         try {
             setLoading(true);
-            const params: any = {};
+            const params: Record<string, string> = {};
             if (search) params.search = search;
             if (creatorFilter) params.creatorId = creatorFilter;
             if (conversationFilter) params.conversationId = conversationFilter;
@@ -60,7 +63,7 @@ const UserBookmarks = () => {
             const response = await bookmarkApi.getBookmarks(params);
             setBookmarks(response.data.data.bookmarks || []);
         } catch (err) {
-            console.error('Failed to fetch bookmarks:', err);
+            logger.error('Failed to fetch bookmarks:', err);
         } finally {
             setLoading(false);
         }
@@ -72,7 +75,7 @@ const UserBookmarks = () => {
             const response = await bookmarkApi.getRecommendations({ limit: 5 });
             setRecommendations(response.data.data.recommendations || []);
         } catch (err) {
-            console.error('Failed to fetch recommendations:', err);
+            logger.error('Failed to fetch recommendations:', err);
         } finally {
             setLoadingRecommendations(false);
         }
@@ -83,7 +86,7 @@ const UserBookmarks = () => {
             await bookmarkApi.removeBookmark(messageId);
             setBookmarks(prev => prev.filter(b => b.messageId !== messageId));
         } catch (err) {
-            console.error('Failed to remove bookmark:', err);
+            logger.error('Failed to remove bookmark:', err);
         }
     };
 
@@ -94,7 +97,7 @@ const UserBookmarks = () => {
             fetchRecommendations();
             fetchBookmarks();
         } catch (err) {
-            console.error('Failed to add bookmark:', err);
+            logger.error('Failed to add bookmark:', err);
         }
     };
 
@@ -174,7 +177,7 @@ const UserBookmarks = () => {
                                     onChange={setCreatorFilter}
                                     style={{ width: '100%' }}
                                 >
-                                    {uniqueCreators.map((creator: any) => (
+                                    {uniqueCreators.map((creator: { id: string; displayName: string }) => (
                                         <Option key={creator.id} value={creator.id}>
                                             {creator.displayName}
                                         </Option>
@@ -190,7 +193,7 @@ const UserBookmarks = () => {
                                     onChange={setConversationFilter}
                                     style={{ width: '100%' }}
                                 >
-                                    {uniqueConversations.map((conv: any) => (
+                                    {uniqueConversations.map((conv: { id: string; creator?: { displayName: string } }) => (
                                         <Option key={conv.id} value={conv.id}>
                                             {conv.creator?.displayName || 'Unknown'}
                                         </Option>
@@ -201,7 +204,7 @@ const UserBookmarks = () => {
                                 <RangePicker
                                     size="large"
                                     value={dateRange}
-                                    onChange={(dates) => setDateRange(dates as any)}
+                                    onChange={(dates) => setDateRange(dates)}
                                     style={{ width: '100%' }}
                                 />
                             </Col>
@@ -239,7 +242,7 @@ const UserBookmarks = () => {
                     bodyStyle={{ padding: '24px' }}
                 >
                     <div style={{ display: 'grid', gap: '16px' }}>
-                        {recommendations.map((rec: any) => (
+                        {recommendations.map((rec: { id: string; displayName: string; profileImage?: string; category?: string; bio?: string; messageId?: string; creator?: { displayName?: string; profileImage?: string }; reason?: string; content?: string; fullContent?: string }) => (
                             <Card
                                 key={rec.messageId}
                                 bordered={false}
@@ -277,7 +280,7 @@ const UserBookmarks = () => {
                                     type="primary"
                                     size="small"
                                     icon={<BookOutlined />}
-                                    onClick={() => handleAddBookmark(rec.messageId)}
+                                    onClick={() => handleAddBookmark(rec.messageId!)}
                                     style={{ borderRadius: '8px', fontWeight: 700, height: '36px' }}
                                 >
                                     Bookmark This

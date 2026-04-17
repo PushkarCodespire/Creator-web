@@ -16,7 +16,8 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { userDashboardApi, subscriptionApi, getImageUrl } from '../../services/api';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 
@@ -32,10 +33,15 @@ const UserDashboard = () => {
     unreadNotifications: 0,
     activeStreak: 0
   });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [subscription, setSubscription] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [tokenUsage, setTokenUsage] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [conversations, setConversations] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [recommendations, setRecommendations] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [activities, setActivities] = useState<any[]>([]);
 
   useEffect(() => {
@@ -94,7 +100,7 @@ const UserDashboard = () => {
         const activityList = data.activities || [];
 
         // Transform activities with appropriate icons
-        const formattedActivities = activityList.map((item: any) => {
+        const formattedActivities = activityList.map((item: { id?: string; type?: string; message?: string; createdAt?: string; title?: string; timestamp?: string }) => {
           let icon = <Bell size={18} style={{ color: colors.primary.solid }} />;
           if (item.type === 'notification' && item.message?.includes('message')) {
             icon = <MessageSquare size={18} style={{ color: colors.primary.solid }} />;
@@ -108,7 +114,7 @@ const UserDashboard = () => {
             id: item.id,
             type: item.type,
             title: item.title || item.message,
-            time: new Date(item.timestamp).toLocaleDateString(),
+            time: new Date(item.timestamp || item.createdAt || '').toLocaleDateString(),
             icon
           };
         });
@@ -116,7 +122,7 @@ const UserDashboard = () => {
       }
 
     } catch (err) {
-      console.error('Failed to fetch dashboard data:', err);
+      logger.error('Failed to fetch dashboard data:', err);
     } finally {
       setLoading(false);
     }
@@ -220,6 +226,7 @@ const UserDashboard = () => {
               footnote: `${tokenUsagePercentage}% used`
             }]
             : [])
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         ].map((stat: any, index) => (
           <Col xs={24} sm={12} lg={6} key={index}>
             <motion.div variants={itemVariants}>

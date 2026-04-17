@@ -15,6 +15,7 @@ import {
   LinkOutlined,
 } from '@ant-design/icons';
 import { Tabs, message } from 'antd';
+// eslint-disable-next-line no-duplicate-imports
 import type { TabsProps } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../store';
@@ -27,6 +28,7 @@ import CustomAvatar from '../components/common/Avatar/Avatar';
 import { Skeleton } from '../components/common/Loading/Skeleton';
 import { EmptyState } from '../components/common/EmptyState/EmptyState';
 import { pageVariants, fadeIn, slideUp } from '../styles/animations';
+import { logger } from '../utils/logger';
 import { colors, spacing, typography, shadows } from '../styles/tokens';
 
 interface UserProfileData {
@@ -46,7 +48,7 @@ interface UserProfileData {
     isVerified: boolean;
     location?: string;
     website?: string;
-    socialLinks?: any;
+    socialLinks?: Record<string, string>;
   };
 }
 
@@ -90,8 +92,8 @@ const UserProfile: React.FC = () => {
         createdAt: creatorData.createdAt,
         creator: creatorData,
       });
-    } catch (error: any) {
-      console.error('Error loading profile:', error);
+    } catch (error: unknown) {
+      logger.error('Error loading profile:', error);
       message.error('Failed to load profile');
     } finally {
       setIsLoading(false);
@@ -107,7 +109,7 @@ const UserProfile: React.FC = () => {
 
       setPosts(response.data.data.posts);
     } catch (error) {
-      console.error('Error loading posts:', error);
+      logger.error('Error loading posts:', error);
     }
   };
 
@@ -122,7 +124,7 @@ const UserProfile: React.FC = () => {
         setIsFollowing(followResponse.data.data.isFollowing);
       }
     } catch (error) {
-      console.error('Error loading follow stats:', error);
+      logger.error('Error loading follow stats:', error);
     }
   };
 

@@ -3,30 +3,13 @@
 // ===========================================
 
 import React, { useState, useEffect } from 'react';
-import { Typography, Empty, Spin, message, Layout, Modal, Card, Row, Col, Avatar, Tag, Grid, Space, Divider, Button } from 'antd';
-import {
-    Plus,
-    TrendingUp,
-    MessageSquare,
-    Heart,
-    Share2,
-    Users,
-    LayoutGrid,
-    ArrowRight,
-    Eye,
-    Calendar,
-    Zap,
-    Sparkles,
-    Search,
-    ChevronRight,
-    MoreVertical,
-    Camera
-} from 'lucide-react';
+import { Typography, Empty, Spin, message, Layout, Modal, Card, Row, Col, Avatar, Tag, Grid, Button } from 'antd';
+import { Plus, TrendingUp, MessageSquare, Heart, Users, LayoutGrid, Zap, Sparkles } from 'lucide-react';
 import { postApi, authApi, getImageUrl } from '../../services/api';
 import PostCard from '../../components/Post/PostCard';
 import PostCreator from '../../components/Post/PostCreator';
-import CustomButton from '../../components/common/Button/CustomButton';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const { Title, Text, Paragraph } = Typography;
@@ -34,11 +17,14 @@ const { Content } = Layout;
 const { useBreakpoint } = Grid;
 
 const CreatorPosts = () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [posts, setPosts] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [overviewLoading, setOverviewLoading] = useState(true);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [overview, setOverview] = useState<any>(null);
     const [createModalVisible, setCreateModalVisible] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [currentUser, setCurrentUser] = useState<any>(null);
 
     const screens = useBreakpoint();
@@ -55,7 +41,7 @@ const CreatorPosts = () => {
             const response = await authApi.getCurrentUser();
             setCurrentUser(response.data.data);
         } catch (error) {
-            console.error('Failed to fetch user:', error);
+            logger.error('Failed to fetch user:', error);
         }
     };
 
@@ -76,7 +62,8 @@ const CreatorPosts = () => {
                     setPosts(response.data.data.posts);
                 }
             }
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
             message.error('Failed to load neural feed');
         } finally {
             setLoading(false);
@@ -89,13 +76,13 @@ const CreatorPosts = () => {
             const response = await postApi.getStatsOverview();
             setOverview(response.data.data || null);
         } catch (error) {
-            console.error('Failed to fetch posts overview:', error);
+            logger.error('Failed to fetch posts overview:', error);
         } finally {
             setOverviewLoading(false);
         }
     };
 
-    const handlePostCreated = (newPost: any) => {
+    const handlePostCreated = (newPost: Record<string, unknown>) => {
         setPosts([newPost, ...posts]);
         setCreateModalVisible(false);
         message.success('Neural transmission successful!');
@@ -108,7 +95,7 @@ const CreatorPosts = () => {
     };
 
     const handlePostUpdate = (postId: string) => {
-        console.log('Update post', postId);
+        logger.info('Update post', postId);
     };
 
     const totals = overview?.totals || {};
@@ -258,7 +245,7 @@ const CreatorPosts = () => {
                                     <div style={{ textAlign: 'center', padding: '24px' }}><Spin /></div>
                                 ) : recentComments.length > 0 ? (
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                        {recentComments.map((comment: any) => (
+                                        {recentComments.map((comment: { id: string; content: string; user?: { name?: string; avatar?: string }; createdAt: string }) => (
                                             <div key={comment.id} style={{ display: 'flex', gap: 16, paddingBottom: '20px', borderBottom: `1px solid ${colors.gray[50]}` }}>
                                                 <Avatar
                                                     size={44}

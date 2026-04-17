@@ -6,12 +6,13 @@
 import { useEffect, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useSelector } from 'react-redux';
-import { RootState } from '../store';
+import type { RootState } from '../store';
+import { logger } from '../utils/logger';
 
 let socket: Socket | null = null;
 
 export const useSocket = () => {
-  const [isConnected, setIsConnected] = useState(false);
+  const [_isConnected, setIsConnected] = useState(false);
   const { token } = useSelector((state: RootState) => state.auth);
 
   useEffect(() => {
@@ -27,17 +28,17 @@ export const useSocket = () => {
       });
 
       socket.on('connect', () => {
-        console.log('✅ Socket connected');
+        logger.info('Socket connected');
         setIsConnected(true);
       });
 
       socket.on('disconnect', () => {
-        console.log('❌ Socket disconnected');
+        logger.warn('Socket disconnected');
         setIsConnected(false);
       });
 
       socket.on('connect_error', (error) => {
-        console.error('Socket connection error:', error);
+        logger.error('Socket connection error:', error);
         setIsConnected(false);
       });
     }

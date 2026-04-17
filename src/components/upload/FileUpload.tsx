@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Upload, message, Progress } from 'antd';
 import { InboxOutlined, CloseCircleOutlined } from '@ant-design/icons';
+// eslint-disable-next-line no-duplicate-imports
 import type { UploadProps } from 'antd';
 
 const { Dragger } = Upload;
@@ -127,8 +128,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       ));
 
       message.success(`${file.name} uploaded successfully`);
-    } catch (error: any) {
-      message.error(`${file.name} upload failed: ${error.message}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'An error occurred';
+      message.error(`${file.name} upload failed: ${msg}`);
 
       setFileList(prev => prev.map(f =>
         f.uid === uploadFile.uid
@@ -149,6 +151,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   };
 
   // Custom request to prevent default upload
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const customRequest = ({ file, onSuccess }: any) => {
     handleUpload(file as File);
     onSuccess('ok');

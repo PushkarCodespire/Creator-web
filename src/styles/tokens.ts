@@ -36,6 +36,7 @@ export const colors: {
     disabled: string;
     inverse: string;
   };
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 } = {
   // Primary – CodeSpire Blue
@@ -200,6 +201,7 @@ export const shadows: {
   xl: string;
   hover: string;
   glow: Record<string, string>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   [key: string]: any;
 } = {
   none: 'none',

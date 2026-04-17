@@ -4,6 +4,7 @@
 // ===========================================
 
 import { io, Socket } from 'socket.io-client';
+import { logger } from './logger';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || 'http://localhost:5000';
 
@@ -69,19 +70,19 @@ class SocketManager {
       if (resolvedUserId) {
         this.socket?.emit('authenticate', { userId: resolvedUserId });
       }
-      console.log('🔌 Socket connected:', this.socket?.id);
+      logger.info('Socket connected:', this.socket?.id);
     });
 
     this.socket.on('disconnect', (reason) => {
-      console.log('🔌 Socket disconnected:', reason);
+      logger.warn('Socket disconnected:', reason);
     });
 
     this.socket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error.message);
+      logger.error('Socket connection error:', error.message);
     });
 
     this.socket.on('reconnect', (attemptNumber) => {
-      console.log(`🔄 Socket reconnected after ${attemptNumber} attempts`);
+      logger.info(`Socket reconnected after ${attemptNumber} attempts`);
     });
   }
 
@@ -112,7 +113,8 @@ class SocketManager {
       if (!raw) return null;
       const parsed = JSON.parse(raw);
       return parsed?.id || null;
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (__error) {
       return null;
     }
   }

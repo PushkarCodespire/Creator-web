@@ -3,54 +3,28 @@
 // ===========================================
 
 import { useState, useEffect } from 'react';
-import {
-    Card,
-    Table,
-    Tag,
-    Button,
-    Input,
-    Space,
-    Typography,
-    Row,
-    Col,
-    Statistic,
-    message,
-    Tabs,
-    Progress,
-    Divider,
-    Tooltip
-} from 'antd';
-import {
-    Activity,
-    ShieldCheck,
-    Ban,
-    AlertTriangle,
-    CheckCircle2,
-    ShieldAlert,
-    Zap,
-    RefreshCw,
-    Search,
-    FlaskConical,
-    MoreVertical,
-    ExternalLink
-} from 'lucide-react';
+import { Card, Table, Tag, Input, Space, Typography, Row, Col, Statistic, message, Tabs, Progress, Divider, Tooltip } from 'antd';
+import { Activity, ShieldCheck, Ban, AlertTriangle, CheckCircle2, ShieldAlert, Zap, RefreshCw, Search, FlaskConical } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import { format } from 'date-fns';
-import { motion } from 'framer-motion';
 import { colors, spacing, shadows } from '../../styles/tokens';
 import CustomCard from '../../components/common/Card/CustomCard';
 import CustomButton from '../../components/common/Button/CustomButton';
 import '../../styles/AdminPanel.css';
+import { logger } from '../../utils/logger';
 
 const { Text, Paragraph } = Typography;
 const { TextArea } = Input;
 
 const AdminAIModeration = () => {
     const [loading, setLoading] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [logs, setLogs] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [stats, setStats] = useState<any>(null);
     const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
     const [testContent, setTestContent] = useState('');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [testResult, setTestResult] = useState<any>(null);
     const [testLoading, setTestLoading] = useState(false);
 
@@ -65,8 +39,9 @@ const AdminAIModeration = () => {
         try {
             const response = await adminApi.getAIModerationStats('30d');
             setStats(response.data.data);
-        } catch (error) {
-            console.error('Failed to load stats');
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error) {
+            logger.error('Failed to load stats');
         }
     };
 
@@ -80,7 +55,8 @@ const AdminAIModeration = () => {
                 pageSize: limit,
                 total: response.data.data.pagination.total
             });
-        } catch (error: any) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_error: unknown) {
             message.error('Failed to load logs');
         } finally {
             setLoading(false);
@@ -95,7 +71,8 @@ const AdminAIModeration = () => {
             const response = await adminApi.testAIModeration(testContent);
             setTestResult(response.data.data);
             message.success('Moderation check complete');
-        } catch (error: any) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error: unknown) {
             message.error('Test failed');
         } finally {
             setTestLoading(false);
@@ -126,16 +103,16 @@ const AdminAIModeration = () => {
         {
             title: 'AI Scores',
             key: 'scores',
-            render: (record: any) => {
+            render: (record: { metadata?: { scores?: Record<string, number>; autoAction?: string } }) => {
                 const metadata = record.metadata || {};
                 const scores = metadata.scores || {};
                 const topScores = Object.entries(scores)
-                    .filter(([_, val]: [string, any]) => (val as number) > 0.1)
-                    .sort((a: any, b: any) => b[1] - a[1]);
+                    .filter(([, val]) => val > 0.1)
+                    .sort((a, b) => (b[1] as number) - (a[1] as number));
 
                 return (
                     <Space wrap>
-                        {topScores.map(([key, val]: [string, any]) => (
+                        {topScores.map(([key, val]) => (
                             <Tooltip title={`${key}: ${Math.round((val as number) * 100)}%`} key={key}>
                                 <Tag
                                     className={(val as number) > 0.8 ? 'admin-tag-error' : 'admin-tag-warning'}
@@ -154,7 +131,7 @@ const AdminAIModeration = () => {
             title: 'Decision',
             key: 'action',
             width: 120,
-            render: (record: any) => {
+            render: (record: { metadata?: { autoAction?: string } }) => {
                 const autoAction = record.metadata?.autoAction || 'NONE';
                 let tagClass = 'admin-tag-neutral';
                 if (autoAction === 'BLOCKED') tagClass = 'admin-tag-error';
@@ -213,7 +190,7 @@ const AdminAIModeration = () => {
                                 {Object.entries(stats.byReason || {} as Record<string, number>).slice(0, 1).map(([reason, count]) => (
                                     <div key={reason} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <Tag className="admin-tag-error" style={{ margin: 0 }}>{reason.toLowerCase().replace(/_/g, ' ')}</Tag>
-                                        <Text style={{ fontWeight: 900, fontSize: '28px', color: colors.text.primary }}>{count as any}</Text>
+                                        <Text style={{ fontWeight: 900, fontSize: '28px', color: colors.text.primary }}>{String(count)}</Text>
                                     </div>
                                 ))}
                                 {Object.keys(stats.byReason || {}).length === 0 && <Text type="secondary" style={{ fontSize: '14px', marginTop: '4px' }}>Clean Record</Text>}

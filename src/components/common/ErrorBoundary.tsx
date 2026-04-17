@@ -7,6 +7,7 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { Result, Button } from 'antd';
 import { ReloadOutlined, HomeOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
+import { logger } from '../../utils/logger';
 
 interface Props {
   children: ReactNode;
@@ -38,15 +39,16 @@ class ErrorBoundaryClass extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error('ErrorBoundary caught an error:', error, errorInfo);
+    logger.error('ErrorBoundary caught an error:', error, errorInfo);
     this.setState({
       error,
       errorInfo,
     });
 
     // Log to error tracking service (e.g., Sentry)
-    if ((window as any).Sentry) {
-      (window as any).Sentry.captureException(error, {
+    const windowWithSentry = window as unknown as { Sentry?: { captureException: (error: Error, context: Record<string, unknown>) => void } };
+    if (windowWithSentry.Sentry) {
+      windowWithSentry.Sentry.captureException(error, {
         contexts: {
           react: {
             componentStack: errorInfo.componentStack,

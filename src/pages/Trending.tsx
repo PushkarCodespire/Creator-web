@@ -4,17 +4,19 @@
 
 import { useState, useEffect } from 'react';
 import { Tabs, Row, Col, Card, Statistic, Spin } from 'antd';
-import { FireOutlined, RiseOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons';
+import { FireOutlined, UserOutlined, FileTextOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import TrendingWidget from '../components/Trending/TrendingWidget';
 import { trendingApi } from '../services/api';
-import { colors, spacing } from '../styles/tokens';
+import { spacing } from '../styles/tokens';
+import { logger } from '../utils/logger';
 
 const { TabPane } = Tabs;
 
 export const TrendingPage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('posts');
-  const [stats, setStats] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [stats, setStats] = useState<Record<string, any> | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
   useEffect(() => {
@@ -27,7 +29,7 @@ export const TrendingPage: React.FC = () => {
       const response = await trendingApi.getTrendingStats();
       setStats(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch trending stats:', error);
+      logger.error('Failed to fetch trending stats:', error);
     } finally {
       setLoadingStats(false);
     }

@@ -4,13 +4,14 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { List, Avatar, Card, Empty, Spin, Tag, Pagination, Input, Select, Row, Col, Button, Typography, Space, Rate } from 'antd';
+import { Avatar, Card, Empty, Spin, Tag, Pagination, Input, Select, Row, Col, Button, Typography } from 'antd';
 import { MessageOutlined, SearchOutlined, StarFilled, CheckCircleFilled, FilterOutlined } from '@ant-design/icons';
 import { chatApi, getImageUrl } from '../../services/api';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
 import { motion } from 'framer-motion';
 import { debounce } from '../../utils/debounce';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 const { Search } = Input;
@@ -18,6 +19,7 @@ const { Option } = Select;
 
 const UserChats = () => {
   const navigate = useNavigate();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [conversations, setConversations] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -67,7 +69,7 @@ const UserChats = () => {
       setConversations(response.data.data.conversations || []);
       setTotal(response.data.data.pagination?.total || 0);
     } catch (err) {
-      console.error('Failed to fetch conversations:', err);
+      logger.error('Failed to fetch conversations:', err);
     } finally {
       setLoading(false);
     }
@@ -237,7 +239,7 @@ const UserChats = () => {
       ) : (
         <>
           <div style={{ display: 'grid', gap: '16px' }}>
-            {conversations.map((item: any) => (
+            {conversations.map((item) => (
               <Card
                 key={item.id}
                 hoverable

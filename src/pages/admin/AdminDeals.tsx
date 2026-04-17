@@ -3,27 +3,11 @@
 // ===========================================
 
 import { useEffect, useState } from 'react';
-import { Table, Tag, Card, Select, Spin, Empty, Space, Statistic, Row, Col, Typography, Progress, List, Avatar, Divider, message } from 'antd';
-import {
-  CircleDollarSign,
-  CheckCircle2,
-  RefreshCw,
-  AlertCircle,
-  Users,
-  Building,
-  Crown,
-  Trophy,
-  History,
-  TrendingUp,
-  Zap,
-  Clock,
-  Percent,
-  ChevronRight,
-  ArrowRight,
-  TrendingUp as LineChart
-} from 'lucide-react';
+import { Tag, Select, Spin, Space, Statistic, Row, Col, Typography, Progress, List, Avatar, Divider, message } from 'antd';
+import { CircleDollarSign, RefreshCw, Users, Building, Crown, Trophy, History, Zap, Percent, ArrowRight, TrendingUp as LineChart } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import CustomTable from '../../components/common/Table/CustomTable';
 import CustomCard from '../../components/common/Card/CustomCard';
 import CustomButton from '../../components/common/Button/CustomButton';
@@ -32,7 +16,8 @@ const { Text, Title, Paragraph } = Typography;
 
 const AdminDeals = () => {
   const [loading, setLoading] = useState(true);
-  const [dealsData, setDealsData] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [dealsData, setDealsData] = useState<Record<string, any> | null>(null);
   const [statusFilter, setStatusFilter] = useState<string | undefined>(undefined);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 10, total: 0 });
 
@@ -56,7 +41,7 @@ const AdminDeals = () => {
         total: data.pagination?.total || 0
       }));
     } catch (err) {
-      console.error('Failed to fetch deals:', err);
+      logger.error('Failed to fetch deals:', err);
       message.error('Failed to load deals data');
     } finally {
       setLoading(false);
@@ -77,7 +62,7 @@ const AdminDeals = () => {
     {
       title: 'Deal Details',
       key: 'details',
-      render: (record: any) => (
+      render: (record: { company?: { companyName: string }; creator?: { displayName: string } }) => (
         <Space direction="vertical" size={0}>
           <Text strong style={{ color: '#0F172A' }}>{record.company?.companyName}</Text>
           <Text type="secondary" style={{ fontSize: '11px', color: '#64748B' }}>{record.creator?.displayName}</Text>
@@ -109,7 +94,7 @@ const AdminDeals = () => {
     {
       title: 'Timeline',
       key: 'timeline',
-      render: (record: any) => (
+      render: (record: { startDate: string; completedAt?: string }) => (
         <Space direction="vertical" size={0}>
           <Text style={{ fontSize: '12px', color: colors.text.tertiary }}>Started: {new Date(record.startDate).toLocaleDateString()}</Text>
           {record.completedAt && <Text style={{ fontSize: '12px', color: colors.success.solid }}>Done: {new Date(record.completedAt).toLocaleDateString()}</Text>}
@@ -263,7 +248,7 @@ const AdminDeals = () => {
           <List
             itemLayout="horizontal"
             dataSource={trends}
-            renderItem={(item: any) => (
+            renderItem={(item: { month: string; revenue: number; completed: number; created: number }) => (
               <List.Item extra={<Text strong style={{ color: colors.text.primary, fontSize: '18px' }}>INR {Number(item.revenue).toLocaleString()}</Text>}>
                 <List.Item.Meta
                   avatar={<Avatar icon={<History size={16} />} style={{ background: colors.gray[100], color: colors.primary.solid, borderRadius: '10px' }} />}
@@ -282,7 +267,7 @@ const AdminDeals = () => {
           <CustomCard title="Top Companies" style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.companies || []}
-              renderItem={(item: any) => (
+              renderItem={(item: { name: string; dealCount: number; totalValue: number }) => (
                 <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar icon={<Building size={16} />} style={{ background: colors.success.subtle, color: colors.success.solid }} />}
@@ -298,7 +283,7 @@ const AdminDeals = () => {
           <CustomCard title="Top Creators (Earnings)" style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.creatorsByEarnings || []}
-              renderItem={(item: any) => (
+              renderItem={(item: { name: string; earnings: number }) => (
                 <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar icon={<Crown size={16} />} style={{ background: '#FFFBEB', color: '#D97706' }} />}
@@ -314,7 +299,7 @@ const AdminDeals = () => {
           <CustomCard title="Top Creators (Deals)" style={{ height: '100%' }}>
             <List
               dataSource={topPerformers.creatorsByDeals || []}
-              renderItem={(item: any) => (
+              renderItem={(item: { name: string; dealCount: number; totalEarnings: number }) => (
                 <List.Item>
                   <List.Item.Meta
                     avatar={<Avatar icon={<Trophy size={16} />} style={{ background: '#EEF2FF', color: colors.primary.solid }} />}
@@ -331,7 +316,7 @@ const AdminDeals = () => {
       {/* Transaction Logs */}
       <CustomTable
         title={() => <Text strong style={{ color: colors.text.primary, fontSize: '16px' }}>System-Wide Deal Logs</Text>}
-        dataSource={dealsData.deals || []}
+        dataSource={dealsData?.deals || []}
         columns={dealColumns}
         rowKey="id"
         pagination={{
@@ -355,7 +340,7 @@ const AdminDeals = () => {
 
 // --- Sub-components ---
 
-const MetricCard = ({ title, value, icon, color, subtitle }: any) => (
+const MetricCard = ({ title, value, icon, color, subtitle }: { title: string; value: string; icon: React.ReactNode; color: string; subtitle?: string }) => (
   <CustomCard hoverable style={{ height: '100%', borderRadius: '16px', border: `1px solid ${colors.gray[100]}`, boxShadow: shadows.sm }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
       <div style={{
@@ -392,7 +377,7 @@ const MetricCard = ({ title, value, icon, color, subtitle }: any) => (
   </CustomCard>
 );
 
-const StatusRow = ({ label, count, pct, color }: any) => (
+const StatusRow = ({ label, count, pct, color }: { label: string; count?: number; pct?: number; color: string }) => (
   <div style={{ marginBottom: '18px' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
       <Text strong style={{ color: '#475569', fontSize: '12px' }}>{label}</Text>

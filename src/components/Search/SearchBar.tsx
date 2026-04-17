@@ -5,10 +5,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { Input, AutoComplete, Tag, Spin } from 'antd';
 import { SearchOutlined, CloseCircleOutlined, ClockCircleOutlined, FireOutlined } from '@ant-design/icons';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { searchApi } from '../../services/api';
 import { colors, spacing } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface SearchBarProps {
   placeholder?: string;
@@ -83,7 +84,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       const response = await searchApi.autocomplete(query, 10);
       setSuggestions(response.data.data.suggestions || []);
     } catch (error) {
-      console.error('Failed to fetch suggestions:', error);
+      logger.error('Failed to fetch suggestions:', error);
       setSuggestions([]);
     } finally {
       setLoading(false);
@@ -95,7 +96,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
       const response = await searchApi.getPopularSearches(5);
       setPopularSearches(response.data.data.popular || []);
     } catch (error) {
-      console.error('Failed to fetch popular searches:', error);
+      logger.error('Failed to fetch popular searches:', error);
     }
   };
 
@@ -122,7 +123,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
     setFocused(false);
   };
 
-  const handleSelectSuggestion = (value: string, option: any) => {
+  const handleSelectSuggestion = (value: string, option: { key?: string }) => {
     const suggestion = suggestions.find(s => s.id === option.key);
     if (suggestion) {
       saveRecentSearch(suggestion.title);
@@ -161,7 +162,7 @@ export const SearchBar: React.FC<SearchBarProps> = ({
 
   // Render autocomplete options
   const renderOptions = () => {
-    const options: any[] = [];
+    const options: { key?: string; value?: string; label: React.ReactNode; options?: { key: string; value: string; label: React.ReactNode }[] }[] = [];
 
     // Show suggestions if searching
     if (searchValue.trim().length >= 2 && suggestions.length > 0) {

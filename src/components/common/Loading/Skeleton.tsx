@@ -18,6 +18,7 @@ export interface SkeletonProps {
 const Skeleton: React.FC<SkeletonProps> = ({
   type = 'text',
   count = 1,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   animate = 'wave',
   width,
   height,

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Table, TableProps } from 'antd';
-import { colors, shadows, borderRadius, typography } from '../../../styles/tokens';
+import { colors, shadows } from '../../../styles/tokens';
 
 const CustomTable = <T extends object>(props: TableProps<T>) => {
     return (

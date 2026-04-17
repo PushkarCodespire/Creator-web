@@ -4,9 +4,9 @@
 
 import React from 'react';
 import { Empty, Tooltip, Tag, Typography } from 'antd';
-import { FireExtinguisher, Info, Zap, Flame } from 'lucide-react';
+import { Zap, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
 
 const { Title, Text } = Typography;
 

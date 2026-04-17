@@ -15,13 +15,13 @@ import {
 import { motion } from 'framer-motion';
 import { creatorApi } from '../services/api';
 import { Creator } from '../types';
-import CustomCard from '../components/common/Card/CustomCard';
 import CustomButton from '../components/common/Button/CustomButton';
 import { Skeleton } from '../components/common/Loading/Skeleton';
 import { EmptyState } from '../components/common/EmptyState/EmptyState';
 import { CreatorFilters } from '../components/Search';
 import { colors, typography, spacing, shadows } from '../styles/tokens';
 import { pageVariants, fadeIn, staggerContainer } from '../styles/animations';
+import { logger } from '../utils/logger';
 import { CreatorCard } from '../components/Discovery/CreatorCard'; // Import reused card
 
 const { Search } = Input;
@@ -30,7 +30,7 @@ type ViewMode = 'grid' | 'list';
 type SortBy = 'popular' | 'newest' | 'rating' | 'alphabetical';
 
 const CreatorGallery = () => {
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [creators, setCreators] = useState<Creator[]>([]);
@@ -76,7 +76,7 @@ const CreatorGallery = () => {
       setCreators(response.data.data.creators || []);
       setTotal(response.data.data.pagination?.total || 0);
     } catch (error) {
-      console.error('Failed to fetch creators:', error);
+      logger.error('Failed to fetch creators:', error);
     } finally {
       setLoading(false);
     }
@@ -87,7 +87,7 @@ const CreatorGallery = () => {
       const response = await creatorApi.getCategories();
       setCategories(response.data.data || []);
     } catch (error) {
-      console.error('Failed to fetch categories:', error);
+      logger.error('Failed to fetch categories:', error);
     }
   };
 
@@ -100,7 +100,7 @@ const CreatorGallery = () => {
   const handleCategorySelect = (category: string | undefined) => {
     setSelectedCategory(category);
     setCurrentPage(1);
-    const params: any = {};
+    const params: Record<string, string> = {};
     if (search) params.search = search;
     if (category) params.category = category;
     setSearchParams(params);
@@ -175,7 +175,7 @@ const CreatorGallery = () => {
                   variant="borderless"
                   size="large"
                   defaultValue={search}
-                  onPressEnter={(e: any) => handleSearch(e.target.value)}
+                  onPressEnter={(e: React.KeyboardEvent<HTMLInputElement>) => handleSearch((e.target as HTMLInputElement).value)}
                   onChange={(e) => {
                     if (e.target.value === '') handleSearch('');
                   }}

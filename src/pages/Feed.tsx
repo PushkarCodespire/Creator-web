@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { message, Typography, Button } from 'antd';
 import { useSelector } from 'react-redux';
@@ -7,7 +6,7 @@ import { RootState } from '../store';
 import { PostCard } from '../components/Post';
 import { useInfiniteFeed } from '../hooks/queries';
 import DashboardContentLoader from '../components/common/DashboardContentLoader';
-import { ArrowLeftOutlined, ReloadOutlined } from '@ant-design/icons';
+import { ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 
 const { Title, Text } = Typography;
@@ -15,12 +14,13 @@ const { Title, Text } = Typography;
 const Feed: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
-  const [isCreator, setIsCreator] = useState(false);
+  const [_isCreator, setIsCreator] = useState(false);
 
   const {
     data,
     fetchNextPage,
     hasNextPage,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     isFetchingNextPage,
     isLoading,
     isError,

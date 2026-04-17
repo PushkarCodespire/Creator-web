@@ -5,6 +5,7 @@
 import React, { useState, useCallback, useRef } from 'react';
 import { Modal, Button, Slider, message } from 'antd';
 import Cropper from 'react-easy-crop';
+// eslint-disable-next-line no-duplicate-imports
 import type { Point, Area } from 'react-easy-crop';
 import { UploadOutlined, RotateRightOutlined } from '@ant-design/icons';
 
@@ -164,8 +165,9 @@ export const ImageUpload: React.FC<ImageUploadProps> = ({
       setImageSrc(null);
       setRotation(0);
       setZoom(1);
-    } catch (error: any) {
-      message.error(`Upload failed: ${error.message}`);
+    } catch (error: unknown) {
+      const msg = error instanceof Error ? error.message : 'An error occurred';
+      message.error(`Upload failed: ${msg}`);
     } finally {
       setUploading(false);
     }

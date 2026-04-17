@@ -5,28 +5,17 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import {
-  MessageSquare,
-  Share2,
-  MoreVertical,
-  CircleCheck,
-  Trash2,
-  Edit,
-  Heart,
-  ExternalLink,
-  ChevronRight,
-  TrendingUp,
-  Play,
-  Download
-} from 'lucide-react';
+import { MessageSquare, Share2, MoreVertical, CircleCheck, Trash2, Edit, Heart, ExternalLink, Play, Download } from 'lucide-react';
 import { downloadFromUrl } from '../../utils/fileDownloadUtils';
-import { Dropdown, Modal, message, Avatar, Button, Typography, Space, Tag } from 'antd';
+import { Dropdown, Modal, message, Avatar, Button, Typography, Tag } from 'antd';
+// eslint-disable-next-line no-duplicate-imports
 import type { MenuProps } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { postApi, getImageUrl } from '../../services/api';
 import { CommentSection } from '../Comment';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Text, Paragraph } = Typography;
 
@@ -71,7 +60,7 @@ const PostCard: React.FC<PostCardProps> = ({
   const [showComments, setShowComments] = useState(false);
   const [isLiked, setIsLiked] = useState<boolean>(post.isLiked);
   const [likesCount, setLikesCount] = useState<number>(post.likesCount);
-  const [commentsCount, setCommentsCount] = useState(post.commentsCount || 0);
+  const [commentsCount, _setCommentsCount] = useState(post.commentsCount || 0);
 
   useEffect(() => {
     setIsLiked(post.isLiked);
@@ -97,7 +86,7 @@ const PostCard: React.FC<PostCardProps> = ({
         await postApi.unlikePost(post.id);
       }
     } catch (error) {
-      console.error('Failed to like/unlike post:', error);
+      logger.error('Failed to like/unlike post:', error);
       setIsLiked(!isLiked);
       setLikesCount(prev => isLiked ? prev - 1 : prev + 1);
     }
@@ -108,7 +97,7 @@ const PostCard: React.FC<PostCardProps> = ({
     if (navigator.share) {
       try {
         await navigator.share({ title: `Post by ${post.creator.displayName}`, url: shareUrl });
-      } catch (err) { console.error(err); }
+      } catch (err) { logger.error(err as string); }
     } else {
       await navigator.clipboard.writeText(shareUrl);
       message.success('Nexus link copied to clipboard!');
@@ -130,8 +119,9 @@ const PostCard: React.FC<PostCardProps> = ({
           await postApi.deletePost(post.id);
           message.success('Transmission purged');
           onPostDelete?.(post.id);
-        } catch (error: any) {
-          message.error(error.response?.data?.error || 'Failed to purge');
+        } catch (error: unknown) {
+          const err = error as { response?: { data?: { error?: string } } };
+          message.error(err.response?.data?.error || 'Failed to purge');
         } finally {
           setIsDeleting(false);
         }

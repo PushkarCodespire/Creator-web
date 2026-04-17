@@ -6,7 +6,7 @@
 import { Tooltip } from 'antd';
 import { TrophyOutlined, FireOutlined, StarFilled, CrownOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
-import { colors, spacing, typography } from '../../styles/tokens';
+import { colors } from '../../styles/tokens';
 
 interface AchievementBadgeProps {
   name: string;

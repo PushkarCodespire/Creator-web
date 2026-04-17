@@ -3,20 +3,22 @@
 // ===========================================
 
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Tag, Select, Card, Spin, Button, Space, Tooltip, Input } from 'antd';
-import { Eye, Search, Filter, RefreshCcw, Users, ShieldCheck, UserMinus, UserCheck } from 'lucide-react';
+import { Tag, Select, Spin, Space, Tooltip, Input } from 'antd';
+import { Eye, Search, RefreshCcw, Users, ShieldCheck, UserMinus, UserCheck } from 'lucide-react';
+// eslint-disable-next-line no-duplicate-imports
 import { Row, Col, Statistic, Typography } from 'antd';
 
 const { Text } = Typography;
 import { adminApi } from '../../services/api';
 import UserDetailModal from '../../components/admin/UserDetailModal';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import CustomTable from '../../components/common/Table/CustomTable';
 import CustomCard from '../../components/common/Card/CustomCard';
-import CustomInput from '../../components/common/Form/CustomInput';
 import CustomButton from '../../components/common/Button/CustomButton';
 
 const AdminUsers = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
@@ -54,7 +56,7 @@ const AdminUsers = () => {
         total: response.data.data.pagination.total
       }));
     } catch (err) {
-      console.error('Failed to fetch users:', err);
+      logger.error('Failed to fetch users:', err);
     } finally {
       setLoading(false);
     }
@@ -98,7 +100,7 @@ const AdminUsers = () => {
     {
       title: 'Status',
       key: 'status',
-      render: (record: any) => {
+      render: (record: { isBanned?: boolean; isSuspended?: boolean; isVerified?: boolean }) => {
         if (record.isBanned) return <Tag color="error">BANNED</Tag>;
         if (record.isSuspended) return <Tag color="warning">SUSPENDED</Tag>;
         return (
@@ -117,7 +119,7 @@ const AdminUsers = () => {
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: any) => (
+      render: (record: { id: string }) => (
         <Tooltip title="View Details">
           <CustomButton
             variant="ghost"

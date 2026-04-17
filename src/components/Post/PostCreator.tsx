@@ -4,35 +4,19 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Camera,
-  Video,
-  X,
-  Loader2,
-  Smile,
-  Send,
-  Image as ImageIcon,
-  Film,
-  Zap,
-  Sparkles,
-  Search,
-  ChevronRight,
-  MoreVertical,
-  Paperclip,
-  Check
-} from 'lucide-react';
+import { X, Loader2, Image as ImageIcon, Film, Zap } from 'lucide-react';
 import { Input, message, Upload, Avatar, Button, Space, Typography, Tag, Divider } from 'antd';
-import type { UploadFile } from 'antd';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { postApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { TextArea } = Input;
 const { Text } = Typography;
 
 export interface PostCreatorProps {
-  onPostCreated?: (post: any) => void;
+  onPostCreated?: (post: Record<string, unknown>) => void;
   onCancel?: () => void;
   placeholder?: string;
   maxLength?: number;
@@ -53,6 +37,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const textAreaRef = useRef<any>(null);
 
   const handleMediaUpload = async (file: File) => {
@@ -94,7 +79,7 @@ const PostCreator: React.FC<PostCreatorProps> = ({
       ]);
       message.success('Vector uploaded to matrix');
     } catch (error) {
-      console.error('Upload error:', error);
+      logger.error('Upload error:', error);
       message.error('Matrix connection unstable: Upload failed');
     } finally {
       setIsUploading(false);
@@ -130,8 +115,9 @@ const PostCreator: React.FC<PostCreatorProps> = ({
       setContent('');
       setMediaUrls([]);
       if (onPostCreated) onPostCreated(response.data.data);
-    } catch (error: any) {
-      message.error(error.response?.data?.error || 'Synthesis error');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      message.error(err.response?.data?.error || 'Synthesis error');
     } finally {
       setIsSubmitting(false);
     }

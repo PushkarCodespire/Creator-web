@@ -1,51 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-  Modal,
-  Tabs,
-  Form,
-  Input,
-  Select,
-  Button,
-  Tag,
-  Divider,
-  Space,
-  Statistic,
-  Row,
-  Col,
-  message,
-  Spin,
-  Card,
-  Switch,
-  Table,
-  Popconfirm,
-  Timeline,
-  Typography
-} from 'antd';
-import {
-  User,
-  Mail,
-  ShieldCheck,
-  CheckCircle2,
-  Ban,
-  Clock,
-  Edit3,
-  PlayCircle,
-  Trash2,
-  History,
-  AlertTriangle,
-  ExternalLink,
-  Shield,
-  Info,
-  Youtube,
-  Instagram,
-  Twitter,
-  Globe,
-  MoreVertical
-} from 'lucide-react';
+import { Tabs, Form, Input, Select, Button, Tag, Divider, Space, Statistic, Row, Col, message, Spin, Card, Switch, Table, Popconfirm, Timeline, Typography } from 'antd';
+import { User, Mail, ShieldCheck, CheckCircle2, Ban, Clock, Edit3, PlayCircle, Trash2, History, AlertTriangle, Info, Youtube, Instagram, Twitter, Globe } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import { colors, spacing, shadows, borderRadius, typography } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
 import CustomModal from '../../components/common/Modal/CustomModal';
 import CustomCard from '../../components/common/Card/CustomCard';
+import { logger } from '../../utils/logger';
 
 const { Text, Title, Paragraph } = Typography;
 
@@ -65,13 +25,17 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
   onSuccess,
 }) => {
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [creator, setCreator] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [analytics, setAnalytics] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [history, setHistory] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [form] = Form.useForm();
 
   // Content moderation state
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [contents, setContents] = useState<any[]>([]);
   const [contentsLoading, setContentsLoading] = useState(false);
   const [contentPagination, setContentPagination] = useState({ current: 1, pageSize: 10, total: 0 });
@@ -102,6 +66,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       setContentPagination({ current: 1, pageSize: 10, total: 0 });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, creatorId]);
 
   const fetchData = async () => {
@@ -117,7 +82,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
         try {
           const historyRes = await adminApi.getUserModerationHistory(data.creator.userId);
           setHistory(historyRes.data.data);
-        } catch (e) { console.error('Failed to load history', e); }
+        } catch (e) { logger.error('Failed to load history', e); }
       }
 
       form.setFieldsValue({
@@ -133,7 +98,8 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
         isVerified: data.creator.isVerified,
         isActive: data.creator.isActive,
       });
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to load creator details');
       onClose();
     } finally {
@@ -157,14 +123,15 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
         current: data.pagination?.page || page || 1,
         total: data.pagination?.total || 0,
       }));
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to load creator content');
     } finally {
       setContentsLoading(false);
     }
   };
 
-  const handleUpdateProfile = async (values: any) => {
+  const handleUpdateProfile = async (values: Record<string, unknown>) => {
     if (!creatorId) return;
     try {
       setLoading(true);
@@ -185,7 +152,8 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       await fetchData();
       onSuccess();
       onClose();
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to update creator');
     } finally {
       setLoading(false);
@@ -201,7 +169,8 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       message.success(`Creator ${nextActive ? 'activated' : 'deactivated'}`);
       await fetchData();
       onSuccess();
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to update active status');
     } finally {
       setLoading(false);
@@ -217,14 +186,15 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       await fetchData();
       onSuccess();
       onClose();
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to verify creator');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleReject = async (values: any) => {
+  const handleReject = async (values: { reason: string }) => {
     if (!creatorId) return;
     try {
       setLoading(true);
@@ -235,14 +205,15 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       await fetchData();
       onSuccess();
       onClose();
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to reject creator');
     } finally {
       setLoading(false);
     }
   };
 
-  const openStatusModal = (content: any) => {
+  const openStatusModal = (content: { id: string; status: string; errorMessage?: string }) => {
     setActiveContentId(content.id);
     statusForm.setFieldsValue({
       status: content.status,
@@ -251,7 +222,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
     setContentStatusModalVisible(true);
   };
 
-  const handleUpdateContentStatus = async (values: any) => {
+  const handleUpdateContentStatus = async (values: { status: string; reason?: string; errorMessage?: string }) => {
     if (!activeContentId) return;
     try {
       setLoading(true);
@@ -263,7 +234,8 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       setContentStatusModalVisible(false);
       statusForm.resetFields();
       await fetchContents();
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_err) {
       message.error('Failed to update content status');
     } finally {
       setLoading(false);
@@ -276,7 +248,8 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       await adminApi.deleteContent(contentId);
       message.success('Content deleted');
       await fetchContents();
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (__err) {
       message.error('Failed to delete content');
     } finally {
       setLoading(false);
@@ -296,7 +269,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
             {history?.moderationLogs?.length > 0 ? (
               <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px' }}>
                 <Timeline style={{ marginTop: '16px' }}>
-                  {history.moderationLogs.map((log: any) => (
+                  {history.moderationLogs.map((log: { id: string; action: string; reason?: string; moderator?: { name: string }; createdAt: string }) => (
                     <Timeline.Item key={log.id} color={log.action.includes('BAN') ? colors.error.solid : colors.primary.solid}>
                       <div style={{ fontWeight: 700, color: colors.text.primary, fontSize: '13px' }}>
                         {log.action.replace('_', ' ')}
@@ -326,7 +299,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
           >
             {history?.reportsAgainst?.length > 0 ? (
               <div style={{ maxHeight: 400, overflowY: 'auto', padding: '8px' }}>
-                {history.reportsAgainst.map((report: any) => (
+                {history.reportsAgainst.map((report: { id: string; reason: string; status: string; createdAt: string }) => (
                   <div key={report.id} style={{ marginBottom: 16, borderBottom: `1px solid ${colors.gray[50]}`, paddingBottom: 12 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                       <Text strong style={{ color: colors.text.primary, fontSize: '13px' }}>{report.reason}</Text>
@@ -593,7 +566,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
     {
       title: 'Actions',
       key: 'actions',
-      render: (record: any) => (
+      render: (record: { id: string; status: string }) => (
         <Space>
           <Button
             size="middle"

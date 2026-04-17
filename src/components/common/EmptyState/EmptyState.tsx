@@ -4,7 +4,7 @@
 // ===========================================
 
 import React from 'react';
-import { Button, Space, Typography } from 'antd';
+import { Button, Typography } from 'antd';
 import { colors, spacing } from '../../../styles/tokens';
 import { motion } from 'framer-motion';
 import { fadeInUp } from '../../../styles/animations';

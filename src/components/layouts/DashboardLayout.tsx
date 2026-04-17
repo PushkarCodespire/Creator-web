@@ -4,18 +4,14 @@
 
 import { useLocation, useNavigate, Outlet, Link } from 'react-router-dom';
 import { Layout, Menu, Avatar, Dropdown, Space, Drawer, Grid, Button as AntButton, type MenuProps } from 'antd';
-import {
-  LayoutDashboard, MessageSquare, Star, Users, CircleDollarSign, Settings,
-  Search, Trophy, Globe, PenSquare, FileText, BarChart3, Lightbulb, Wallet,
-  Box, Store, User, LogOut, Mail, Menu as MenuIcon, AlertCircle, Bot, ChevronRight, Bell, Home
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { LayoutDashboard, MessageSquare, Star, Users, CircleDollarSign, Settings, Search, Trophy, Globe, PenSquare, FileText, BarChart3, Lightbulb, Wallet, Box, Store, User, LogOut, Mail, Menu as MenuIcon, AlertCircle, Bot, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { getImageUrl, subscriptionApi } from '../../services/api';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
 import DemoModeBanner from '../DemoModeBanner';
 import { NotificationCenter } from '../notifications';
 
@@ -34,13 +30,14 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
   const screens = useBreakpoint();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [subscription, setSubscription] = useState<any>(user?.subscription || null);
   const isCreatorRejected = type === 'creator' && (user?.creator?.isRejected || user?.creator?.rejected);
   const creatorRejectionReason = user?.creator?.rejectionReason;
   const creatorRejectedAt = user?.creator?.rejectedAt;
 
   const isMobile = !screens.md;
-  const isAdmin = type === 'admin';
+  const _isAdmin = type === 'admin';
 
   useEffect(() => {
     setAvatarError(false);
@@ -55,7 +52,8 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
         if (isMounted) {
           setSubscription(response.data.data || null);
         }
-      } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (_error) {
         // Fall back to user subscription data if API fails
         if (isMounted) {
           setSubscription(user?.subscription || null);
@@ -83,11 +81,14 @@ const DashboardLayout = ({ type }: DashboardLayoutProps) => {
   const disableMenuItems = (items: MenuProps['items'] = []): MenuProps['items'] => {
     const next = (items || []).map((item) => {
       if (!item) return item;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const typed = item as any;
       if (typed.type === 'divider') return typed;
       if (typed.children) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return { ...typed, disabled: true, children: disableMenuItems(typed.children as any) } as any;
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       return { ...typed, disabled: true } as any;
     });
     return next as MenuProps['items'];

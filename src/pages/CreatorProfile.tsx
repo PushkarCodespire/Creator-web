@@ -32,6 +32,7 @@ import { CreatorStats } from '../components/Creator/CreatorStats';
 import { FAQAccordion } from '../components/Creator/FAQAccordion';
 import CreatorReviews from '../components/Creator/CreatorReviews';
 import { ShareDialog } from '../components/Social/ShareDialog';
+import { logger } from '../utils/logger';
 import { colors, typography, spacing, shadows } from '../styles/tokens';
 import { pageVariants, fadeIn, slideUp } from '../styles/animations';
 
@@ -64,6 +65,7 @@ const CreatorProfile = () => {
   const navigate = useNavigate();
   const [creator, setCreator] = useState<CreatorProfileType | null>(null);
   const [posts, setPosts] = useState<PostData[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [contentItems, setContentItems] = useState<any[]>([]);
   const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>([]);
   const [loading, setLoading] = useState(true);
@@ -107,7 +109,7 @@ const CreatorProfile = () => {
       setCreator(data);
       if (data.faqs) setFaqs(data.faqs);
     } catch (error) {
-      console.error('Failed to fetch creator:', error);
+      logger.error('Failed to fetch creator:', error);
     }
   };
 
@@ -116,7 +118,7 @@ const CreatorProfile = () => {
       const response = await postApi.getFeed({ creatorId: id, limit: 6 });
       setPosts(response.data.data.posts || []);
     } catch (error) {
-      console.error('Failed to fetch posts:', error);
+      logger.error('Failed to fetch posts:', error);
     }
   };
 
@@ -126,11 +128,11 @@ const CreatorProfile = () => {
       const response = await creatorApi.getContent(id!);
       setContentItems(response.data.data || []);
     } catch (error) {
-      console.error('Failed to fetch content:', error);
+      logger.error('Failed to fetch content:', error);
     }
   };
 
-  const fetchFAQs = async () => {
+  const _fetchFAQs = async () => {
     // FAQs are now fetched as part of the creator profile response
     if (creator?.faqs) {
       setFaqs(creator.faqs);
@@ -196,7 +198,7 @@ const CreatorProfile = () => {
             responseRate={creator.performance?.responseRate || 100}
             avgResponseTime={creator.performance?.avgResponseTimeSeconds || 0}
             topicExpertise={creator.topicExpertise}
-            userSatisfaction={creator.satisfactionTrend?.map((item: any) => ({
+            userSatisfaction={creator.satisfactionTrend?.map((item: { month: string; score: number }) => ({
               month: item.month,
               satisfaction: item.score
             }))}

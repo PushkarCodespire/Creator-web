@@ -26,7 +26,8 @@ export const isValidUrl = (string: string): boolean => {
   try {
     new URL(string);
     return true;
-  } catch (_) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  } catch (__) {
     return false;
   }
 };

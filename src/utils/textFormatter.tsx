@@ -62,7 +62,7 @@ export const formatText = (text: string): React.ReactNode => {
  */
 const formatNonCode = (text: string, startKey: number): React.ReactNode[] => {
   const parts: React.ReactNode[] = [];
-  let currentText = text;
+  const currentText = text;
   let key = startKey;
 
   // Pattern for formatting

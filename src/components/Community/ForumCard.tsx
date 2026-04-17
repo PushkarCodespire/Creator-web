@@ -1,5 +1,5 @@
 import React from 'react';
-import { Avatar, Tag, Button, Typography, Space } from 'antd';
+import { Avatar, Tag, Typography, Space } from 'antd';
 import {
   MessageOutlined,
   EyeOutlined,

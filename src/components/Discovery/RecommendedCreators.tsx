@@ -10,6 +10,7 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { recommendationApi, followApi } from '../../services/api';
 import { colors, spacing } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface RecommendedCreatorsProps {
   title?: string;
@@ -25,6 +26,7 @@ export const RecommendedCreators: React.FC<RecommendedCreatorsProps> = ({
   showReasons = true,
 }) => {
   const { user } = useSelector((state: RootState) => state.auth);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [creators, setCreators] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [followingMap, setFollowingMap] = useState<Map<string, boolean>>(new Map());
@@ -50,12 +52,12 @@ export const RecommendedCreators: React.FC<RecommendedCreatorsProps> = ({
 
       // Initialize following map
       const initialMap = new Map<string, boolean>();
-      recs.forEach((creator: any) => {
+      recs.forEach((creator: { id: string; creatorId?: string; reason?: string }) => {
         initialMap.set(creator.id, false);
       });
       setFollowingMap(initialMap);
     } catch (error) {
-      console.error('Failed to fetch recommendations:', error);
+      logger.error('Failed to fetch recommendations:', error);
       setCreators([]);
     } finally {
       setLoading(false);
@@ -80,9 +82,10 @@ export const RecommendedCreators: React.FC<RecommendedCreatorsProps> = ({
         setFollowingMap(new Map(followingMap.set(creatorId, true)));
         antMessage.success('Following creator');
       }
-    } catch (error: any) {
-      console.error('Failed to toggle follow:', error);
-      antMessage.error(error.response?.data?.error || 'Failed to update follow status');
+    } catch (error: unknown) {
+      logger.error('Failed to toggle follow:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to update follow status');
     }
   };
 

@@ -3,7 +3,7 @@
 // ARIA labels and live regions
 // ===========================================
 
-import { useEffect, useRef } from 'react';
+import { useRef } from 'react';
 
 /**
  * Hook to announce messages to screen readers

@@ -1,21 +1,23 @@
 import { useState, useEffect } from 'react';
 import { Modal, List, Avatar, Rate, Progress, Spin, message, Row, Col } from 'antd';
-import { User, Star, StarHalf, MessageSquare } from 'lucide-react';
+import { User, Star, MessageSquare } from 'lucide-react';
 import { reviewApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface ReviewsModalProps {
     creatorId: string;
     visible: boolean;
     onClose: () => void;
-    initialSummary?: any;
+    initialSummary?: { averageRating: number; totalReviews: number; breakdown: Record<string, number> };
 }
 
 export const ReviewsModal: React.FC<ReviewsModalProps> = ({ creatorId, visible, onClose, initialSummary }) => {
     const [loading, setLoading] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [reviews, setReviews] = useState<any[]>([]);
-    const [summary, setSummary] = useState<any>(initialSummary);
-    const [page, setPage] = useState(1);
+    const [summary, setSummary] = useState(initialSummary);
+    const [page, _setPage] = useState(1);
     const limit = 10;
 
     useEffect(() => {
@@ -31,7 +33,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ creatorId, visible, 
             setReviews(response.data.data.reviews);
             setSummary(response.data.data.summary);
         } catch (err) {
-            console.error('Failed to fetch reviews:', err);
+            logger.error('Failed to fetch reviews:', err);
             message.error('Failed to load reviews');
         } finally {
             setLoading(false);
@@ -40,7 +42,7 @@ export const ReviewsModal: React.FC<ReviewsModalProps> = ({ creatorId, visible, 
 
     const getBreakdownTotal = () => {
         if (!summary?.breakdown) return 0;
-        return Object.values(summary.breakdown).reduce((a: any, b: any) => a + b, 0) as number;
+        return Object.values(summary.breakdown).reduce((a: number, b: number) => a + b, 0) as number;
     };
 
     const totalPossible = getBreakdownTotal();

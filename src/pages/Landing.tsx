@@ -4,22 +4,9 @@
 
 import { useNavigate } from 'react-router-dom';
 import { Collapse, Avatar } from 'antd';
-import {
-  MessageSquare,
-  Rocket,
-  CircleDollarSign,
-  Users,
-  CheckCircle2,
-  Star,
-  ArrowRight,
-  Play,
-  ShieldCheck,
-  Sparkles,
-  TrendingUp,
-  Zap
-} from 'lucide-react';
+import { MessageSquare, Rocket, CircleDollarSign, Users, CheckCircle2, Star, ArrowRight, Play, ShieldCheck, Sparkles, Zap } from 'lucide-react';
 import { useEffect, useState, useRef } from 'react';
-import { motion, useInView, useAnimation } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
 import CustomButton from '../components/common/Button/CustomButton';
 import CustomCard from '../components/common/Card/CustomCard';
 import { FeaturedCreators } from '../components/Discovery';
@@ -670,7 +657,7 @@ const Landing = () => {
               gap: spacing[6],
             }}
           >
-            {features.map((feature, index) => (
+            {features.map((feature, _index) => (
               <motion.div
                 key={feature.title}
                 variants={scaleIn}

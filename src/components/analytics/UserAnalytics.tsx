@@ -10,6 +10,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import CustomCard from '../common/Card/CustomCard';
 import { colors, spacing, typography } from '../../styles/tokens';
 import { analyticsApi } from '../../services/api';
+import { logger } from '../../utils/logger';
 
 
 
@@ -20,7 +21,9 @@ interface UserAnalyticsProps {
 export const UserAnalytics: React.FC<UserAnalyticsProps> = () => {
   const [loading, setLoading] = useState(false);
   const [timeRange, setTimeRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [chatHistory, setChatHistory] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [learningProgress, setLearningProgress] = useState<any[]>([]);
   const [engagementStats, setEngagementStats] = useState({
     totalMessages: 0,
@@ -66,7 +69,7 @@ export const UserAnalytics: React.FC<UserAnalyticsProps> = () => {
         activeDays: stats.activeDays ?? stats.daysActive ?? 0,
       });
     } catch (error) {
-      console.error('Failed to fetch analytics:', error);
+      logger.error('Failed to fetch analytics:', error);
     } finally {
       setLoading(false);
     }
@@ -164,6 +167,7 @@ export const UserAnalytics: React.FC<UserAnalyticsProps> = () => {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
+                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
                       label={({ topic, progress }: any) => `${topic}: ${progress}%`}
                       outerRadius={80}
                       fill="#8884d8"

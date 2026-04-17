@@ -21,9 +21,10 @@ import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import api from '../../services/api';
 import { connectSocket, getSocket } from '../../utils/socket';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing } from '../../styles/tokens';
 import { Notification } from '../../types';
 import './NotificationCenter.css';
+import { logger } from '../../utils/logger';
 
 let notificationSequence = 0;
 const buildFallbackNotificationId = () => `notif_${Date.now()}_${++notificationSequence}`;
@@ -62,6 +63,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     );
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const normalizeNotification = (payload: any): Notification => {
     // If it's already a clean notification object from our API
     if (payload.id && payload.type && payload.message) {
@@ -79,13 +81,14 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         ? '/creator-dashboard/opportunities'
         : (payload?.actionUrl || payload?.url),
       data: payload?.data,
-      priority: (payload?.priority as any) || 'NORMAL',
+      priority: (payload?.priority as Notification['priority']) || 'NORMAL',
       createdAt: payload?.createdAt || new Date().toISOString(),
       readAt: payload?.readAt || null,
       expiresAt: payload?.expiresAt || null
     };
   };
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const buildOpportunityNotification = (payload: any): Notification => {
     const opportunity = payload?.opportunity || payload;
     const companyName = opportunity?.company?.companyName || payload?.company?.companyName;
@@ -137,11 +140,13 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
     const authToken = token || localStorage.getItem('token') || undefined;
     const socket = connectSocket(authToken, user.id);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleNotification = (payload: any) => {
       const normalized = normalizeNotification(payload);
       pushNotification(normalized);
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleOpportunity = (payload: any) => {
       const normalized = buildOpportunityNotification(payload);
       pushNotification(normalized);
@@ -178,7 +183,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         } else if (data.data && data.data.notifications && Array.isArray(data.data.notifications)) {
           notificationsData = data.data.notifications;
         } else {
-          console.warn('Notification API response format unexpected:', data);
+          logger.warn('Notification API response format unexpected:', data);
         }
       }
 
@@ -188,7 +193,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
       setNotifications(normalized.slice(0, limit));
     } catch (error) {
-      console.error('Error loading notifications:', error);
+      logger.error('Error loading notifications:', error);
       setNotifications([]); // Always fallback to empty array
     } finally {
       setIsLoading(false);
@@ -202,7 +207,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
         prev.map(n => n.id === notificationId ? { ...n, isRead: true } : n)
       );
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      logger.error('Error marking notification as read:', error);
     }
   };
 
@@ -211,7 +216,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       await api.put('/notifications/read-all');
       setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      logger.error('Error marking all notifications as read:', error);
     }
   };
 
@@ -225,7 +230,8 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
     // Chat/message notifications → open chat interface
     if (type.includes('chat') || type.includes('message')) {
-      const data = notification.data || {};
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const data: Record<string, any> = (notification.data || {}) as Record<string, any>;
 
       // Prefer a proper creatorId derived from structured data
       const creatorIdFromData =
@@ -276,7 +282,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       unreadCount = filteredNotifications.filter(n => n && !n.isRead).length;
     }
   } catch (e) {
-    console.error('Error calculating unreadCount:', e);
+    logger.error('Error calculating unreadCount:', e);
   }
 
   const getIcon = (type: string) => {

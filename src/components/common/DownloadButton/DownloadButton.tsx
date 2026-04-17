@@ -6,8 +6,9 @@
 import React, { useState } from 'react';
 import { Button, message } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
-import { downloadFromUrl, downloadFile } from '../../../utils/fileDownloadUtils';
-import { convertToDownloadUrl, downloadDisplayedImage } from '../../../utils/downloadHelpers';
+import { downloadFromUrl } from '../../../utils/fileDownloadUtils';
+import { downloadDisplayedImage } from '../../../utils/downloadHelpers';
+import { logger } from '../../../utils/logger';
 
 export interface DownloadButtonProps {
     /** The URL to download from. Can be display URL or download URL */
@@ -81,7 +82,7 @@ export const DownloadButton: React.FC<DownloadButtonProps> = ({
             message.success('Download started');
             onDownloadComplete?.();
         } catch (error) {
-            console.error('Download failed:', error);
+            logger.error('Download failed:', error);
             message.error('Failed to download file');
             onDownloadError?.(error as Error);
         } finally {

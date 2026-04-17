@@ -4,21 +4,14 @@
 // ===========================================
 
 import { useState, useEffect } from 'react';
-import { Drawer, Input, Tabs, Empty, Spin, Typography, Button, Space, Avatar, message as antMessage } from 'antd';
-import {
-  HistoryOutlined,
-  BookOutlined,
-  BulbOutlined,
-  SearchOutlined,
-  CloseOutlined,
-} from '@ant-design/icons';
+import { Input, Tabs, Empty, Spin, Typography, Button, Avatar } from 'antd';
+import { BulbOutlined, SearchOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState, AppDispatch } from '../../store';
 import { fetchUserConversations } from '../../store/slices/chatSlice';
-import { chatApi, bookmarkApi, getImageUrl } from '../../services/api';
+import { bookmarkApi, getImageUrl } from '../../services/api';
 import { Conversation, Message } from '../../types';
-import { colors, spacing, typography } from '../../styles/tokens';
-import { formatRelativeTime } from '../../utils/dateUtils';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 
@@ -34,6 +27,7 @@ interface ChatSidebarProps {
 
 export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   visible,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   onClose,
   onConversationSelect,
   currentConversationId,
@@ -41,10 +35,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const dispatch = useDispatch<AppDispatch>();
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const { conversations } = useSelector((state: RootState) => state.chat);
-  const [activeTab, setActiveTab] = useState('history');
+  const [_activeTab, _setActiveTab] = useState('history');
   const [searchQuery, setSearchQuery] = useState('');
   const [savedMessages, setSavedMessages] = useState<Message[]>([]);
-  const [suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
+  const [_suggestedTopics, setSuggestedTopics] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -62,7 +56,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       await loadSavedMessages();
       await loadSuggestedTopics();
     } catch (error) {
-      console.error('Failed to load sidebar data:', error);
+      logger.error('Failed to load sidebar data:', error);
     } finally {
       setLoading(false);
     }
@@ -74,7 +68,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
       const data = response.data.data;
       setSavedMessages(Array.isArray(data) ? data : (data?.bookmarks || data?.data || []));
     } catch (error) {
-      console.error('Failed to load saved messages:', error);
+      logger.error('Failed to load saved messages:', error);
     }
   };
 
@@ -102,7 +96,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     );
   });
 
-  const filteredSavedMessages = (Array.isArray(savedMessages) ? savedMessages : []).filter((msg: Message) => {
+  const _filteredSavedMessages = (Array.isArray(savedMessages) ? savedMessages : []).filter((msg: Message) => {
     if (!searchQuery) return true;
     return msg.content.toLowerCase().includes(searchQuery.toLowerCase());
   });

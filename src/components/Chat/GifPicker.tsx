@@ -7,6 +7,7 @@ import { Input, Spin, Empty, Tabs } from 'antd';
 import { SearchOutlined, FireOutlined, SmileOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Search } = Input;
 
@@ -57,7 +58,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({
       const data = await response.json();
       setGifs(data.data || []);
     } catch (error) {
-      console.error('Failed to fetch trending GIFs:', error);
+      logger.error('Failed to fetch trending GIFs:', error);
     } finally {
       setLoading(false);
     }
@@ -79,7 +80,7 @@ export const GifPicker: React.FC<GifPickerProps> = ({
       const data = await response.json();
       setGifs(data.data || []);
     } catch (error) {
-      console.error('Failed to search GIFs:', error);
+      logger.error('Failed to search GIFs:', error);
     } finally {
       setLoading(false);
     }

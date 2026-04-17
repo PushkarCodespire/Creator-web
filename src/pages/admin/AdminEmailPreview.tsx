@@ -4,7 +4,7 @@
 // ===========================================
 
 import { useEffect, useState } from 'react';
-import { Card, Select, Input, Button, Row, Col, Space, message, Divider, Tag } from 'antd';
+import { Card, Select, Input, Button, Row, Col, Space, message, Divider } from 'antd';
 import { MailOutlined, CopyOutlined, ReloadOutlined } from '@ant-design/icons';
 import { adminApi } from '../../services/api';
 import '../../styles/AdminPanel.css';
@@ -532,7 +532,8 @@ const AdminEmailPreview = () => {
         setPreviewSubject(tmpl.subject);
         return;
       }
-    } catch (err) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (__err) {
       message.error('Failed to load preview from API. Showing local preview.');
     }
 

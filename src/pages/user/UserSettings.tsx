@@ -7,7 +7,8 @@ import { userApi, authApi, notificationApi, getImageUrl } from '../../services/a
 import AvatarUpload from '../../components/upload/AvatarUpload';
 import { motion } from 'framer-motion';
 import DashboardContentLoader from '../../components/common/DashboardContentLoader';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 
@@ -29,6 +30,7 @@ const UserSettings = () => {
 
     // Interests State
     const [interests, setInterests] = useState<string[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [categories, setCategories] = useState<any[]>([]);
     const [interestsLoading, setInterestsLoading] = useState(false);
 
@@ -78,7 +80,7 @@ const UserSettings = () => {
                 dispatch(updateUser({ name: data.name, avatar: data.avatar }));
             }
         } catch (err) {
-            console.error('Failed to fetch profile:', err);
+            logger.error('Failed to fetch profile:', err);
             setProfile({
                 name: user?.name,
                 avatar: user?.avatar,
@@ -93,7 +95,7 @@ const UserSettings = () => {
             const settings = response.data.data || {};
             setNotifSettings(prev => ({ ...prev, ...settings }));
         } catch (err) {
-            console.error('Failed to fetch notification settings:', err);
+            logger.error('Failed to fetch notification settings:', err);
         }
     };
 
@@ -107,13 +109,13 @@ const UserSettings = () => {
             setInterests(intRes.data.data.interests || []);
             setCategories(catRes.data.data.categories || []);
         } catch (err) {
-            console.error(err);
+            logger.error(err as string);
         } finally {
             setInterestsLoading(false);
         }
     };
 
-    const handleProfileUpdate = async (values: any) => {
+    const handleProfileUpdate = async (values: Record<string, string>) => {
         try {
             setLoading(true);
             const payload = {
@@ -132,7 +134,8 @@ const UserSettings = () => {
                 avatar: updated.avatar ?? payload.avatar
             }));
             message.success('Profile updated successfully');
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__err) {
             message.error('Failed to update profile');
         } finally {
             setLoading(false);
@@ -150,7 +153,8 @@ const UserSettings = () => {
             }));
             dispatch(updateUser({ avatar: updated.avatar ?? url }));
             message.success('Avatar updated successfully');
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__err) {
             message.error('Failed to update avatar');
         } finally {
             setLoading(false);
@@ -162,7 +166,8 @@ const UserSettings = () => {
             setLoading(true);
             await userApi.updateInterests(interests);
             message.success('Interests updated successfully');
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__err) {
             message.error('Failed to update interests');
         } finally {
             setLoading(false);
@@ -176,20 +181,22 @@ const UserSettings = () => {
             setNotifSettings(newSettings);
             await notificationApi.updateSettings(newSettings);
             message.success('Settings updated');
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__err) {
             setNotifSettings(previous);
             message.error('Failed to update settings');
         }
     };
 
-    const handlePasswordChange = async (values: any) => {
+    const handlePasswordChange = async (values: { currentPassword: string; newPassword: string; confirmPassword: string }) => {
         try {
             setLoading(true);
             await authApi.changePassword(values.currentPassword, values.newPassword);
             message.success('Password changed successfully');
             passwordForm.resetFields(['currentPassword', 'newPassword', 'confirmPassword']);
-        } catch (err: any) {
-            message.error(err.response?.data?.message || 'Failed to change password');
+        } catch (err: unknown) {
+            const e = err as { response?: { data?: { message?: string } } };
+            message.error(e.response?.data?.message || 'Failed to change password');
         } finally {
             setLoading(false);
         }

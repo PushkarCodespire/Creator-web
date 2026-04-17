@@ -4,13 +4,14 @@
 
 import { useState } from 'react';
 import { Popover, Tooltip, message as antMessage } from 'antd';
-import { SmileOutlined, PlusOutlined } from '@ant-design/icons';
+import { SmileOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { reactionApi } from '../../services/api';
 import { MessageReaction } from '../../types';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface MessageReactionsProps {
   messageId: string;
@@ -27,7 +28,7 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
 }) => {
   const { user } = useSelector((state: RootState) => state.auth);
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [_loading, setLoading] = useState(false);
 
   const handleReactionClick = async (emoji: string) => {
     if (!user) {
@@ -67,16 +68,17 @@ export const MessageReactions: React.FC<MessageReactionsProps> = ({
       }
 
       setPickerOpen(false);
-    } catch (error: any) {
-      console.error('Failed to update reaction:', error);
-      antMessage.error(error.response?.data?.error || 'Failed to update reaction');
+    } catch (error: unknown) {
+      logger.error('Failed to update reaction:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to update reaction');
     } finally {
       setLoading(false);
     }
   };
 
   const reactionEntries = Object.entries(reactions);
-  const hasReactions = reactionEntries.length > 0;
+  const _hasReactions = reactionEntries.length > 0;
 
   const pickerContent = (
     <div

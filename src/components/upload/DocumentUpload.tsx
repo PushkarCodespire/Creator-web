@@ -73,6 +73,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   };
 
   // Custom upload request
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const customRequest = async ({ file, onSuccess, onError, onProgress }: any) => {
     const formData = new FormData();
     formData.append('document', file);
@@ -109,9 +110,10 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
 
       onSuccess(response.data);
       message.success(`${file.name} uploaded successfully`);
-    } catch (error: any) {
-      onError(error);
-      message.error(`${file.name} upload failed: ${error.message}`);
+    } catch (error: unknown) {
+      onError(error as Error);
+      const msg = error instanceof Error ? error.message : 'An error occurred';
+      message.error(`${file.name} upload failed: ${msg}`);
     } finally {
       setUploading(false);
     }
@@ -160,6 +162,7 @@ export const DocumentUpload: React.FC<DocumentUploadProps> = ({
   };
 
   // Handle file list change
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const handleChange = (info: any) => {
     let newFileList = [...info.fileList];
 

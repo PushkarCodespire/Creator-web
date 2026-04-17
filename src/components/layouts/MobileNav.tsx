@@ -6,15 +6,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Badge } from 'antd';
-import {
-  Home,
-  Compass,
-  MessageSquare,
-  User,
-  LayoutGrid,
-  CreditCard,
-  LogIn
-} from 'lucide-react';
+import { Home, Compass, MessageSquare, User, CreditCard, LogIn } from 'lucide-react';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { colors, shadows, zIndex } from '../../styles/tokens';

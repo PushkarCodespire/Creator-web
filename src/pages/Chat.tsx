@@ -11,30 +11,23 @@ import {
   MenuOutlined,
   SunOutlined,
   MoonOutlined,
-  SmileOutlined,
-  PaperClipOutlined,
   ArrowDownOutlined,
   CheckCircleFilled,
   AudioOutlined,
-  CameraOutlined,
   FileImageOutlined,
   CloseOutlined,
   UserOutlined,
   PlusOutlined,
   SearchOutlined,
-  VerticalRightOutlined,
-  VerticalLeftOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
-  HistoryOutlined,
-  MessageOutlined
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
-import { RootState, AppDispatch } from '../store';
-import { startConversation, fetchConversation, sendMessage, addMessage } from '../store/slices/chatSlice';
+import type { RootState, AppDispatch } from '../store';
+import { fetchConversation, addMessage } from '../store/slices/chatSlice';
 import { creatorApi, chatApi, getImageUrl, reviewApi, subscriptionApi } from '../services/api';
-import { Creator, Message, Review } from '../types';
-import { RateLimitStatus } from '../types/chat';
+import type { Creator, Message, Review } from '../types';
+import type { RateLimitStatus } from '../types/chat';
 import socketService from '../services/socket';
 import UpgradeModal from '../components/Chat/UpgradeModal';
 import GuestLimitModal from '../components/Chat/GuestLimitModal';
@@ -43,8 +36,15 @@ import remarkGfm from 'remark-gfm';
 import StreamingMessage from '../components/Chat/StreamingMessage';
 import MediaMessage from '../components/Chat/MediaMessage';
 import CreatorChatView from '../components/Chat/CreatorChatView';
-// uuid import removed
+import { logger } from '../utils/logger';
 import './ChatInterface.css';
+
+interface ConversationSummary {
+  id: string;
+  creatorId: string;
+  creator?: { displayName?: string; profileImage?: string };
+  lastMessage?: { content?: string };
+}
 
 const getNextGuestSequence = () => {
   const key = 'guestIdSequence';
@@ -73,7 +73,7 @@ const FanChatView = () => {
   const [loadingCreator, setLoadingCreator] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768); // Open by default on desktop, closed on mobile
   const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // ChatGPT-style collapse - Default to true as per request
-  const [allConversations, setAllConversations] = useState<any[]>([]);
+  const [allConversations, setAllConversations] = useState<ConversationSummary[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [isRecording, setIsRecording] = useState(false);
@@ -86,7 +86,7 @@ const FanChatView = () => {
   const [skipReviewForSession, setSkipReviewForSession] = useState(false);
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [tokenBalance, setTokenBalance] = useState<number | null>(null);
-  const [tokenGrant, setTokenGrant] = useState<number | null>(null);
+  const [_tokenGrant, setTokenGrant] = useState<number | null>(null);
   const [tokensPerMessage, setTokensPerMessage] = useState<number | null>(null);
   const [showTokenRenewModal, setShowTokenRenewModal] = useState(false);
 
@@ -97,7 +97,7 @@ const FanChatView = () => {
   const [conversationMode, setConversationMode] = useState<'AI' | 'MANUAL'>('AI');
   // Sync mode from Redux when the conversation loads or changes
   useEffect(() => {
-    const m = (currentConversation as any)?.mode;
+    const m = (currentConversation as unknown as Record<string, unknown>)?.mode;
     if (m === 'AI' || m === 'MANUAL') setConversationMode(m);
   }, [currentConversation]);
   const [streamingMessage, setStreamingMessage] = useState(''); // Keep streaming message separate
@@ -105,7 +105,7 @@ const FanChatView = () => {
   const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
-  const [loadingMessages, setLoadingMessages] = useState(false);
+  const [_loadingMessages, setLoadingMessages] = useState(false);
 
   // Refs
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -175,7 +175,8 @@ const FanChatView = () => {
           setTokenBalance(data.subscription?.tokenBalance ?? null);
           setTokenGrant(data.subscription?.tokenGrant ?? null);
         }
-      } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (__error) {
         // Token info is optional; ignore errors here
       }
     };
@@ -220,8 +221,8 @@ const FanChatView = () => {
       socketService.joinConversation(convId, user?.id, guestId);
       setupSocketListeners();
 
-    } catch (error: any) {
-      console.error('Failed to initialize chat:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to initialize chat:', error);
       antMessage.error('Failed to load chat');
     } finally {
       setLoadingCreator(false);
@@ -234,8 +235,8 @@ const FanChatView = () => {
       setLoadingHistory(true);
       const response = await chatApi.getUserConversations({ limit: 50 });
       setAllConversations(response.data.data.conversations || []);
-    } catch (error) {
-      console.error('Failed to load history:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to load history:', error);
     } finally {
       setLoadingHistory(false);
     }
@@ -257,9 +258,10 @@ const FanChatView = () => {
       setMyReview(review || null);
       setReviewRating(review?.rating ?? 5);
       setReviewText(review?.review ?? '');
-    } catch (error: any) {
-      if (error?.response?.status !== 404) {
-        console.error('Failed to load review:', error);
+    } catch (error: unknown) {
+      const err = error as { response?: { status?: number } };
+      if (err?.response?.status !== 404) {
+        logger.error('Failed to load review:', error);
       }
       setMyReview(null);
       setReviewRating(5);
@@ -289,8 +291,8 @@ const FanChatView = () => {
     try {
       setLoadingMessages(true);
       await dispatch(fetchConversation(convId)).unwrap();
-    } catch (error) {
-      console.error('Failed to load messages:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to load messages:', error);
     } finally {
       setLoadingMessages(false);
     }
@@ -307,16 +309,16 @@ const FanChatView = () => {
       if (remaining !== undefined && remaining <= 2 && remaining > 0) {
         antMessage.warning(`You have ${remaining} message${remaining === 1 ? '' : 's'} remaining today`);
       }
-    } catch (error) {
-      console.error('Failed to fetch rate limit status:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to fetch rate limit status:', error);
     }
   };
 
   const setupSocketListeners = () => {
-    console.log('🔌 Setting up socket listeners...');
+    logger.debug('Setting up socket listeners...');
 
     socketService.onMessageStream((data) => {
-      console.log('🌊 Received message stream:', data);
+      logger.debug('Received message stream:', data);
       if (data.conversationId === conversationIdRef.current) {
         setStreamingMessage(data.accumulated);
         setIsAIStreaming(true);
@@ -325,7 +327,7 @@ const FanChatView = () => {
 
     socketService.onMessageComplete((data) => {
       setIsTyping(false);
-      dispatch(addMessage(data.message as any));
+      dispatch(addMessage(data.message as unknown as Message));
       setStreamingMessage('');
       setIsAIStreaming(false);
       fetchRateLimitStatus();
@@ -343,22 +345,22 @@ const FanChatView = () => {
     const sock = socketService.getSocket();
     if (sock) {
       sock.off('message:new');
-      sock.on('message:new', (payload: any) => {
-        const msg = payload?.message;
+      sock.on('message:new', (payload: Record<string, unknown>) => {
+        const msg = payload?.message as Message | undefined;
         if (!msg) return;
         // Only handle messages for the currently-open conversation
         if (payload.conversationId && payload.conversationId !== conversationIdRef.current) return;
         // Skip USER role (we already added our own outgoing message locally)
         if (msg.role === 'USER') return;
-        dispatch(addMessage(msg as any));
+        dispatch(addMessage(msg));
         setIsTyping(false);
       });
 
       sock.off('conversation:mode-changed');
-      sock.on('conversation:mode-changed', (payload: any) => {
+      sock.on('conversation:mode-changed', (payload: Record<string, unknown>) => {
         if (payload?.conversationId && payload.conversationId !== conversationIdRef.current) return;
         if (payload?.mode === 'AI' || payload?.mode === 'MANUAL') {
-          setConversationMode(payload.mode);
+          setConversationMode(payload.mode as 'AI' | 'MANUAL');
           if (payload.autoReleased) {
             antMessage.info('The creator went offline. AI is replying again.');
           } else if (payload.mode === 'MANUAL') {
@@ -373,7 +375,7 @@ const FanChatView = () => {
       // user goes online/offline. Match by the creator's userId (read from a
       // ref so the handler always sees the latest creator).
       sock.off('user_presence');
-      sock.on('user_presence', (payload: any) => {
+      sock.on('user_presence', (payload: Record<string, unknown>) => {
         if (!creatorUserIdRef.current || payload?.userId !== creatorUserIdRef.current) return;
         setIsCreatorOnline(payload?.status === 'online');
       });
@@ -419,7 +421,7 @@ const FanChatView = () => {
       setInputMessage('');
 
       // Handle file uploads
-      let mediaAttachments: any[] = [];
+      let mediaAttachments: Record<string, unknown>[] = [];
       if (selectedFiles.length > 0) {
         // Create optimistic media objects for immediate display
         const optimisticMedia = selectedFiles.map(file => ({
@@ -439,7 +441,7 @@ const FanChatView = () => {
           role: 'USER',
           createdAt: new Date().toISOString(),
           conversationId: conversationId,
-          media: optimisticMedia as any
+          media: optimisticMedia as Message['media']
         };
         dispatch(addMessage(tempMessage));
         setIsTyping(true);
@@ -451,8 +453,8 @@ const FanChatView = () => {
           if (uploadResponse.data?.data?.media) {
             mediaAttachments = uploadResponse.data.data.media;
           }
-        } catch (uploadError) {
-          console.error('Failed to upload media:', uploadError);
+        } catch (uploadError: unknown) {
+          logger.error('Failed to upload media:', uploadError);
           antMessage.error('Failed to upload attachments');
           // Stop typing indicator if upload fails
           setIsTyping(false);
@@ -510,7 +512,7 @@ const FanChatView = () => {
               remaining: response.data.data.remainingMessages
             }
           }
-        } as any) : null);
+        } as RateLimitStatus) : null);
       } else {
         await fetchRateLimitStatus();
       }
@@ -520,27 +522,28 @@ const FanChatView = () => {
       setIsAIStreaming(false);
       setStreamingMessage('');
 
-    } catch (error: any) {
-      console.error('Failed to send message:', error);
+    } catch (error: unknown) {
+      logger.error('Failed to send message:', error);
       // Always clear typing/streaming state on failure
       setIsTyping(false);
       setIsAIStreaming(false);
       setStreamingMessage('');
 
+      const err = error as { response?: { status?: number } };
       // Handle rate limit error
-      if (error.response?.status === 429) {
+      if (err.response?.status === 429) {
         if (isAuthenticated) {
           setShowUpgradeModal(true);
         } else {
           setShowGuestLimitModal(true);
         }
         antMessage.error('Message limit reached');
-      } else if (error.response?.status === 402) {
+      } else if (err.response?.status === 402) {
         setShowTokenRenewModal(true);
         antMessage.error('Out of tokens. Please renew to continue.');
-      } else if (error.response?.status === 403) {
+      } else if (err.response?.status === 403) {
         antMessage.error('Your account is suspended');
-      } else if (error.response?.status === 400) {
+      } else if (err.response?.status === 400) {
         antMessage.error('Message contains inappropriate content');
       } else {
         antMessage.error('Failed to send message');
@@ -596,9 +599,10 @@ const FanChatView = () => {
         navigate(pendingNavigation);
         setPendingNavigation(null);
       }
-    } catch (error: any) {
-      console.error('Failed to submit review:', error);
-      antMessage.error(error?.response?.data?.error || 'Failed to submit review');
+    } catch (error: unknown) {
+      logger.error('Failed to submit review:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err?.response?.data?.error || 'Failed to submit review');
     } finally {
       setReviewSubmitting(false);
     }
@@ -663,8 +667,8 @@ const FanChatView = () => {
         mediaRecorder.start();
         setIsRecording(true);
         antMessage.info('Recording started');
-      } catch (err) {
-        console.error('Error accessing microphone:', err);
+      } catch (micError: unknown) {
+        logger.error('Error accessing microphone:', micError);
         antMessage.error('Could not access microphone');
       }
     }
@@ -917,7 +921,7 @@ const FanChatView = () => {
             <>
               {messages.map((msg, index) => {
                 const isUser = msg.role === 'USER';
-                const isManualCreator = (msg.role as any) === 'CREATOR';
+                const isManualCreator = (msg.role as string) === 'CREATOR';
                 return (
                   <div key={msg.id || index} className={`message-wrapper ${isUser ? 'user' : 'ai'}`}>
                     <Avatar

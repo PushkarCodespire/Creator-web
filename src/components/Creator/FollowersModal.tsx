@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Modal, List, Avatar, Button, message, Popconfirm, Spin } from 'antd';
 import { User, Trash2, Users } from 'lucide-react';
 import { creatorApi, getImageUrl } from '../../services/api';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 interface FollowersModalProps {
     visible: boolean;
@@ -11,7 +12,7 @@ interface FollowersModalProps {
 
 export const FollowersModal: React.FC<FollowersModalProps> = ({ visible, onClose }) => {
     const [loading, setLoading] = useState(false);
-    const [followers, setFollowers] = useState<any[]>([]);
+    const [followers, setFollowers] = useState<{ id: string; name: string; avatar?: string; email?: string; followerId?: string; followedAt?: string }[]>([]);
     const [total, setTotal] = useState(0);
     const [page, setPage] = useState(1);
     const limit = 20;
@@ -29,7 +30,7 @@ export const FollowersModal: React.FC<FollowersModalProps> = ({ visible, onClose
             setFollowers(response.data.data.followers);
             setTotal(response.data.data.totals.total);
         } catch (err) {
-            console.error('Failed to fetch followers:', err);
+            logger.error('Failed to fetch followers:', err);
             message.error('Failed to load followers');
         } finally {
             setLoading(false);
@@ -42,7 +43,7 @@ export const FollowersModal: React.FC<FollowersModalProps> = ({ visible, onClose
             message.success('Follower removed from matrix');
             fetchFollowers();
         } catch (err) {
-            console.error('Failed to remove follower:', err);
+            logger.error('Failed to remove follower:', err);
             message.error('Failed to remove follower');
         }
     };
@@ -95,7 +96,7 @@ export const FollowersModal: React.FC<FollowersModalProps> = ({ visible, onClose
                                     <Popconfirm
                                         title="Remove Follower"
                                         description="Are you sure you want to disconnect this follower from your matrix?"
-                                        onConfirm={() => handleRemoveFollower(item.followerId)}
+                                        onConfirm={() => handleRemoveFollower(item.followerId || item.id)}
                                         okText="Disconnect"
                                         cancelText="Cancel"
                                         okButtonProps={{ danger: true, style: { borderRadius: '8px' } }}
@@ -136,7 +137,7 @@ export const FollowersModal: React.FC<FollowersModalProps> = ({ visible, onClose
                                         <div>
                                             <div style={{ color: colors.text.secondary, fontSize: '13px', fontWeight: 500 }}>{item.email}</div>
                                             <div style={{ fontSize: '11px', color: colors.text.tertiary, marginTop: '4px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.02em' }}>
-                                                Connected since {new Date(item.followedAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                                                Connected since {new Date(item.followedAt || '').toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                                             </div>
                                         </div>
                                     }

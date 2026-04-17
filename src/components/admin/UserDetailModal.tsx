@@ -1,48 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import {
-    Modal,
-    Tabs,
-    Form,
-    Input,
-    Select,
-    Button,
-    Tag,
-    Divider,
-    Space,
-    Statistic,
-    Row,
-    Col,
-    message,
-    Spin,
-    Timeline,
-    Badge,
-    Switch,
-    Card,
-    Popconfirm,
-    Empty,
-    InputNumber,
-    Typography
-} from 'antd';
-import {
-    User,
-    Mail,
-    ShieldCheck,
-    History,
-    Ban,
-    Unlock,
-    AlertTriangle,
-    CheckCircle2,
-    Clock,
-    Pencil,
-    Shield,
-    StopCircle
-} from 'lucide-react';
+import { Tabs, Form, Input, Select, Tag, Divider, Space, Statistic, Row, Col, message, Spin, Timeline, Badge, Switch, Card, Empty, InputNumber, Typography } from 'antd';
+import { User, Mail, History, Ban, Unlock, AlertTriangle, CheckCircle2, Clock, Pencil } from 'lucide-react';
 import { adminApi } from '../../services/api';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
 import CustomModal from '../common/Modal/CustomModal';
 import CustomCard from '../common/Card/CustomCard';
 import CustomButton from '../common/Button/CustomButton';
-import CustomInput from '../common/Form/CustomInput';
 
 const { Title, Text, Paragraph } = Typography;
 
@@ -55,8 +18,11 @@ interface UserDetailModalProps {
 
 const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onClose, onSuccess }) => {
     const [loading, setLoading] = useState(false);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [user, setUser] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [analytics, setAnalytics] = useState<any>(null);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [history, setHistory] = useState<any>(null);
     const [activeTab, setActiveTab] = useState('1');
     const [form] = Form.useForm();
@@ -97,7 +63,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                 role: userRes.data.data.user.role,
                 isVerified: userRes.data.data.user.isVerified
             });
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
             message.error('Failed to load user details');
             onClose();
         } finally {
@@ -105,30 +72,31 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
         }
     };
 
-    const handleUpdate = async (values: any) => {
+    const handleUpdate = async (values: Record<string, string | boolean>) => {
         if (!userId) return;
         try {
             setLoading(true);
             await adminApi.updateUser(userId, {
-                name: values.name,
-                email: values.email,
-                isVerified: values.isVerified
+                name: values.name as string,
+                email: values.email as string,
+                isVerified: values.isVerified as boolean
             });
             if (values.role !== user.role) {
-                await adminApi.updateUserRole(userId, values.role);
+                await adminApi.updateUserRole(userId, values.role as string);
             }
             message.success('User updated successfully');
             fetchData();
             onSuccess();
             onClose();
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
             message.error('Failed to update user');
         } finally {
             setLoading(false);
         }
     };
 
-    const handleActionSubmit = async (values: any) => {
+    const handleActionSubmit = async (values: { days?: number; reason: string }) => {
         if (!userId) return;
         try {
             setLoading(true);
@@ -147,7 +115,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
             fetchData();
             onSuccess();
             onClose();
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
             message.error(`Failed to ${actionType.toLowerCase()} user`);
         } finally {
             setLoading(false);
@@ -162,7 +131,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
             message.success('User unsuspended');
             fetchData();
             onSuccess();
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
             message.error('Failed to unsuspend user');
         } finally {
             setLoading(false);
@@ -177,7 +147,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
             message.success('User unbanned');
             fetchData();
             onSuccess();
-        } catch (err) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
             message.error('Failed to unban user');
         } finally {
             setLoading(false);
@@ -336,7 +307,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                         {history?.moderationLogs?.length > 0 ? (
                             <Timeline
                                 mode="left"
-                                items={history.moderationLogs.map((log: any) => ({
+                                items={history.moderationLogs.map((log: { action: string; reason?: string; moderator?: { name: string }; createdAt: string }) => ({
                                     color: log.action.includes('BAN') ? 'red' : log.action.includes('SUSPEND') ? 'orange' : 'blue',
                                     children: (
                                         <>
@@ -358,7 +329,7 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                     <Card title="Reports Against User" size="small">
                         {history?.reportsAgainst?.length > 0 ? (
                             <Timeline
-                                items={history.reportsAgainst.map((report: any) => ({
+                                items={history.reportsAgainst.map((report: { reason: string; status: string; createdAt: string }) => ({
                                     color: report.status === 'RESOLVED' ? 'green' : 'gold',
                                     children: (
                                         <>

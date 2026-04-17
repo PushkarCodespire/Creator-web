@@ -4,18 +4,10 @@
 
 import { useEffect, useState } from 'react';
 import { Card, Tag, Button, Modal, Form, Input, InputNumber, message, Empty, Spin, Row, Col, Select, Pagination, Grid, Tabs, Typography } from 'antd';
-import {
-  DollarSign,
-  Users,
-  Search,
-  FolderClosed,
-  ShieldCheck,
-  ChevronRight,
-  Briefcase,
-  Zap
-} from 'lucide-react';
+import { DollarSign, Users, Search, ShieldCheck, Briefcase, Zap } from 'lucide-react';
 import { opportunityApi, creatorApi } from '../../services/api';
 import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 const { TextArea } = Input;
 const { useBreakpoint } = Grid;
@@ -23,9 +15,12 @@ const { Title, Text } = Typography;
 
 const CreatorOpportunities = () => {
   const [activeTab, setActiveTab] = useState('opportunities');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [opportunities, setOpportunities] = useState<any[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [applications, setApplications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [applyModal, setApplyModal] = useState<any>(null);
   const [submitting, setSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
@@ -70,7 +65,7 @@ const CreatorOpportunities = () => {
       setOpportunities(response.data.data.opportunities || []);
       setTotal(response.data.data.pagination?.total || 0);
     } catch (err) {
-      console.error('Failed to fetch opportunities:', err);
+      logger.error('Failed to fetch opportunities:', err);
     } finally {
       setLoading(false);
     }
@@ -83,7 +78,7 @@ const CreatorOpportunities = () => {
       const creatorId = user?.id;
 
       if (!creatorId) {
-        console.error('Creator ID not found');
+        logger.error('Creator ID not found');
         return;
       }
 
@@ -96,13 +91,13 @@ const CreatorOpportunities = () => {
       });
       setApplications(response.data.data || []);
     } catch (err) {
-      console.error('Failed to fetch applications:', err);
+      logger.error('Failed to fetch applications:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleApply = async (values: any) => {
+  const handleApply = async (values: Record<string, unknown>) => {
     if (applyModal?.hasApplied || applyModal?.myApplicationStatus) {
       message.info(`You already applied${applyModal?.myApplicationStatus ? ` (${applyModal.myApplicationStatus})` : ''}.`);
       setApplyModal(null);
@@ -110,7 +105,7 @@ const CreatorOpportunities = () => {
     }
     setSubmitting(true);
     try {
-      await opportunityApi.apply(applyModal.id, values.pitch, values.proposedBudget);
+      await opportunityApi.apply(applyModal.id, values.pitch as string, values.proposedBudget as number);
       message.success('Application submitted!');
       setApplyModal(null);
       form.resetFields();
@@ -121,8 +116,9 @@ const CreatorOpportunities = () => {
             : item
         )
       );
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to apply');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to apply');
     } finally {
       setSubmitting(false);
     }
@@ -240,7 +236,7 @@ const CreatorOpportunities = () => {
       ) : (
         <div style={{ width: '100%' }}>
           <Row gutter={[24, 24]}>
-            {opportunities.map((item: any) => {
+            {opportunities.map((item) => {
               const alreadyApplied = !!item.hasApplied || !!item.myApplicationStatus;
               const appliedStatus = item.myApplicationStatus ? item.myApplicationStatus.replace('_', ' ') : 'Applied';
 
@@ -450,7 +446,7 @@ const CreatorOpportunities = () => {
       ) : (
         <div style={{ width: '100%' }}>
           <Row gutter={[24, 24]}>
-            {applications.map((item: any) => (
+            {applications.map((item) => (
               <Col xs={24} sm={24} md={12} lg={8} key={item.id}>
                 <Card
                   bordered={false}

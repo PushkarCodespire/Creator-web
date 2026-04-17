@@ -38,7 +38,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
       setCopied(true);
       antMessage.success('Link copied to clipboard!');
       setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (__error) {
       antMessage.error('Failed to copy link');
     }
   };
@@ -67,8 +68,8 @@ export const ShareDialog: React.FC<ShareDialogProps> = ({
           text: description,
           url,
         });
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
+      } catch (error: unknown) {
+        if (error instanceof Error && error.name !== 'AbortError') {
           antMessage.error('Failed to share');
         }
       }

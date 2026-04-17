@@ -6,9 +6,10 @@
 import React from 'react';
 import { Button, Space, Card } from 'antd';
 import { DownloadOutlined } from '@ant-design/icons';
-import { downloadFromUrl, downloadFile } from '../utils/fileDownloadUtils';
+import { downloadFromUrl } from '../utils/fileDownloadUtils';
 import { downloadDisplayedImage, convertToDownloadUrl } from '../utils/downloadHelpers';
 import { DownloadButton } from '../components/common/DownloadButton';
+import { logger } from '../utils/logger';
 
 /**
  * Example 1: Simple Download Button Component
@@ -57,9 +58,9 @@ export const Example2_ManualDownload = () => {
     const handleDownload = async () => {
         try {
             await downloadFromUrl('/api/download/content/report.xlsx', 'monthly-report.xlsx');
-            console.log('Download started successfully');
+            logger.info('Download started successfully');
         } catch (error) {
-            console.error('Download failed:', error);
+            logger.error('Download failed:', error);
             alert('Failed to download file');
         }
     };
@@ -87,9 +88,9 @@ export const Example3_DownloadDisplayedImage = () => {
     const handleDownload = async () => {
         try {
             await downloadDisplayedImage(imageUrl, 'profile-photo.jpg');
-            console.log('Image download started');
+            logger.info('Image download started');
         } catch (error) {
-            console.error('Download failed:', error);
+            logger.error('Download failed:', error);
         }
     };
 
@@ -151,7 +152,8 @@ export const Example5_DownloadWithLoading = () => {
         try {
             await downloadFromUrl('/api/download/content/large-file.zip', 'archive.zip');
             alert('Download started successfully!');
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             alert('Download failed. Please try again.');
         } finally {
             setLoading(false);
@@ -190,7 +192,7 @@ export const Example6_MultipleDownloads = () => {
                 // Add small delay between downloads
                 await new Promise(resolve => setTimeout(resolve, 500));
             } catch (error) {
-                console.error(`Failed to download ${file.name}:`, error);
+                logger.error(`Failed to download ${file.name}:`, error);
             }
         }
         alert('All downloads started!');
@@ -238,7 +240,7 @@ export const Example7_ChatFileDownload = () => {
         try {
             await downloadFromUrl(fileAttachment.url, fileAttachment.name);
         } catch (error) {
-            console.error('Download failed:', error);
+            logger.error('Download failed:', error);
         }
     };
 
@@ -274,14 +276,14 @@ export const Example7_ChatFileDownload = () => {
  */
 export const Example8_DownloadWithCallbacks = () => {
     const handleDownloadComplete = () => {
-        console.log('Download completed successfully');
+        logger.info('Download completed successfully');
         // Track analytics
         // Update UI
         // Show success notification
     };
 
     const handleDownloadError = (error: Error) => {
-        console.error('Download error:', error);
+        logger.error('Download error:', error);
         // Track error analytics
         // Show error notification
         // Suggest retry

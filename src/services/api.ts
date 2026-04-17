@@ -132,7 +132,10 @@ export const authApi = {
     api.put('/auth/profile', data),
 
   changePassword: (currentPassword: string, newPassword: string) =>
-    api.put('/auth/password', { currentPassword, newPassword })
+    api.put('/auth/password', { currentPassword, newPassword }),
+
+  becomeCreator: (data?: { about?: string; expertise?: string; topics?: string }) =>
+    api.post('/auth/become-creator', data || {}),
 };
 
 // ===========================================
@@ -186,14 +189,14 @@ export const creatorApi = {
 
   getDashboard: () => api.get('/creators/dashboard/me'),
 
-  updateProfile: (data: any) => {
+  updateProfile: (data: FormData | Record<string, unknown>) => {
     // Handle FormData (e.g. avatar upload) separately
     if (data instanceof FormData) {
       return api.put('/creators/profile', data);
     }
 
     // Ensure websiteUrl is an empty string if it's null or undefined
-    const submissionData = { ...data };
+    const submissionData = { ...data } as Record<string, unknown>;
     if ('websiteUrl' in submissionData && (submissionData.websiteUrl === null || submissionData.websiteUrl === undefined)) {
       submissionData.websiteUrl = '';
     }
@@ -283,8 +286,8 @@ export const chatApi = {
   startConversation: (creatorId: string) =>
     api.post('/chat/start', { creatorId }),
 
-  sendMessage: (conversationId: string, content: string, media?: any[]) =>
-    api.post('/chat/message', { conversationId, content, media }),
+  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean) =>
+    api.post('/chat/message', { conversationId, content, media, voiceMode }),
 
   uploadChatMedia: (files: File[]) => {
     const formData = new FormData();
@@ -336,6 +339,15 @@ export const contentApi = {
   addYouTube: (url: string, title?: string) =>
     api.post('/content/youtube', { url, title }),
 
+  previewYouTube: (url: string) =>
+    api.post('/content/youtube/preview', { url }),
+
+  getAiSummary: () =>
+    api.get('/content/ai-summary'),
+
+  generateAiSummary: () =>
+    api.post('/content/ai-summary'),
+
   addManual: (title: string, text: string) =>
     api.post('/content/manual', { title, text }),
 
@@ -349,7 +361,13 @@ export const contentApi = {
 
   delete: (contentId: string) => api.delete(`/content/${contentId}`),
 
-  retrain: (contentId: string) => api.post(`/content/${contentId}/retrain`)
+  retrain: (contentId: string) => api.post(`/content/${contentId}/retrain`),
+
+  // Voice Clone
+  uploadVoiceClone: (formData: FormData) =>
+    api.post('/content/voice-clone', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  getVoiceClone: () => api.get('/content/voice-clone'),
+  deleteVoiceClone: () => api.delete('/content/voice-clone'),
 };
 
 // ===========================================
@@ -429,6 +447,34 @@ export const payoutApi = {
 };
 
 // ===========================================
+// PROGRAM API
+// ===========================================
+
+export const programApi = {
+  getAll: () => api.get('/programs'),
+  getByCreator: (creatorId: string) => api.get(`/programs/creator/${creatorId}`),
+  create: (data: { name: string; description?: string; price?: number; category?: string }) => api.post('/programs', data),
+  update: (id: string, data: Record<string, unknown>) => api.put(`/programs/${id}`, data),
+  delete: (id: string) => api.delete(`/programs/${id}`),
+};
+
+// ===========================================
+// BOOKING API
+// ===========================================
+
+export const bookingApi = {
+  getPublicSlots: (creatorId: string) => api.get(`/bookings/public/${creatorId}`),
+  getSlots: () => api.get('/bookings/slots'),
+  createSlot: (data: { title?: string; startTime: string; endTime: string; price?: number; type?: string }) => api.post('/bookings/slots', data),
+  deleteSlot: (id: string) => api.delete(`/bookings/slots/${id}`),
+  getRequests: () => api.get('/bookings/requests'),
+  requestBooking: (data: { slotId: string; message?: string; type?: string }) => api.post('/bookings/request', data),
+  acceptRequest: (id: string) => api.post(`/bookings/requests/${id}/accept`),
+  declineRequest: (id: string) => api.post(`/bookings/requests/${id}/decline`),
+  getStats: () => api.get('/bookings/stats'),
+};
+
+// ===========================================
 // OPPORTUNITY API
 // ===========================================
 
@@ -447,11 +493,11 @@ export const opportunityApi = {
 
   getById: (id: string) => api.get(`/opportunities/${id}`),
 
-  create: (data: any) => api.post('/opportunities', data),
+  create: (data: Record<string, unknown>) => api.post('/opportunities', data),
 
   // Partial update — only OPEN opportunities are editable. `type` and `status`
   // are silently ignored by the backend if sent.
-  update: (id: string, data: any) => api.put(`/opportunities/${id}`, data),
+  update: (id: string, data: Record<string, unknown>) => api.put(`/opportunities/${id}`, data),
 
   // Cancel an OPEN opportunity. Auto-rejects all PENDING applications and
   // notifies every applicant.
@@ -501,8 +547,8 @@ export const milestoneApi = {
 
 export const companyApi = {
   getDashboard: () => api.get('/companies/dashboard'),
-  updateProfile: (data: any) => api.put('/companies/profile', data),
-  discoverCreators: (params?: any) => api.get('/companies/discover-creators', { params }),
+  updateProfile: (data: Record<string, unknown>) => api.put('/companies/profile', data),
+  discoverCreators: (params?: Record<string, unknown>) => api.get('/companies/discover-creators', { params }),
   getDeals: (params?: { page?: number; limit?: number; status?: string }) => api.get('/companies/deals', { params }),
   completeDeal: (dealId: string) => api.post(`/opportunities/deals/${dealId}/complete`)
 };
@@ -533,7 +579,7 @@ export const adminApi = {
     api.get('/admin/creators', { params }),
   getPendingCreators: (params?: { page?: number; limit?: number }) => api.get('/admin/creators/pending', { params }),
   getCreator: (creatorId: string) => api.get(`/admin/creators/${creatorId}`),
-  updateCreator: (creatorId: string, data: any) => api.put(`/admin/creators/${creatorId}`, data),
+  updateCreator: (creatorId: string, data: Record<string, unknown>) => api.put(`/admin/creators/${creatorId}`, data),
   setCreatorActive: (creatorId: string, isActive: boolean) =>
     api.put(`/admin/creators/${creatorId}/active`, { isActive }),
   verifyCreator: (creatorId: string) => api.post(`/admin/creators/${creatorId}/verify`),
@@ -544,7 +590,7 @@ export const adminApi = {
   getCompanies: (params?: { page?: number; limit?: number; search?: string; verified?: boolean; industry?: string }) =>
     api.get('/admin/companies', { params }),
   getCompany: (companyId: string) => api.get(`/admin/companies/${companyId}`),
-  updateCompany: (companyId: string, data: any) => api.put(`/admin/companies/${companyId}`, data),
+  updateCompany: (companyId: string, data: Record<string, unknown>) => api.put(`/admin/companies/${companyId}`, data),
   verifyCompany: (companyId: string) => api.post(`/admin/companies/${companyId}/verify`),
 
   // Deals
@@ -607,11 +653,11 @@ export const postApi = {
   getPost: (id: string) => api.get(`/posts/${id}`),
 
   // Create post
-  createPost: (data: { content: string; media?: any[]; type?: string; publishedAt?: string }) =>
+  createPost: (data: { content: string; media?: Record<string, unknown>[]; type?: string; publishedAt?: string }) =>
     api.post('/posts', data),
 
   // Update post
-  updatePost: (id: string, data: { content?: string; media?: any[]; type?: string; isPublished?: boolean }) =>
+  updatePost: (id: string, data: { content?: string; media?: Record<string, unknown>[]; type?: string; isPublished?: boolean }) =>
     api.put(`/posts/${id}`, data),
 
   // Delete post
@@ -855,7 +901,7 @@ export const gamificationApi = {
   getUserAchievements: () => api.get('/gamification/achievements'),
   getLeaderboard: (type: 'users' | 'creators' = 'users', period: 'all' | 'week' | 'month' = 'all') =>
     api.get('/gamification/leaderboard', { params: { type, period } }),
-  checkAchievements: (eventType: string, eventData?: any) =>
+  checkAchievements: (eventType: string, eventData?: Record<string, unknown>) =>
     api.post('/gamification/check', { eventType, eventData }),
 };
 
@@ -901,7 +947,10 @@ export const notificationApi = {
     emailModeration?: boolean;
     pushEnabled?: boolean;
     soundEnabled?: boolean;
-  }) => api.put('/notifications/settings', data)
+  }) => api.put('/notifications/settings', data),
+
+  markAsRead: (id: string) => api.put(`/notifications/${id}/read`),
+  markAllAsRead: () => api.put('/notifications/read-all'),
 };
 
 export default api;

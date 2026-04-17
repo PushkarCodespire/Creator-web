@@ -320,7 +320,7 @@ export interface Notification {
   title: string;
   message: string;
   actionUrl?: string;
-  data?: any;
+  data?: Record<string, unknown>;
   priority?: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
   isRead: boolean;
   readAt?: string | null;

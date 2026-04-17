@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Row, Col, Input, Button, Tabs, Typography, Space } from 'antd';
-import { SearchOutlined, PlusOutlined, FireOutlined, MessageOutlined, BulbOutlined, TrophyOutlined } from '@ant-design/icons';
+import { Input, Button, Tabs, Typography } from 'antd';
+import { PlusOutlined, FireOutlined, MessageOutlined, BulbOutlined, TrophyOutlined } from '@ant-design/icons';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { ForumCard } from '../components/Community/ForumCard';
 import DashboardContentLoader from '../components/common/DashboardContentLoader';
+import { logger } from '../utils/logger';
 
 const { Search } = Input;
 const { TabPane } = Tabs;
@@ -43,7 +44,7 @@ const Community = () => {
       setLoading(true);
       setTopics([]);
     } catch (error) {
-      console.error('Failed to fetch topics:', error);
+      logger.error('Failed to fetch topics:', error);
     } finally {
       setLoading(false);
     }

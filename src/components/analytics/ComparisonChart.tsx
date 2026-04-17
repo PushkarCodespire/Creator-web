@@ -4,14 +4,7 @@
 
 import React from 'react';
 import { Row, Col, Tag, Empty, Typography } from 'antd';
-import {
-  MessageSquare,
-  DollarSign,
-  UserPlus,
-  ArrowUp,
-  ArrowDown,
-  Activity
-} from 'lucide-react';
+import { MessageSquare, DollarSign, UserPlus, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   BarChart,
   Bar,
@@ -22,7 +15,7 @@ import {
   Legend,
   ResponsiveContainer
 } from 'recharts';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
 import { motion } from 'framer-motion';
 
 const { Title, Text } = Typography;
@@ -54,6 +47,7 @@ interface ComparisonChartProps {
 export const ComparisonChart: React.FC<ComparisonChartProps> = ({
   data,
   periodDays = 30,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   loading = false
 }) => {
   if (!data) {
@@ -88,7 +82,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
     return { icon: null, color: colors.text.tertiary, bg: colors.gray[100], prefix: '' };
   };
 
-  const CustomTooltip = ({ active, payload }: any) => {
+  const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: { color: string; name: string; value: number; payload: { metric: string } }[] }) => {
     if (!active || !payload || payload.length === 0) return null;
     return (
       <div style={{
@@ -99,7 +93,7 @@ export const ComparisonChart: React.FC<ComparisonChartProps> = ({
         boxShadow: shadows.lg
       }}>
         <div style={{ fontWeight: 800, color: colors.text.primary, marginBottom: '8px', fontSize: '13px', textTransform: 'uppercase' }}>{payload[0].payload.metric}</div>
-        {payload.map((entry: any, index: number) => (
+        {payload.map((entry, index: number) => (
           <div key={index} style={{ color: entry.color, fontWeight: 800, fontSize: '15px', marginBottom: index === 0 ? '4px' : 0 }}>
             {entry.name}: {entry.payload.metric === 'Revenue (₹)' ? '₹' : ''}{entry.value.toLocaleString()}
           </div>

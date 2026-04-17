@@ -5,30 +5,52 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Tabs, Row, Col, Card, Empty, Spin, Tag, Select, DatePicker, Checkbox } from 'antd';
-import { SearchOutlined, UserOutlined, FileTextOutlined, TeamOutlined, TagOutlined } from '@ant-design/icons';
+import { SearchOutlined, UserOutlined, FileTextOutlined, TeamOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import SearchBar from '../components/Search/SearchBar';
 import { searchApi } from '../services/api';
 import { colors, spacing } from '../styles/tokens';
+import { logger } from '../utils/logger';
 
 const { TabPane } = Tabs;
 const { RangePicker } = DatePicker;
 
 type SearchType = 'all' | 'creator' | 'post' | 'user' | 'hashtag';
 
+interface SearchResultItem {
+  id: string;
+  title: string;
+  subtitle?: string;
+  url: string;
+  image?: string;
+}
+
+interface SearchResults {
+  creators?: SearchResultItem[];
+  posts?: SearchResultItem[];
+  users?: SearchResultItem[];
+}
+
+interface SearchTotals {
+  creators?: number;
+  posts?: number;
+  users?: number;
+}
+
 export const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const navigate = useNavigate();
+  const _navigate = useNavigate();
 
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [type, setType] = useState<SearchType>((searchParams.get('type') as SearchType) || 'all');
-  const [results, setResults] = useState<any>({});
-  const [totals, setTotals] = useState<any>({});
+  const [results, setResults] = useState<SearchResults>({});
+  const [totals, setTotals] = useState<SearchTotals>({});
   const [loading, setLoading] = useState(false);
 
   // Filters
   const [category, setCategory] = useState<string | undefined>();
   const [verifiedOnly, setVerifiedOnly] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [dateRange, setDateRange] = useState<any>(null);
 
   useEffect(() => {
@@ -44,7 +66,7 @@ export const SearchPage: React.FC = () => {
 
     try {
       setLoading(true);
-      const params: any = {
+      const params: Record<string, string | number | boolean> = {
         q: searchQuery,
         type,
         limit: 20,
@@ -57,11 +79,11 @@ export const SearchPage: React.FC = () => {
         params.dateTo = dateRange[1].toISOString();
       }
 
-      const response = await searchApi.globalSearch(params);
+      const response = await searchApi.globalSearch(params as { q: string; type?: SearchType; category?: string; limit?: number; verified?: boolean; dateFrom?: string; dateTo?: string });
       setResults(response.data.data.results || {});
       setTotals(response.data.data.totals || {});
     } catch (error) {
-      console.error('Search failed:', error);
+      logger.error('Search failed:', error);
       setResults({});
       setTotals({});
     } finally {
@@ -176,7 +198,7 @@ export const SearchPage: React.FC = () => {
             items={[
               {
                 key: 'all',
-                label: `All (${Object.values(totals).reduce((a: any, b: any) => a + b, 0)})`,
+                label: `All (${Object.values(totals).reduce((a: number, b: number) => a + b, 0)})`,
                 children: <AllResults results={results} loading={loading} />,
               },
               {
@@ -215,7 +237,7 @@ export const SearchPage: React.FC = () => {
 };
 
 // All Results Tab
-const AllResults: React.FC<{ results: any; loading: boolean }> = ({ results, loading }) => {
+const AllResults: React.FC<{ results: SearchResults; loading: boolean }> = ({ results, loading }) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: spacing[8] }}>
@@ -224,7 +246,7 @@ const AllResults: React.FC<{ results: any; loading: boolean }> = ({ results, loa
     );
   }
 
-  const hasResults = Object.values(results).some((arr: any) => arr.length > 0);
+  const hasResults = Object.values(results).some((arr) => Array.isArray(arr) && arr.length > 0);
 
   if (!hasResults) {
     return <Empty description="No results found" />;
@@ -232,30 +254,30 @@ const AllResults: React.FC<{ results: any; loading: boolean }> = ({ results, loa
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: spacing[6] }}>
-      {results.creators?.length > 0 && (
+      {(results.creators?.length ?? 0) > 0 && (
         <div>
           <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: spacing[3] }}>
             <UserOutlined /> Creators
           </h3>
-          <CreatorResults creators={results.creators.slice(0, 3)} loading={false} />
+          <CreatorResults creators={results.creators!.slice(0, 3)} loading={false} />
         </div>
       )}
 
-      {results.posts?.length > 0 && (
+      {(results.posts?.length ?? 0) > 0 && (
         <div>
           <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: spacing[3] }}>
             <FileTextOutlined /> Posts
           </h3>
-          <PostResults posts={results.posts.slice(0, 5)} loading={false} />
+          <PostResults posts={results.posts!.slice(0, 5)} loading={false} />
         </div>
       )}
 
-      {results.users?.length > 0 && (
+      {(results.users?.length ?? 0) > 0 && (
         <div>
           <h3 style={{ fontSize: '20px', fontWeight: 600, marginBottom: spacing[3] }}>
             <TeamOutlined /> Users
           </h3>
-          <UserResults users={results.users.slice(0, 3)} loading={false} />
+          <UserResults users={results.users!.slice(0, 3)} loading={false} />
         </div>
       )}
     </div>
@@ -263,7 +285,7 @@ const AllResults: React.FC<{ results: any; loading: boolean }> = ({ results, loa
 };
 
 // Creator Results
-const CreatorResults: React.FC<{ creators: any[]; loading: boolean }> = ({ creators, loading }) => {
+const CreatorResults: React.FC<{ creators: SearchResultItem[]; loading: boolean }> = ({ creators, loading }) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: spacing[8] }}>
@@ -314,7 +336,7 @@ const CreatorResults: React.FC<{ creators: any[]; loading: boolean }> = ({ creat
 };
 
 // Post Results
-const PostResults: React.FC<{ posts: any[]; loading: boolean }> = ({ posts, loading }) => {
+const PostResults: React.FC<{ posts: SearchResultItem[]; loading: boolean }> = ({ posts, loading }) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: spacing[8] }}>
@@ -364,7 +386,7 @@ const PostResults: React.FC<{ posts: any[]; loading: boolean }> = ({ posts, load
 };
 
 // User Results
-const UserResults: React.FC<{ users: any[]; loading: boolean }> = ({ users, loading }) => {
+const UserResults: React.FC<{ users: SearchResultItem[]; loading: boolean }> = ({ users, loading }) => {
   if (loading) {
     return (
       <div style={{ textAlign: 'center', padding: spacing[8] }}>

@@ -5,7 +5,7 @@
 
 import React from 'react';
 import { Modal, ModalProps } from 'antd';
-import { colors, shadows, borderRadius, spacing } from '../../../styles/tokens';
+import { colors, shadows, spacing } from '../../../styles/tokens';
 
 export interface CustomModalProps extends ModalProps {
     icon?: React.ReactNode;

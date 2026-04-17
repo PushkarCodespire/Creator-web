@@ -3,19 +3,21 @@
 // ===========================================
 
 import { useEffect, useState, useCallback } from 'react';
-import { Table, Tag, Card, Spin, Space, Input, Select, Button, Avatar } from 'antd';
-import { Search, Filter, RefreshCcw, Building, ShieldCheck, PieChart, Users } from 'lucide-react';
+import { Tag, Spin, Space, Input, Select, Avatar } from 'antd';
+import { Search, RefreshCcw, Building, ShieldCheck, PieChart } from 'lucide-react';
+// eslint-disable-next-line no-duplicate-imports
 import { Row, Col, Statistic, Typography } from 'antd';
 
 const { Text } = Typography;
 import { adminApi } from '../../services/api';
-import { colors, spacing, typography, shadows } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import CustomTable from '../../components/common/Table/CustomTable';
 import CustomCard from '../../components/common/Card/CustomCard';
-import CustomInput from '../../components/common/Form/CustomInput';
 import CustomButton from '../../components/common/Button/CustomButton';
 
 const AdminCompanies = () => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ current: 1, pageSize: 20, total: 0 });
@@ -52,7 +54,7 @@ const AdminCompanies = () => {
         total: data.pagination?.total || 0
       }));
     } catch (err) {
-      console.error('Failed to fetch companies:', err);
+      logger.error('Failed to fetch companies:', err);
     } finally {
       setLoading(false);
     }
@@ -73,7 +75,7 @@ const AdminCompanies = () => {
     {
       title: 'Company',
       key: 'company',
-      render: (record: any) => (
+      render: (record: { logo?: string; companyName: string }) => (
         <Space>
           <Avatar
             icon={<Building size={16} />}
@@ -87,7 +89,7 @@ const AdminCompanies = () => {
     {
       title: 'Email',
       key: 'email',
-      render: (record: any) => record.user?.email || '-'
+      render: (record: { user?: { email?: string } }) => record.user?.email || '-'
     },
     {
       title: 'Industry',
@@ -100,7 +102,7 @@ const AdminCompanies = () => {
     {
       title: 'Status',
       key: 'status',
-      render: (record: any) => (
+      render: (record: { isVerified: boolean }) => (
         <Tag style={{
           background: record.isVerified ? 'rgba(16,185,129,0.12)' : 'rgba(148,163,184,0.18)',
           borderColor: record.isVerified ? 'rgba(16,185,129,0.35)' : 'rgba(148,163,184,0.35)',

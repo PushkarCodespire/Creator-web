@@ -12,6 +12,7 @@ import { commentApi } from '../../services/api';
 import CustomButton from '../common/Button/CustomButton';
 import { colors, spacing, typography } from '../../styles/tokens';
 import { Comment } from '../../types';
+import { logger } from '../../utils/logger';
 
 const { TextArea } = Input;
 
@@ -53,9 +54,10 @@ export const CommentComposer: React.FC<CommentComposerProps> = ({
       setContent('');
       message.success(parentId ? 'Reply posted!' : 'Comment posted!');
       if (onCancel) onCancel();
-    } catch (error: any) {
-      console.error('Failed to post comment:', error);
-      message.error(error.response?.data?.error || 'Failed to post comment');
+    } catch (error: unknown) {
+      logger.error('Failed to post comment:', error);
+      const err = error as { response?: { data?: { error?: string } } };
+      message.error(err.response?.data?.error || 'Failed to post comment');
     } finally {
       setIsSubmitting(false);
     }

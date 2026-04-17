@@ -3,6 +3,8 @@
 // Handles file downloads using fetch and blob
 // ===========================================
 
+import { logger } from './logger';
+
 /**
  * Downloads a file from the given URL using fetch API
  * This properly handles the Content-Disposition: attachment header
@@ -46,7 +48,7 @@ export async function downloadFile(url: string, filename: string): Promise<void>
         window.URL.revokeObjectURL(downloadUrl);
 
     } catch (error) {
-        console.error('Download error:', error);
+        logger.error('Download error:', error);
         throw error;
     }
 }

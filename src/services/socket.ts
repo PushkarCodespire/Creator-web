@@ -4,6 +4,7 @@
 // ===========================================
 
 import { io, Socket } from 'socket.io-client';
+import { logger } from '../utils/logger';
 
 // Types for Socket.io events
 export interface StreamMessageData {
@@ -20,13 +21,13 @@ export interface CompleteMessageData {
         role: 'ASSISTANT' | 'USER';
         content: string;
         createdAt: string;
-        [key: string]: any;
+        [key: string]: unknown;
     };
 }
 
 export interface MessageErrorData {
     messageId: string;
-    error: any;
+    error: { message?: string; userMessage?: string; code?: string };
     code: string;
 }
 
@@ -49,7 +50,7 @@ class SocketService {
             if (currentUserId && currentUserId !== this.authenticatedUserId) {
                 this.socket.emit('authenticate', { userId: currentUserId });
                 this.authenticatedUserId = currentUserId;
-                console.log('🔁 Socket re-authenticated as', currentUserId);
+                logger.debug('Socket re-authenticated as', currentUserId);
             }
             return this.socket;
         }
@@ -77,7 +78,7 @@ class SocketService {
                 this.socket?.emit('authenticate', { userId: resolvedUserId });
                 this.authenticatedUserId = resolvedUserId;
             }
-            console.log('✅ Socket.io connected');
+            logger.info('Socket.io connected');
             // Re-join conversation room if we were in one
             if (this.currentConversationId) {
                 // Directly emit join_chat on the socket to avoid the "connected" check in joinConversation
@@ -90,11 +91,11 @@ class SocketService {
         });
 
         this.socket.on('disconnect', (reason) => {
-            console.log('❌ Socket.io disconnected:', reason);
+            logger.warn('Socket.io disconnected:', reason);
         });
 
         this.socket.on('connect_error', (error) => {
-            console.error('⚠️ Socket.io connection error:', error.message);
+            logger.error('Socket.io connection error:', error.message);
         });
 
         return this.socket;
@@ -107,12 +108,12 @@ class SocketService {
         this.currentConversationId = conversationId;
 
         if (!this.socket?.connected) {
-            console.log(`⏳ Socket not connected yet. Will join room ${conversationId} once connected.`);
+            logger.debug(`Socket not connected yet. Will join room ${conversationId} once connected.`);
             return;
         }
 
         this.socket.emit('join_chat', { conversationId, userId, guestId });
-        console.log(`📥 Joined conversation room: ${conversationId}`);
+        logger.debug(`Joined conversation room: ${conversationId}`);
     }
 
     /**
@@ -124,7 +125,7 @@ class SocketService {
         this.socket.emit('conversation:leave', { conversationId });
         this.currentConversationId = null;
 
-        console.log(`📤 Left conversation room: ${conversationId}`);
+        logger.debug(`Left conversation room: ${conversationId}`);
     }
 
     /**
@@ -151,7 +152,7 @@ class SocketService {
     /**
      * Listen for new messages (non-streaming)
      */
-    onNewMessage(callback: (message: any) => void): void {
+    onNewMessage(callback: (message: Record<string, unknown>) => void): void {
         this.socket?.on('message:new', callback);
     }
 
@@ -182,7 +183,7 @@ class SocketService {
             this.socket = null;
             this.currentConversationId = null;
             this.authenticatedUserId = null;
-            console.log('🔌 Socket.io disconnected');
+            logger.info('Socket.io disconnected');
         }
     }
 
@@ -209,7 +210,8 @@ class SocketService {
             if (!raw) return null;
             const parsed = JSON.parse(raw);
             return parsed?.id || null;
-        } catch (error) {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (__error) {
             return null;
         }
     }

@@ -3,15 +3,22 @@
 // Code splitting enabled for optimal performance
 // ===========================================
 
-import { lazy, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from './store';
 import PageLoader from './components/common/PageLoader';
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => { window.scrollTo(0, 0); }, [pathname]);
+  return null;
+}
+
 // Layouts (not lazy loaded - needed immediately)
 import MainLayout from './components/layouts/MainLayout';
 import DashboardLayout from './components/layouts/DashboardLayout';
+import CreatorDashboardLayout from './components/layouts/CreatorDashboardLayout';
 
 // Lazy load all pages for code splitting
 // Public Pages
@@ -21,7 +28,7 @@ const CreatorProfile = lazy(() => import('./pages/CreatorProfile'));
 const Chat = lazy(() => import('./pages/Chat'));
 const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
-const Pricing = lazy(() => import('./pages/Pricing'));
+const _Pricing = lazy(() => import('./pages/Pricing'));
 const PaymentSuccess = lazy(() => import('./pages/PaymentSuccess'));
 const PaymentFailure = lazy(() => import('./pages/PaymentFailure'));
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail'));
@@ -31,6 +38,18 @@ const Feed = lazy(() => import('./pages/Feed'));
 const UserProfile = lazy(() => import('./pages/UserProfile'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const ServerError = lazy(() => import('./pages/ServerError'));
+
+// Website pages (cream/orange design — from creator-platform-website)
+const WebsiteLayout = lazy(() => import('./pages/website/WebsiteLayout'));
+const WebsiteHome = lazy(() => import('./pages/website/WebsiteHome'));
+const WebsiteFindExpert = lazy(() => import('./pages/website/WebsiteFindExpert'));
+const WebsiteCreateAI = lazy(() => import('./pages/website/WebsiteCreateAI'));
+const WebsiteChat = lazy(() => import('./pages/website/WebsiteChat'));
+const WebsitePricing = lazy(() => import('./pages/website/WebsitePricing'));
+const WebsiteCheckout = lazy(() => import('./pages/website/WebsiteCheckout'));
+const WebsiteProfile = lazy(() => import('./pages/website/WebsiteProfile'));
+const WebsiteUserProfile = lazy(() => import('./pages/website/WebsiteUserProfile'));
+const WebsiteAbout = lazy(() => import('./pages/website/WebsiteAbout'));
 
 // Sprint 5 pages
 const Trending = lazy(() => import('./pages/Trending'));
@@ -51,13 +70,14 @@ const UserSettings = lazy(() => import('./pages/user/UserSettings'));
 
 // Creator Dashboard
 const CreatorDashboardHome = lazy(() => import('./pages/creator/CreatorDashboardHome'));
-const CreatorContent = lazy(() => import('./pages/creator/CreatorContent'));
-const ContentDetails = lazy(() => import('./pages/creator/ContentDetails'));
+const CreatorBookings = lazy(() => import('./pages/creator/CreatorBookings'));
 const CreatorAnalytics = lazy(() => import('./pages/creator/CreatorAnalytics'));
-const CreatorOpportunities = lazy(() => import('./pages/creator/CreatorOpportunities'));
 const CreatorSettings = lazy(() => import('./pages/creator/CreatorSettings'));
 const CreatorPayouts = lazy(() => import('./pages/creator/CreatorPayouts'));
-const CreatorPosts = lazy(() => import('./pages/creator/CreatorPosts'));
+const CreatorRevenue = lazy(() => import('./pages/creator/CreatorRevenue'));
+const CreatorProducts = lazy(() => import('./pages/creator/CreatorProducts'));
+const CreatorDetailedAnalytics = lazy(() => import('./pages/creator/CreatorDetailedAnalytics'));
+const CreatorYourAI = lazy(() => import('./pages/creator/CreatorYourAI'));
 
 // Company Dashboard
 const CompanyDashboard = lazy(() => import('./pages/company/CompanyDashboard'));
@@ -106,21 +126,34 @@ const ProtectedRoute = ({
 function App() {
   return (
     <Suspense fallback={<PageLoader />}>
+      <ScrollToTop />
       <Routes>
+        {/* Website pages — own layout, cream/orange design */}
+        <Route element={<WebsiteLayout />}>
+          <Route path="/" element={<WebsiteHome />} />
+          <Route path="/find-expert" element={<WebsiteFindExpert />} />
+          <Route path="/create-your-ai" element={<WebsiteCreateAI />} />
+          <Route path="/pricing" element={<WebsitePricing />} />
+          <Route path="/pricing/checkout" element={<WebsiteCheckout />} />
+          <Route path="/creator/:creatorId" element={<WebsiteProfile />} />
+          <Route path="/user/profile" element={<WebsiteUserProfile />} />
+          <Route path="/about" element={<WebsiteAbout />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
+        <Route path="/website-chat/:creatorId" element={<WebsiteChat />} />
+
         {/* Public Routes */}
         <Route element={<MainLayout />}>
-          <Route path="/" element={<Landing />} />
+          <Route path="/explore" element={<Landing />} />
           <Route path="/feed" element={<Feed />} />
           <Route path="/creators" element={<CreatorGallery />} />
           <Route path="/creator/:id" element={<CreatorProfile />} />
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/posts/:id" element={<Feed />} />
-          <Route path="/pricing" element={<Pricing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/reset-password" element={<ResetPassword />} />
 
           {/* Sprint 5 pages */}
           <Route path="/trending" element={<Trending />} />
@@ -175,17 +208,18 @@ function App() {
           path="/creator-dashboard"
           element={
             <ProtectedRoute allowedRoles={['CREATOR', 'ADMIN']}>
-              <DashboardLayout type="creator" />
+              <CreatorDashboardLayout />
             </ProtectedRoute>
           }
         >
           <Route index element={<CreatorDashboardHome />} />
-          <Route path="content" element={<CreatorContent />} />
-          <Route path="content/:contentId" element={<ContentDetails />} />
+          <Route path="content" element={<CreatorBookings />} />
           <Route path="analytics" element={<CreatorAnalytics />} />
-          <Route path="posts" element={<CreatorPosts />} />
-          <Route path="opportunities" element={<CreatorOpportunities />} />
+          <Route path="detailed-analytics" element={<CreatorDetailedAnalytics />} />
+          <Route path="revenue" element={<CreatorRevenue />} />
+          <Route path="products" element={<CreatorProducts />} />
           <Route path="payouts" element={<CreatorPayouts />} />
+          <Route path="your-ai" element={<CreatorYourAI />} />
           <Route path="settings" element={<CreatorSettings />} />
         </Route>
 

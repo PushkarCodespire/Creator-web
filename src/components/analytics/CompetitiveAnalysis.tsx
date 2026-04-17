@@ -8,6 +8,7 @@ import { Select, Spin, Empty, Row, Col } from 'antd';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, Legend } from 'recharts';
 import CustomCard from '../common/Card/CustomCard';
 import { colors, spacing, typography } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 import { analyticsApi } from '../../services/api';
 
 interface CompetitiveAnalysisProps {
@@ -16,6 +17,7 @@ interface CompetitiveAnalysisProps {
 
 export const CompetitiveAnalysis: React.FC<CompetitiveAnalysisProps> = () => {
   const [loading, setLoading] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [comparisonData, setComparisonData] = useState<any>(null);
   const [metric, setMetric] = useState<'engagement' | 'revenue' | 'growth'>('engagement');
 
@@ -23,6 +25,7 @@ export const CompetitiveAnalysis: React.FC<CompetitiveAnalysisProps> = () => {
     fetchComparisonData();
   }, [metric]);
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const normalizeCompetitiveData = (data: any) => {
     if (!data) return null;
     const yourMetrics = data.yourMetrics || data.your || data.creator || data.metrics;
@@ -49,7 +52,7 @@ export const CompetitiveAnalysis: React.FC<CompetitiveAnalysisProps> = () => {
       const data = response.data?.data ?? response.data;
       setComparisonData(normalizeCompetitiveData(data));
     } catch (error) {
-      console.error('Failed to fetch comparison data:', error);
+      logger.error('Failed to fetch comparison data:', error);
       setComparisonData(null);
     } finally {
       setLoading(false);

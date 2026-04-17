@@ -2,20 +2,35 @@ import { useEffect, useState } from 'react';
 import { Card, Button, Table, Tag, Modal, Form, Input, InputNumber, Select, message, Typography, Row, Col, Space, Popconfirm, Tooltip } from 'antd';
 import { PlusOutlined, EditOutlined, DeleteOutlined, ExclamationCircleOutlined, EyeOutlined } from '@ant-design/icons';
 import { opportunityApi, companyApi } from '../../services/api';
-import { colors, spacing, shadows, typography, borderRadius } from '../../styles/tokens';
+import { colors, shadows } from '../../styles/tokens';
 import { motion } from 'framer-motion';
+import { logger } from '../../utils/logger';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
 type ModalMode = 'create' | 'edit';
 
+interface OpportunityItem {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  category?: string;
+  budget?: number;
+  budgetType?: string;
+  minFollowers?: number;
+  requirements?: string;
+  status: string;
+  _count?: { applications: number };
+}
+
 const CompanyOpportunities = () => {
-  const [opportunities, setOpportunities] = useState<any[]>([]);
+  const [opportunities, setOpportunities] = useState<OpportunityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<ModalMode>('create');
-  const [editingOpportunity, setEditingOpportunity] = useState<any>(null);
+  const [editingOpportunity, setEditingOpportunity] = useState<OpportunityItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [form] = Form.useForm();
@@ -28,8 +43,8 @@ const CompanyOpportunities = () => {
     try {
       const response = await companyApi.getDashboard();
       setOpportunities(response.data.data?.opportunities || []);
-    } catch (err) {
-      console.error('Failed to fetch:', err);
+    } catch (err: unknown) {
+      logger.error('Failed to fetch:', err);
     } finally {
       setLoading(false);
     }
@@ -42,7 +57,7 @@ const CompanyOpportunities = () => {
     setModalOpen(true);
   };
 
-  const openEditModal = (opportunity: any) => {
+  const openEditModal = (opportunity: OpportunityItem) => {
     setModalMode('edit');
     setEditingOpportunity(opportunity);
     form.setFieldsValue({
@@ -64,12 +79,12 @@ const CompanyOpportunities = () => {
     form.resetFields();
   };
 
-  const handleSubmit = async (values: any) => {
+  const handleSubmit = async (values: Record<string, unknown>) => {
     setSubmitting(true);
     try {
       if (modalMode === 'edit' && editingOpportunity) {
         // Strip `type` — backend ignores it anyway, but no point sending it
-        const { type, ...editable } = values;
+        const { type: _type, ...editable } = values;
         await opportunityApi.update(editingOpportunity.id, editable);
         message.success('Opportunity updated');
       } else {
@@ -78,18 +93,20 @@ const CompanyOpportunities = () => {
       }
       closeModal();
       fetchData();
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string | { message?: string } } } };
+      const errMsg = typeof e.response?.data?.error === 'object'
+        ? (e.response?.data?.error as { message?: string })?.message
+        : e.response?.data?.error;
       message.error(
-        err.response?.data?.error?.message ||
-          err.response?.data?.error ||
-          `Failed to ${modalMode === 'edit' ? 'update' : 'create'}`
+        errMsg || `Failed to ${modalMode === 'edit' ? 'update' : 'create'}`
       );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleCancel = async (opportunity: any) => {
+  const handleCancel = async (opportunity: OpportunityItem) => {
     setCancellingId(opportunity.id);
     try {
       const res = await opportunityApi.cancel(opportunity.id);
@@ -100,12 +117,12 @@ const CompanyOpportunities = () => {
           : 'Opportunity cancelled.'
       );
       fetchData();
-    } catch (err: any) {
-      message.error(
-        err.response?.data?.error?.message ||
-          err.response?.data?.error ||
-          'Failed to cancel opportunity'
-      );
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string | { message?: string } } } };
+      const errMsg = typeof e.response?.data?.error === 'object'
+        ? (e.response?.data?.error as { message?: string })?.message
+        : e.response?.data?.error;
+      message.error(errMsg || 'Failed to cancel opportunity');
     } finally {
       setCancellingId(null);
     }
@@ -122,9 +139,9 @@ const CompanyOpportunities = () => {
       title: 'Budget',
       dataIndex: 'budget',
       key: 'budget',
-      render: (b: any) => {
+      render: (b: number | null | undefined) => {
         // Prisma Decimal serializes as a string; coerce before formatting.
-        const n = b != null ? Number(b) : null;
+        const n = b !== null ? Number(b) : null;
         return n && !Number.isNaN(n)
           ? <Text style={{ fontWeight: 700, color: colors.primary.solid, fontSize: '15px' }}>₹{n.toLocaleString('en-IN')}</Text>
           : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>Negotiable</Text>;
@@ -133,7 +150,7 @@ const CompanyOpportunities = () => {
     {
       title: 'Applications',
       key: 'apps',
-      render: (r: any) => (
+      render: (_: unknown, r: OpportunityItem) => (
         <Tag color="purple" style={{ borderRadius: '6px', fontWeight: 800, padding: '2px 10px' }}>
           {r._count?.applications || 0}
         </Tag>
@@ -152,7 +169,7 @@ const CompanyOpportunities = () => {
     {
       title: 'Action',
       key: 'action',
-      render: (_: any, record: any) => {
+      render: (_: unknown, record: OpportunityItem) => {
         const isOpen = record.status === 'OPEN';
         const applicantCount = record._count?.applications || 0;
         return (
@@ -398,7 +415,7 @@ const CompanyOpportunities = () => {
             >
               <ExclamationCircleOutlined style={{ marginTop: 2 }} />
               <span>
-                <strong>{editingOpportunity._count.applications}</strong> creator{editingOpportunity._count.applications === 1 ? ' has' : 's have'} already applied. Changes to budget, requirements, or deadline will apply to their applications too.
+                <strong>{editingOpportunity?._count?.applications}</strong> creator{editingOpportunity?._count?.applications === 1 ? ' has' : 's have'} already applied. Changes to budget, requirements, or deadline will apply to their applications too.
               </span>
             </div>
           )}
@@ -461,8 +478,8 @@ const CompanyOpportunities = () => {
                 min={0}
                 size="large"
                 placeholder="Enter amount"
-                formatter={value => `₹ ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
-                parser={value => value ? value.replace(/₹\s?|(,*)/g, '') as any : ''}
+                formatter={value => value ? `₹ ${new Intl.NumberFormat('en-IN').format(Number(value))}` : '₹ '}
+                parser={value => (value ? value.replace(/₹\s?|(,*)/g, '') : '') as unknown as 0}
               />
             </Form.Item>
 

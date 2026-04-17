@@ -4,7 +4,7 @@
 
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { chatApi } from '../../services/api';
-import { Conversation, Message } from '../../types';
+import type { Conversation, Message } from '../../types';
 
 interface ChatState {
   currentConversation: Conversation | null;
@@ -36,20 +36,22 @@ export const startConversation = createAsyncThunk(
         localStorage.setItem('guestId', guestId);
       }
       return { conversation, guestId };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to start conversation');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Failed to start conversation');
     }
   }
 );
 
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
-  async ({ conversationId, content, media }: { conversationId: string; content: string; media?: any[] }, { rejectWithValue }) => {
+  async ({ conversationId, content, media }: { conversationId: string; content: string; media?: Record<string, unknown>[] }, { rejectWithValue }) => {
     try {
       const response = await chatApi.sendMessage(conversationId, content, media);
       return response.data.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to send message');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Failed to send message');
     }
   }
 );
@@ -60,8 +62,9 @@ export const fetchConversation = createAsyncThunk(
     try {
       const response = await chatApi.getConversation(conversationId);
       return response.data.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch conversation');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch conversation');
     }
   }
 );
@@ -72,8 +75,9 @@ export const fetchUserConversations = createAsyncThunk(
     try {
       const response = await chatApi.getUserConversations();
       return response.data.data.conversations || response.data.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to fetch conversations');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Failed to fetch conversations');
     }
   }
 );
@@ -84,8 +88,9 @@ export const editMessage = createAsyncThunk(
     try {
       const response = await chatApi.editMessage(messageId, content);
       return response.data.data;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to edit message');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Failed to edit message');
     }
   }
 );
@@ -96,8 +101,9 @@ export const deleteMessage = createAsyncThunk(
     try {
       await chatApi.deleteMessage(messageId);
       return messageId;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.error || 'Failed to delete message');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      return rejectWithValue(err.response?.data?.error || 'Failed to delete message');
     }
   }
 );
@@ -165,7 +171,7 @@ const chatSlice = createSlice({
       })
       .addCase(sendMessage.fulfilled, (state, action) => {
         state.isSending = false;
-        const pushDedup = (msg: any) => {
+        const pushDedup = (msg: Message | undefined) => {
           if (!msg) return;
           if (!msg.id) {
             state.messages.push(msg);

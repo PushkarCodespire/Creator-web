@@ -13,6 +13,7 @@ import { RootState } from '../../store';
 import { postApi } from '../../services/api';
 import { likeAnimation } from '../../styles/animations';
 import { colors } from '../../styles/tokens';
+import { logger } from '../../utils/logger';
 
 export interface LikeButtonProps {
   postId: string;
@@ -78,15 +79,16 @@ const LikeButton: React.FC<LikeButtonProps> = ({
       if (onLikeChange) {
         onLikeChange(newLiked, newCount);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Revert optimistic update on error
       setIsLiked(previousLiked);
       setLikeCount(previousCount);
 
-      const errorMessage = error.response?.data?.error || 'Failed to update like';
+      const err = error as { response?: { data?: { error?: string } } };
+      const errorMessage = err.response?.data?.error || 'Failed to update like';
       message.error(errorMessage);
 
-      console.error('Error toggling like:', error);
+      logger.error('Error toggling like:', error);
     } finally {
       setIsLoading(false);
     }

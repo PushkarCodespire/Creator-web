@@ -8,6 +8,7 @@ import { LinkOutlined, GlobalOutlined } from '@ant-design/icons';
 import { motion } from 'framer-motion';
 import { linkPreviewApi } from '../../services/api';
 import { LinkPreview } from '../../types';
+import { logger } from '../../utils/logger';
 import { colors, spacing, typography } from '../../styles/tokens';
 
 interface LinkPreviewCardProps {
@@ -17,7 +18,7 @@ interface LinkPreviewCardProps {
 export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({ url }) => {
   const [preview, setPreview] = useState<LinkPreview | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [_error, setError] = useState(false);
 
   useEffect(() => {
     fetchPreview();
@@ -30,7 +31,7 @@ export const LinkPreviewCard: React.FC<LinkPreviewCardProps> = ({ url }) => {
       const response = await linkPreviewApi.getPreview(url);
       setPreview(response.data.data);
     } catch (error) {
-      console.error('Failed to fetch link preview:', error);
+      logger.error('Failed to fetch link preview:', error);
       setError(true);
       // Set minimal preview on error
       setPreview({

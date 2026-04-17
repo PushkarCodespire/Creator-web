@@ -4,23 +4,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import {
-  Card,
-  Button,
-  Tag,
-  Spin,
-  message,
-  Descriptions,
-  List,
-  Progress,
-  Space,
-  Typography,
-  Divider,
-  Alert,
-  Row,
-  Col,
-  Tooltip,
-} from 'antd';
+import { Card, Button, Tag, Spin, message, Descriptions, List, Progress, Space, Typography, Divider, Alert, Row, Col } from 'antd';
 import {
   ArrowLeft,
   Trash2,
@@ -43,7 +27,7 @@ import { contentApi } from '../../services/api';
 import { connectSocket, getSocket } from '../../utils/socket';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { colors, spacing, shadows, borderRadius } from '../../styles/tokens';
+import { colors, spacing, shadows } from '../../styles/tokens';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const { Title, Text, Paragraph } = Typography;
@@ -91,20 +75,20 @@ const ContentDetails = () => {
     const authToken = token || localStorage.getItem('token') || undefined;
     const socket = connectSocket(authToken);
 
-    const handleUpdate = (update: any) => {
+    const handleUpdate = (update: { contentId: string; status?: string; chunksCount?: number; errorMessage?: string; processedAt?: string; progress?: { percentage?: number; stage?: string }; message?: string }) => {
       if (update.contentId === contentId) {
         setContent((prev) =>
           prev
             ? {
               ...prev,
-              status: update.status || prev.status,
+              status: (update.status || prev.status) as ContentDetails['status'],
               chunksCount: update.chunksCount ?? prev.chunksCount,
               errorMessage: update.errorMessage ?? prev.errorMessage,
               processedAt: update.processedAt ?? prev.processedAt,
               progressPercentage: update.progress?.percentage,
               progressMessage: update.message,
               progressStage: update.progress?.stage,
-            }
+            } as ContentDetails
             : null
         );
 
@@ -130,8 +114,9 @@ const ContentDetails = () => {
       setLoading(true);
       const response = await contentApi.getById(contentId);
       setContent(response.data.data);
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to synchronize neural asset');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to synchronize neural asset');
       navigate('/creator-dashboard/content');
     } finally {
       setLoading(false);
@@ -144,8 +129,9 @@ const ContentDetails = () => {
       await contentApi.delete(contentId);
       message.success('Neural asset purged successfully');
       navigate('/creator-dashboard/content');
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to purge asset');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to purge asset');
     }
   };
 
@@ -156,8 +142,9 @@ const ContentDetails = () => {
       await contentApi.retrain(contentId);
       message.success('Neural recalibration started');
       setContent((prev) => (prev ? { ...prev, status: 'PROCESSING', errorMessage: undefined } : null));
-    } catch (err: any) {
-      message.error(err.response?.data?.error || 'Failed to recalibrate');
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string } } };
+      message.error(e.response?.data?.error || 'Failed to recalibrate');
     } finally {
       setProcessing(false);
     }
@@ -324,10 +311,12 @@ const ContentDetails = () => {
               <Cpu size={20} style={{ color: colors.primary.solid }} />
               <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 800, letterSpacing: '-0.01em' }}>Neural Extraction in Progress</Title>
             </div>
-            <span style={{ fontSize: '24px', fontWeight: 900, color: colors.primary.solid }}>{(content as any).progressPercentage || 0}%</span>
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <span style={{ fontSize: '24px', fontWeight: 900, color: colors.primary.solid }}>{(content as unknown as Record<string, any>).progressPercentage || 0}%</span>
           </div>
           <Progress
-            percent={(content as any).progressPercentage || 0}
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            percent={(content as unknown as Record<string, any>).progressPercentage || 0}
             showInfo={false}
             strokeColor={colors.primary.solid}
             strokeWidth={14}
@@ -346,7 +335,9 @@ const ContentDetails = () => {
             <div>
               <Text style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: colors.text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Stage</Text>
               <Text style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>
-                <span style={{ color: colors.primary.solid, fontWeight: 800 }}>[{(content as any).progressStage?.toUpperCase()}]</span> • {(content as any).progressMessage || 'Synthesizing knowledge vectors...'}
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                <span style={{ color: colors.primary.solid, fontWeight: 800 }}>[{(content as unknown as Record<string, any>).progressStage?.toUpperCase()}]</span> • {(content as unknown as Record<string, any>).progressMessage || 'Synthesizing knowledge vectors...'}
               </Text>
             </div>
           </div>

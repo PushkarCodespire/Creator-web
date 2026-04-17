@@ -51,7 +51,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
     try {
       await navigator.clipboard.writeText(content);
       antMessage.success('Message copied to clipboard');
-    } catch (error) {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (__error) {
       antMessage.error('Failed to copy message');
     }
   };
@@ -74,8 +75,9 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       }
       setEditModalVisible(false);
       antMessage.success('Message updated');
-    } catch (error: any) {
-      antMessage.error(error.response?.data?.error || 'Failed to update message');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to update message');
     }
   };
 
@@ -87,8 +89,9 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         onDelete(messageId);
       }
       antMessage.success('Message deleted');
-    } catch (error: any) {
-      antMessage.error(error.response?.data?.error || 'Failed to delete message');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { error?: string } } };
+      antMessage.error(err.response?.data?.error || 'Failed to delete message');
     } finally {
       setDeleting(false);
     }
@@ -109,8 +112,8 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         await navigator.clipboard.writeText(`${content}\n\n${window.location.href}`);
         antMessage.success('Message link copied to clipboard');
       }
-    } catch (error: any) {
-      if (error.name !== 'AbortError') {
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name !== 'AbortError') {
         antMessage.error('Failed to share message');
       }
     }
@@ -164,8 +167,9 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             if (onBookmarkChange) onBookmarkChange(true);
             antMessage.success('Message bookmarked');
           }
-        } catch (error: any) {
-          antMessage.error(error.response?.data?.error || 'Failed to update bookmark');
+        } catch (error: unknown) {
+          const err = error as { response?: { data?: { error?: string } } };
+          antMessage.error(err.response?.data?.error || 'Failed to update bookmark');
         }
       },
     },

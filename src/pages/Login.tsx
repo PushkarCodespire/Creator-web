@@ -2,15 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-  Mail,
-  Lock,
-  CheckCircle,
-  Eye,
-  EyeOff,
-  ShieldCheck,
-  Loader2
-} from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { message } from 'antd';
 import { RootState, AppDispatch } from '../store';
 import { login, clearError } from '../store/slices/authSlice';
@@ -18,10 +10,10 @@ import '../styles/Auth.css';
 
 const TESTIMONIALS = [
   {
-    text: "AI Creator Platform helped me monetize my knowledge in ways I never imagined. The AI tools are incredible!",
-    name: "Sarah Jenkins",
-    role: "Digital Artist",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg"
+    text: "Creatorpal transformed how I organize my research. It's the first platform that understands the nuance of clinical pedagogy.",
+    name: "Dr. Elena Rodriguez",
+    role: "Clinical Curriculum Lead",
+    avatar: "https://randomuser.me/api/portraits/women/68.jpg"
   },
   {
     text: "The best community for creators. I've found amazing partnerships here that boosted my career.",
@@ -31,9 +23,9 @@ const TESTIMONIALS = [
   },
   {
     text: "Setting up my profile took minutes. Now I'm earning recurring revenue from my AI workshops.",
-    name: "Elena Rodriguez",
-    role: "AI Consultant",
-    avatar: "https://randomuser.me/api/portraits/women/68.jpg"
+    name: "Sarah Jenkins",
+    role: "Digital Artist",
+    avatar: "https://randomuser.me/api/portraits/women/44.jpg"
   }
 ];
 
@@ -42,16 +34,11 @@ const Login = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { isAuthenticated, isLoading, error, user, isProfileComplete } = useSelector((state: RootState) => state.auth);
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    remember: false
-  });
-
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
 
-  // Rotate Testimonials
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveTestimonial((prev) => (prev + 1) % TESTIMONIALS.length);
@@ -59,24 +46,23 @@ const Login = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Redirect if authenticated
   useEffect(() => {
     if (isAuthenticated && user) {
-      let path = '/dashboard';
-
-      if (user.role === 'CREATOR') {
-        path = isProfileComplete ? '/creator-dashboard' : '/onboarding/creator';
+      if (user.role === 'USER') {
+        // Fan/User — go back to previous page
+        navigate(-1);
+      } else if (user.role === 'CREATOR') {
+        navigate(isProfileComplete ? '/creator-dashboard' : '/onboarding/creator');
       } else if (user.role === 'COMPANY') {
-        path = '/company-dashboard';
+        navigate('/company-dashboard');
       } else if (user.role === 'ADMIN') {
-        path = '/admin';
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
       }
-
-      navigate(path);
     }
   }, [isAuthenticated, user, navigate, isProfileComplete]);
 
-  // Handle API Errors
   useEffect(() => {
     if (error) {
       message.error(error);
@@ -84,59 +70,30 @@ const Login = () => {
     }
   }, [error, dispatch]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.email || !formData.password) {
+    if (!email || !password) {
       message.error("Please fill in all fields");
       return;
     }
-    dispatch(login({ email: formData.email, password: formData.password }));
+    dispatch(login({ email, password }));
   };
 
   return (
     <div className="register-container">
+      <div className="auth-card">
       {/* Left Brand Panel */}
       <div className="brand-panel">
         <div className="brand-content">
-          <div className="brand-logo-container" style={{ marginBottom: '32px' }}>
-            <img src="/Logo.png" alt="CodeSpire" style={{ height: '56px', width: 'auto' }} />
+          <div style={{ marginBottom: 32 }}>
+            <img src="/website/figma/logo11.png" alt="CreatorPal" style={{ height: 30, width: 'auto' }} />
           </div>
           <h1 className="brand-headline">
-            Join 10,000+ creators <br />
-            monetizing their expertise
+            Join <strong>10,000+</strong> Creators monetizing their expertise
           </h1>
           <p className="brand-subtext">
-            The all-in-one platform for AI creators to build, sell, and grow their community.
+            The all-in-one platform for curriculum building, community management, and medical-grade data curation.
           </p>
-
-          <ul className="benefit-list">
-            <li className="benefit-item">
-              <span className="check-icon">
-                <CheckCircle size={14} color="#ffffff" strokeWidth={3} />
-              </span>
-              Free to start, cancel anytime
-            </li>
-            <li className="benefit-item">
-              <span className="check-icon">
-                <CheckCircle size={14} color="#ffffff" strokeWidth={3} />
-              </span>
-              No credit card required
-            </li>
-            <li className="benefit-item">
-              <span className="check-icon">
-                <CheckCircle size={14} color="#ffffff" strokeWidth={3} />
-              </span>
-              Set up your profile in 2 minutes
-            </li>
-          </ul>
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -146,6 +103,10 @@ const Login = () => {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.5 }}
               className="testimonial-card"
+              style={{
+                background: 'rgba(255,255,255,0.06)',
+                border: '1px solid rgba(255,255,255,0.1)',
+              }}
             >
               <p className="testimonial-text">"{TESTIMONIALS[activeTestimonial].text}"</p>
               <div className="testimonial-user">
@@ -160,14 +121,6 @@ const Login = () => {
               </div>
             </motion.div>
           </AnimatePresence>
-
-          <div className="trust-badges">
-            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <ShieldCheck size={16} /> SSL Secured
-            </span>
-            <span>GDPR Compliant</span>
-            <span>Verified by Stripe</span>
-          </div>
         </div>
       </div>
 
@@ -175,37 +128,33 @@ const Login = () => {
       <div className="form-panel">
         <div className="form-wrapper">
           <div className="form-header">
-            <h2 className="form-title">👋 Welcome Back!</h2>
-            <p className="form-subtitle">Sign in to continue to your dashboard</p>
+            <h2 className="form-title">Welcome Back</h2>
+            <p className="form-subtitle">Sign in to your CreatorPal account</p>
           </div>
 
           <form onSubmit={handleSubmit}>
             <div className="input-group">
-              <label className="input-label">Email Address</label>
-              <div className="input-wrapper">
-                <Mail className="field-icon" size={18} strokeWidth={2} />
-                <input
-                  type="email"
-                  name="email"
-                  className="custom-input"
-                  placeholder="john@example.com"
-                  value={formData.email}
-                  onChange={handleChange}
-                />
-              </div>
+              <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Email Address</label>
+              <input
+                type="email"
+                className="custom-input"
+                style={{ paddingLeft: 16 }}
+                placeholder="john.doe@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
             </div>
 
             <div className="input-group">
-              <label className="input-label">Password</label>
+              <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Password</label>
               <div className="input-wrapper">
-                <Lock className="field-icon" size={18} strokeWidth={2} />
                 <input
                   type={showPassword ? "text" : "password"}
-                  name="password"
                   className="custom-input"
-                  placeholder="••••••••••••"
-                  value={formData.password}
-                  onChange={handleChange}
+                  style={{ paddingLeft: 16 }}
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
                 <div className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
                   {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -213,38 +162,26 @@ const Login = () => {
               </div>
             </div>
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '0.875rem', color: '#4a5565' }}>
-                <input
-                  type="checkbox"
-                  name="remember"
-                  checked={formData.remember}
-                  onChange={handleChange}
-                  style={{ width: '16px', height: '16px', borderRadius: '4px', border: '1px solid #e5e7eb' }}
-                />
-                Remember me
-              </label>
-              <Link to="/forgot-password" style={{ color: '#1268ff', fontSize: '0.875rem', fontWeight: 600 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 24 }}>
+              <Link to="/forgot-password" style={{ color: '#ff3e48', fontSize: 13, fontWeight: 500 }}>
                 Forgot password?
               </Link>
             </div>
 
-            <button type="submit" className="submit-btn" disabled={isLoading}>
-              {isLoading ? (
-                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                  <Loader2 className="animate-spin" size={20} />
-                  Signing in...
-                </div>
-              ) : 'Sign In'}
+            <button type="submit" className="submit-btn" disabled={isLoading} style={{
+              background: '#ff3e48',
+              borderRadius: 10,
+            }}>
+              {isLoading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
 
-
-          <div style={{ textAlign: 'center', marginTop: '32px' }}>
-            <span style={{ color: '#6a7282', fontSize: '0.95rem' }}>New here? </span>
-            <Link to="/register" style={{ color: '#1268ff', fontWeight: 600, fontSize: '0.95rem' }}>Create an account</Link>
+          <div style={{ textAlign: 'center', marginTop: 28 }}>
+            <span style={{ color: '#6B7280', fontSize: 14 }}>Don't have an account? </span>
+            <Link to="/register" style={{ color: '#ff3e48', fontWeight: 600, fontSize: 14 }}>Sign Up</Link>
           </div>
         </div>
+      </div>
       </div>
     </div>
   );
