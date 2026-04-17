@@ -57,7 +57,7 @@ const Register = () => {
     if (isAuthenticated) {
       const userRole = role as string;
       if (userRole === 'CREATOR') {
-        navigate('/creator-dashboard');
+        navigate('/onboarding/creator');
       } else if (userRole === 'COMPANY') {
         navigate('/company-dashboard');
       } else if (userRole === 'ADMIN') {
