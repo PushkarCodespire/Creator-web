@@ -43,7 +43,6 @@ args: []
 env:
   VITE_API_URL: "/api"
   VITE_SOCKET_URL: "wss://crp.dev.gcp.codespiresolutions.com"
-  VITE_CREATOR_API_URL: "/api"
   VITE_UPLOAD_PUBLIC_PATH: "/api/upload/image"
 
   VITE_DEMO_MODE: "false"
@@ -51,8 +50,6 @@ env:
   VITE_CHAT_ID_KRISHANSH: ""
   VITE_CHAT_ID_RAGHAV: ""
   VITE_CHAT_ID_RAVYA: ""
-  VITE_GIPHY_API_KEY: ""
-
 envSecret: {}
 
 envFrom: []

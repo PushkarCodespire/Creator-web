@@ -5,7 +5,7 @@
 
 export const CHAT_CONFIG = {
   /** Base URL of the creator-platform backend. Empty = demo mode. */
-  apiUrl: (import.meta.env.VITE_CREATOR_API_URL || "").replace(/\/$/, ""),
+  apiUrl: (import.meta.env.VITE_API_URL || "").replace(/\/$/, ""),
 
   /** How many AI responses a visitor gets before the subscription wall. */
   freeTrialLimit: 5,

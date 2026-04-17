@@ -5,7 +5,5 @@ export * from './MediaMessage';
 export * from './MessageReactions';
 export * from './MediaUploadButton';
 export * from './BookmarkButton';
-export * from './GifButton';
-export * from './GifPicker';
 export * from './LinkPreviewCard';
 export * from './VoiceMessage';
