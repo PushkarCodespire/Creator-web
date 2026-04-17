@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { useState, useRef, useEffect } from 'react';
 import { RootState, AppDispatch } from '../../../store';
-import { logout } from '../../../store/slices/authSlice';
+import { logout, fetchCurrentUser } from '../../../store/slices/authSlice';
 import styles from '../WebsiteHome.module.css';
 
 const LOGO_SRC = "/website/figma/Maskgroup3.png";
@@ -21,6 +21,15 @@ export function WebsiteNav() {
   const dispatch = useDispatch<AppDispatch>();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Fetch user if authenticated but user data is missing (stale localStorage)
+  const fetchedRef = useRef(false);
+  useEffect(() => {
+    if (isAuthenticated && !user && !fetchedRef.current) {
+      fetchedRef.current = true;
+      dispatch(fetchCurrentUser());
+    }
+  }, [isAuthenticated, user, dispatch]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -79,7 +88,7 @@ export function WebsiteNav() {
                   zIndex: 50,
                 }}>
                   <Link
-                    to={user?.role === 'CREATOR' ? '/creator-dashboard' : '/user/profile'}
+                    to="/user/profile"
                     onClick={() => setDropdownOpen(false)}
                     style={{ display: 'block', padding: '10px 16px', borderBottom: '1px solid #f3f4f6', textDecoration: 'none', transition: 'background 120ms ease' }}
                     onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}

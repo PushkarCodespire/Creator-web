@@ -48,17 +48,14 @@ const Login = () => {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      if (user.role === 'USER') {
-        // Fan/User — go back to previous page
-        navigate(-1);
-      } else if (user.role === 'CREATOR') {
-        navigate(isProfileComplete ? '/creator-dashboard' : '/onboarding/creator');
+      if (user.role === 'CREATOR') {
+        navigate('/creator-dashboard');
       } else if (user.role === 'COMPANY') {
         navigate('/company-dashboard');
       } else if (user.role === 'ADMIN') {
         navigate('/admin');
       } else {
-        navigate('/dashboard');
+        navigate(-1);
       }
     }
   }, [isAuthenticated, user, navigate, isProfileComplete]);

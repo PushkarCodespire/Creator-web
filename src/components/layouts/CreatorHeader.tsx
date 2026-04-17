@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, X } from 'lucide-react';
+import { Bell, X, Home } from 'lucide-react';
 import { searchApi, notificationApi } from '../../services/api';
 import { useDashboardFilter } from './DashboardFilterContext';
 
@@ -128,6 +128,17 @@ export default function CreatorHeader() {
 
       {/* Right side */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        {/* Home button */}
+        <button type="button" onClick={() => navigate('/')} title="Go to Home" style={{
+          width: 40, height: 40, borderRadius: 10, background: '#fff', border: '1px solid #ede8e3',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', cursor: 'pointer', transition: 'all 0.15s ease',
+        }}
+          onMouseEnter={(e) => { e.currentTarget.style.background = '#ff3e48'; e.currentTarget.style.color = '#fff'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = '#fff'; e.currentTarget.style.color = '#6b7280'; }}
+        >
+          <Home size={18} />
+        </button>
+
         {/* Time filters */}
         <div style={{ display: 'flex', background: '#fff', border: '1px solid #ede8e3', borderRadius: 10, padding: 3, gap: 2 }}>
           {['7D', '30D', '90D'].map((f) => (

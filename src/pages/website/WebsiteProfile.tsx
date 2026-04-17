@@ -126,24 +126,33 @@ export default function WebsiteProfile() {
     window.scrollTo(0, 0);
   }, []);
 
-  useEffect(() => {
+  const fetchProfileData = async () => {
     if (!creatorId) return;
-    (async () => {
-      try {
-        const [profileRes, programsRes, slotsRes] = await Promise.all([
-          creatorApi.getById(creatorId),
-          programApi.getByCreator(creatorId).catch(() => ({ data: { data: [] } })),
-          bookingApi.getPublicSlots(creatorId).catch(() => ({ data: { data: [] } })),
-        ]);
-        setCreator(profileRes.data.data);
-        setPrograms(programsRes.data.data || []);
-        setSlots(slotsRes.data.data || []);
-      } catch {
-        setError('Creator not found');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    try {
+      const [profileRes, programsRes, slotsRes] = await Promise.all([
+        creatorApi.getById(creatorId),
+        programApi.getByCreator(creatorId).catch(() => ({ data: { data: [] } })),
+        bookingApi.getPublicSlots(creatorId).catch(() => ({ data: { data: [] } })),
+      ]);
+      setCreator(profileRes.data.data);
+      setPrograms(programsRes.data.data || []);
+      setSlots(slotsRes.data.data || []);
+    } catch {
+      setError('Creator not found');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchProfileData();
+  }, [creatorId]);
+
+  // Refetch when window regains focus (user switches back from another tab)
+  useEffect(() => {
+    const onFocus = () => fetchProfileData();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
   }, [creatorId]);
 
   const handleSubmitReview = async () => {

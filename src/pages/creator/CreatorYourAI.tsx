@@ -70,6 +70,16 @@ const CreatorYourAI = () => {
   const [voiceError, setVoiceError] = useState('');
   const voiceFileRef = useRef<HTMLInputElement>(null);
 
+  // Auto-poll when any content is PROCESSING
+  useEffect(() => {
+    const hasProcessing = contents.some((c: { status?: string }) => c.status === 'PROCESSING');
+    if (!hasProcessing) return;
+    const interval = setInterval(() => {
+      fetchContents();
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [contents]);
+
   useEffect(() => {
     fetchContents();
     // Load voice clone status
