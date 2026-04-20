@@ -105,8 +105,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     setHighlightIndex(0);
     setCurrentLine(0);
 
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    const fullUrl = audioUrl.startsWith('http') ? audioUrl : `${baseUrl}${audioUrl}`;
+    const fullUrl = getImageUrl(audioUrl);
 
     const audio = new Audio(fullUrl);
     audioRef.current = audio;
