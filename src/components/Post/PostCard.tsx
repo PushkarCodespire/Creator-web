@@ -134,7 +134,7 @@ const PostCard: React.FC<PostCardProps> = ({
       { key: 'edit', label: 'Modify Matrix', icon: <Edit size={16} />, onClick: () => onPostUpdate?.(post.id) },
       { key: 'delete', label: 'Purge Stream', icon: <Trash2 size={16} />, danger: true, onClick: handleDeletePost },
     ]
-    : [{ key: 'report', label: 'Report Disruption', icon: <ExternalLink size={16} />, onClick: () => message.info('Analytics pending') }];
+    : [{ key: 'report', label: 'Report Disruption', icon: <ExternalLink size={16} />, onClick: () => { message.info('Analytics pending'); } }];
 
   const formatTimestamp = (timestamp: string) => {
     const diff = Math.floor((new Date().getTime() - new Date(timestamp).getTime()) / 1000);

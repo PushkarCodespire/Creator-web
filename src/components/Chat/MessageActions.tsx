@@ -124,7 +124,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       key: 'copy',
       label: 'Copy',
       icon: <CopyOutlined />,
-      onClick: handleCopy,
+      onClick: () => { void handleCopy(); },
     },
     ...(canEdit
       ? [
@@ -156,28 +156,30 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
       key: 'bookmark',
       label: isBookmarked ? 'Remove bookmark' : 'Bookmark',
       icon: isBookmarked ? <BookOutlined style={{ color: colors.warning.solid }} /> : <BookOutlined />,
-      onClick: async () => {
-        try {
-          if (isBookmarked) {
-            await bookmarkApi.removeBookmark(messageId);
-            if (onBookmarkChange) onBookmarkChange(false);
-            antMessage.success('Bookmark removed');
-          } else {
-            await bookmarkApi.addBookmark(messageId);
-            if (onBookmarkChange) onBookmarkChange(true);
-            antMessage.success('Message bookmarked');
+      onClick: () => {
+        void (async () => {
+          try {
+            if (isBookmarked) {
+              await bookmarkApi.removeBookmark(messageId);
+              if (onBookmarkChange) onBookmarkChange(false);
+              antMessage.success('Bookmark removed');
+            } else {
+              await bookmarkApi.addBookmark(messageId);
+              if (onBookmarkChange) onBookmarkChange(true);
+              antMessage.success('Message bookmarked');
+            }
+          } catch (error: unknown) {
+            const err = error as { response?: { data?: { error?: string } } };
+            antMessage.error(err.response?.data?.error || 'Failed to update bookmark');
           }
-        } catch (error: unknown) {
-          const err = error as { response?: { data?: { error?: string } } };
-          antMessage.error(err.response?.data?.error || 'Failed to update bookmark');
-        }
+        })();
       },
     },
     {
       key: 'share',
       label: 'Share',
       icon: <ShareAltOutlined />,
-      onClick: handleShare,
+      onClick: () => { void handleShare(); },
     },
   ];
 

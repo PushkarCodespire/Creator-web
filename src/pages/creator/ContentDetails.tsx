@@ -311,7 +311,7 @@ const ContentDetails = () => {
               <Cpu size={20} style={{ color: colors.primary.solid }} />
               <Title level={4} style={{ color: colors.text.primary, margin: 0, fontWeight: 800, letterSpacing: '-0.01em' }}>Neural Extraction in Progress</Title>
             </div>
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
             <span style={{ fontSize: '24px', fontWeight: 900, color: colors.primary.solid }}>{(content as unknown as Record<string, any>).progressPercentage || 0}%</span>
           </div>
           <Progress
@@ -335,8 +335,7 @@ const ContentDetails = () => {
             <div>
               <Text style={{ display: 'block', fontSize: '12px', fontWeight: 800, color: colors.text.tertiary, textTransform: 'uppercase', letterSpacing: '0.05em' }}>Current Stage</Text>
               <Text style={{ fontSize: '15px', fontWeight: 600, color: colors.text.primary }}>
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <span style={{ color: colors.primary.solid, fontWeight: 800 }}>[{(content as unknown as Record<string, any>).progressStage?.toUpperCase()}]</span> • {(content as unknown as Record<string, any>).progressMessage || 'Synthesizing knowledge vectors...'}
               </Text>
             </div>

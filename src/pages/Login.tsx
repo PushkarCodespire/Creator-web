@@ -49,13 +49,13 @@ const Login = () => {
   useEffect(() => {
     if (isAuthenticated && user) {
       if (user.role === 'CREATOR') {
-        navigate('/creator-dashboard');
+        navigate('/creator-dashboard', { replace: true });
       } else if (user.role === 'COMPANY') {
-        navigate('/company-dashboard');
+        navigate('/company-dashboard', { replace: true });
       } else if (user.role === 'ADMIN') {
-        navigate('/admin');
+        navigate('/admin', { replace: true });
       } else {
-        navigate(-1);
+        navigate('/', { replace: true });
       }
     }
   }, [isAuthenticated, user, navigate, isProfileComplete]);

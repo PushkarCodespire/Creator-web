@@ -49,7 +49,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator, layout = 'gri
                     height: '100%',
                     display: 'flex',
                     flexDirection: isList ? 'row' : 'column',
-                    alignItems: isList ? 'center' : 'center',
+                    alignItems: 'center',
                     textAlign: isList ? 'left' : 'center',
                     position: 'relative',
                     border: '1px solid rgba(229, 231, 235, 0.5)',
@@ -152,7 +152,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator, layout = 'gri
                     gap: isList ? 4 : 0
                 }}>
                     <h3 style={{
-                        fontSize: isList ? 18 : 18,
+                        fontSize: 18,
                         fontWeight: 700,
                         color: colors.text.primary,
                         marginBottom: isList ? 0 : 4,

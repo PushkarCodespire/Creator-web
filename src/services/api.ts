@@ -59,7 +59,7 @@ export const getDownloadUrl = (folder: string, filename?: string) => {
 
   // Remove any leading slashes so we don't break the pattern
   const cleanFilename = filename.replace(/^\/+/, '');
-  const cleanFolder = folder.replace(/^\/+|\/+$/g, '');
+  const cleanFolder = folder.replace(/(?:^\/+)|(?:\/+$)/g, '');
 
   // apiBase already normalizes API_URL and ensures no trailing slash
   return `${apiBase}/download/${cleanFolder}/${cleanFilename}`;

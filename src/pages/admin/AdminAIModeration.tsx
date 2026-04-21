@@ -232,7 +232,7 @@ const AdminAIModeration = () => {
                                         loading={loading}
                                         pagination={{
                                             ...pagination,
-                                            onChange: (page, pageSize) => loadLogs(page, pageSize),
+                                            onChange: (page, pageSize) => { void loadLogs(page, pageSize); },
                                             showTotal: (total) => `Total ${total} entries`
                                         }}
                                     />

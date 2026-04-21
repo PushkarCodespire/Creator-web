@@ -97,27 +97,29 @@ export function WebsiteNav() {
                     <div style={{ fontWeight: 600, fontSize: 14, color: '#111827' }}>{user?.name || 'Profile'}</div>
                     {user?.email && <div style={{ fontSize: 12, color: '#6b7280', marginTop: 2 }}>{user.email}</div>}
                   </Link>
-                  <Link
-                    to={user?.role === 'CREATOR' ? '/creator-dashboard' : '/dashboard'}
-                    onClick={() => setDropdownOpen(false)}
-                    style={{
-                      display: 'block',
-                      width: '100%',
-                      padding: '10px 16px',
-                      textAlign: 'left',
-                      fontSize: 14,
-                      color: '#111827',
-                      textDecoration: 'none',
-                      cursor: 'pointer',
-                      background: 'none',
-                      borderBottom: '1px solid #f3f4f6',
-                      transition: 'background 120ms ease',
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
-                    onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                  >
-                    Dashboard
-                  </Link>
+                  {user?.role === 'CREATOR' && (
+                    <Link
+                      to="/creator-dashboard"
+                      onClick={() => setDropdownOpen(false)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontSize: 14,
+                        color: '#111827',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        background: 'none',
+                        borderBottom: '1px solid #f3f4f6',
+                        transition: 'background 120ms ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      Dashboard
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => { dispatch(logout()); setDropdownOpen(false); }}
