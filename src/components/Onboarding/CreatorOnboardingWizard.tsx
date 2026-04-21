@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Form, Input, Select, message as antMessage, Switch, InputNumber } from 'antd';
-import { User, FileText, CircleDollarSign, Bot, Rocket, CheckCircle, Youtube, Plus, Camera } from 'lucide-react';
+import { User, FileText, CircleDollarSign, Bot, Rocket, CheckCircle, Youtube, Plus, Camera, Sparkles } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import api, { creatorApi, contentApi } from '../../services/api';
@@ -24,6 +24,38 @@ const labelStyle: React.CSSProperties = { fontWeight: 700, fontSize: 11, textTra
 const inputStyle: React.CSSProperties = { height: 40, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 14, paddingLeft: 16 };
 const textareaStyle: React.CSSProperties = { ...inputStyle, height: 'auto', padding: '10px 16px' };
 
+// Wrapper to keep Ant Design Form.Item value/onChange binding while adding a generate button
+const BioFieldWithGenerate = ({ value, onChange, taglineValue, generatingBio, onGenerate, ...rest }: {
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  taglineValue?: string;
+  generatingBio: boolean;
+  onGenerate: () => void;
+  [key: string]: unknown;
+}) => (
+  <div style={{ position: 'relative' }}>
+    <TextArea value={value} onChange={onChange} {...rest} />
+    <button
+      type="button"
+      disabled={!taglineValue || generatingBio}
+      onClick={onGenerate}
+      title={taglineValue ? 'Generate bio with AI' : 'Enter a tagline first'}
+      style={{
+        position: 'absolute', top: 8, right: 8,
+        width: 30, height: 30, borderRadius: 8, border: 'none',
+        background: (!taglineValue || generatingBio) ? '#e5e7eb' : 'linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%)',
+        color: '#fff',
+        cursor: (!taglineValue || generatingBio) ? 'not-allowed' : 'pointer',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        transition: 'all 0.2s ease',
+        boxShadow: (!taglineValue || generatingBio) ? 'none' : '0 2px 8px rgba(255,62,72,0.3)',
+      }}
+    >
+      <Sparkles size={13} style={generatingBio ? { animation: 'spin 1s linear infinite' } : undefined} />
+    </button>
+  </div>
+);
+
 export const CreatorOnboardingWizard: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
@@ -40,7 +72,10 @@ export const CreatorOnboardingWizard: React.FC = () => {
   const [completedTabs, setCompletedTabs] = useState<Set<string>>(new Set());
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.creator?.profileImage || user?.avatar || null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [generatingBio, setGeneratingBio] = useState(false);
+  const [generatingPersonality, setGeneratingPersonality] = useState(false);
   const avatarInputRef = useRef<HTMLInputElement>(null);
+  const taglineValue = Form.useWatch('tagline', form);
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -95,6 +130,17 @@ export const CreatorOnboardingWizard: React.FC = () => {
       setIsInitialized(true);
     }
   }, [user, form, isInitialized]);
+
+  // Auto-generate AI personality when Intelligence tab opens (if empty)
+  useEffect(() => {
+    if (activeTab === 'intelligence' && isInitialized) {
+      const currentPersonality = form.getFieldValue('aiPersonality');
+      if (!currentPersonality && !generatingPersonality) {
+        handleGeneratePersonality();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab]);
 
   const handleSave = async () => {
     try {
@@ -179,6 +225,53 @@ export const CreatorOnboardingWizard: React.FC = () => {
     );
   }
 
+  const handleGenerateBio = async () => {
+    const tagline = form.getFieldValue('tagline');
+    if (!tagline) {
+      antMessage.warning('Please enter a tagline first');
+      return;
+    }
+    setGeneratingBio(true);
+    try {
+      const res = await creatorApi.generateBio({
+        displayName: form.getFieldValue('displayName'),
+        tagline,
+        category: form.getFieldValue('category'),
+        tags: form.getFieldValue('tags'),
+      });
+      if (res.data?.success && res.data.data?.bio) {
+        form.setFieldsValue({ bio: res.data.data.bio });
+        antMessage.success('Bio generated! Feel free to edit it.');
+      }
+    } catch {
+      antMessage.error('Failed to generate bio');
+    } finally {
+      setGeneratingBio(false);
+    }
+  };
+
+  const handleGeneratePersonality = async () => {
+    setGeneratingPersonality(true);
+    try {
+      const res = await creatorApi.generateAiPersonality({
+        displayName: form.getFieldValue('displayName'),
+        category: form.getFieldValue('category'),
+        tagline: form.getFieldValue('tagline'),
+        bio: form.getFieldValue('bio'),
+        aiTone: form.getFieldValue('aiTone'),
+        tags: form.getFieldValue('tags'),
+      });
+      if (res.data?.success && res.data.data?.aiPersonality) {
+        form.setFieldsValue({ aiPersonality: res.data.data.aiPersonality });
+        antMessage.success('AI personality generated! Feel free to customize it.');
+      }
+    } catch {
+      antMessage.error('Failed to generate AI personality');
+    } finally {
+      setGeneratingPersonality(false);
+    }
+  };
+
   const renderTab = () => {
     switch (activeTab) {
       case 'identity':
@@ -238,7 +331,14 @@ export const CreatorOnboardingWizard: React.FC = () => {
               <Input placeholder="Your mission in one line" style={inputStyle} />
             </Form.Item>
             <Form.Item name="bio" label={<span style={labelStyle}>Bio</span>} rules={[{ required: true }]} style={{ marginBottom: 12 }}>
-              <TextArea rows={3} placeholder="Tell your fans who you are..." style={textareaStyle} />
+              <BioFieldWithGenerate
+                rows={3}
+                placeholder="Tell your fans who you are..."
+                style={textareaStyle}
+                taglineValue={taglineValue}
+                generatingBio={generatingBio}
+                onGenerate={handleGenerateBio}
+              />
             </Form.Item>
             <Form.Item name="tags" label={<span style={labelStyle}>Tags</span>} style={{ marginBottom: 0 }}>
               <Select mode="tags" style={{ width: '100%' }} placeholder="Add tags" tokenSeparators={[',']} />
@@ -389,9 +489,28 @@ export const CreatorOnboardingWizard: React.FC = () => {
                 <Option value="educational">Educational</Option>
               </Select>
             </Form.Item>
-            <Form.Item name="aiPersonality" label={<span style={labelStyle}>AI Personality (System Prompt)</span>} rules={[{ required: true }]} style={{ marginBottom: 14 }}>
-              <TextArea rows={4} placeholder="Describe your AI persona..." style={textareaStyle} />
+            <Form.Item name="aiPersonality" label={<span style={labelStyle}>AI Personality (System Prompt)</span>} rules={[{ required: true }]} style={{ marginBottom: 4 }}>
+              <TextArea rows={4} placeholder={generatingPersonality ? 'Generating AI personality...' : 'Describe your AI persona...'} style={textareaStyle} disabled={generatingPersonality} />
             </Form.Item>
+            <div style={{ marginBottom: 14, textAlign: 'right' }}>
+              <button
+                type="button"
+                onClick={handleGeneratePersonality}
+                disabled={generatingPersonality}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 6,
+                  padding: '6px 14px', borderRadius: 8,
+                  border: '1px solid #e5e7eb',
+                  background: generatingPersonality ? '#f3f4f6' : '#fff',
+                  color: generatingPersonality ? '#9ca3af' : '#ff3e48',
+                  fontSize: 12, fontWeight: 600,
+                  cursor: generatingPersonality ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <Sparkles size={12} />
+                {generatingPersonality ? 'Generating...' : 'Generate with AI'}
+              </button>
+            </div>
             <Form.Item name="welcomeMessage" label={<span style={labelStyle}>Welcome Message</span>} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
               <Input placeholder="First thing your AI says to new fans" style={inputStyle} />
             </Form.Item>

@@ -70,6 +70,15 @@ const CreatorYourAI = () => {
   const [voiceError, setVoiceError] = useState('');
   const voiceFileRef = useRef<HTMLInputElement>(null);
 
+  // Voice Recording
+  const [showRecorder, setShowRecorder] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingTime, setRecordingTime] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const mediaStreamRef = useRef<MediaStream | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Auto-poll when any content is PROCESSING
   useEffect(() => {
     const hasProcessing = contents.some((c: { status?: string }) => c.status === 'PROCESSING');
@@ -148,6 +157,85 @@ const CreatorYourAI = () => {
       setVoiceUploading(false);
     }
   };
+
+  const getReadingScript = () => {
+    const name = user?.creator?.displayName || user?.name || 'there';
+    const category = user?.creator?.category || 'fitness';
+    const tagline = user?.creator?.tagline || '';
+    return `Hi, I'm ${name}. I'm passionate about ${category} and helping people achieve their goals.${tagline ? ` ${tagline}.` : ''} Whether you're just starting your journey or looking to take things to the next level, I'm here to guide you every step of the way. I believe everyone deserves access to expert guidance and personalized support. Let's work together to build healthy habits, stay consistent, and unlock your full potential. I'm excited to be part of your journey and can't wait to help you become the best version of yourself.`;
+  };
+
+  const handleStartRecording = async () => {
+    setVoiceError('');
+    audioChunksRef.current = [];
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaStreamRef.current = stream;
+      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      mediaRecorderRef.current = mediaRecorder;
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        if (blob.size < 1000) {
+          setVoiceError('Recording too short. Please record at least 30 seconds.');
+          return;
+        }
+
+        setVoiceUploading(true);
+        setShowRecorder(false);
+        setIsRecording(false);
+        setRecordingTime(0);
+        try {
+          const formData = new FormData();
+          formData.append('audio', blob, 'voice-recording.webm');
+          const res = await contentApi.uploadVoiceClone(formData);
+          setVoiceStatus(res.data.data?.status || 'READY');
+          showMsg('Voice clone created from recording!');
+        } catch (err: unknown) {
+          const e = err as { response?: { data?: { error?: { message?: string } } } };
+          setVoiceError(e?.response?.data?.error?.message || 'Voice clone failed');
+        } finally {
+          setVoiceUploading(false);
+        }
+      };
+
+      mediaRecorder.start(1000); // collect chunks every second
+      setIsRecording(true);
+      setRecordingTime(0);
+      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
+    } catch {
+      setVoiceError('Microphone access is required to record your voice. Please allow microphone access and try again.');
+    }
+  };
+
+  const handleStopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const handleCancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaStreamRef.current?.getTracks().forEach(t => t.stop());
+    }
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    setShowRecorder(false);
+    setIsRecording(false);
+    setRecordingTime(0);
+    audioChunksRef.current = [];
+  };
+
+  const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const handleOpenSummary = () => {
     // If we have a cached summary and it doesn't need regenerating, just show it
@@ -330,7 +418,7 @@ const CreatorYourAI = () => {
                   </div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: '#111827', marginBottom: 4 }}>Analyzing your AI...</div>
                   <div style={{ fontSize: 13, color: '#9ca3af' }}>Reading all training data and generating a comprehensive summary</div>
-                  <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
+                  <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } } @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }`}</style>
                 </div>
               ) : (
                 <div className="ai-summary-content" style={{ fontSize: 14, color: '#374151', lineHeight: 1.7 }}>
@@ -498,34 +586,86 @@ const CreatorYourAI = () => {
             </button>
           </div>
         ) : (
-          <div style={{ border: '2px dashed #ede8e3', borderRadius: 14, padding: '36px 24px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10, background: '#fafaf8' }}>
-            <Mic size={24} style={{ color: '#9ca3af' }} />
-            <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, textAlign: 'center' }}>
-              {voiceStatus === 'PROCESSING' ? 'Processing your voice...' : 'Upload an audio sample of your voice (MP3, WAV, M4A)'}
-            </p>
-            {voiceError && <p style={{ fontSize: 12, color: '#dc2626', margin: 0 }}>{voiceError}</p>}
-            <input
-              ref={voiceFileRef}
-              type="file"
-              accept="audio/mpeg,audio/wav,audio/x-m4a,audio/mp4,.mp3,.wav,.m4a"
-              style={{ display: 'none' }}
-              onChange={handleVoiceUpload}
-            />
-            <button
-              type="button"
-              onClick={() => voiceFileRef.current?.click()}
-              disabled={voiceUploading || voiceStatus === 'PROCESSING'}
-              style={{
-                padding: '8px 20px', borderRadius: 10,
-                background: voiceUploading ? '#d1d5db' : '#ff3e48',
-                color: '#fff', fontSize: 13, fontWeight: 600, border: 'none',
-                cursor: voiceUploading ? 'not-allowed' : 'pointer',
-                display: 'flex', alignItems: 'center', gap: 6,
-              }}
-            >
-              <Upload size={14} /> {voiceUploading ? 'Uploading...' : 'Upload Audio'}
-            </button>
-            <p style={{ fontSize: 11, color: '#d1d5db', margin: 0 }}>Minimum 1 minute of clear speech recommended</p>
+          <div style={{ border: '2px dashed #ede8e3', borderRadius: 14, padding: '28px 24px', background: '#fafaf8' }}>
+            {voiceStatus === 'PROCESSING' || voiceUploading ? (
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#ff3e48', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
+                <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>{voiceUploading ? 'Uploading your voice...' : 'Processing your voice...'}</p>
+              </div>
+            ) : showRecorder ? (
+              /* Recording Panel */
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', margin: 0 }}>Read the following paragraph aloud:</p>
+                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '16px 18px', fontSize: 14, lineHeight: 1.7, color: '#374151', fontStyle: 'italic' }}>
+                  &ldquo;{getReadingScript()}&rdquo;
+                </div>
+
+                {!isRecording ? (
+                  <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
+                    <button type="button" onClick={handleStartRecording} style={{
+                      padding: '10px 24px', borderRadius: 10, background: '#ff3e48', color: '#fff',
+                      fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                    }}>
+                      <Mic size={14} /> Start Recording
+                    </button>
+                    <button type="button" onClick={handleCancelRecording} style={{
+                      padding: '10px 18px', borderRadius: 10, background: '#fff', color: '#6b7280',
+                      fontSize: 13, fontWeight: 600, border: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                    }}>
+                      <X size={14} /> Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#dc2626', animation: 'pulse 1.5s ease-in-out infinite' }} />
+                      <span style={{ fontSize: 20, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{formatTime(recordingTime)}</span>
+                      <span style={{ fontSize: 12, color: '#9ca3af' }}>/ 01:00 min recommended</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 10 }}>
+                      <button type="button" onClick={handleStopRecording} style={{
+                        padding: '10px 24px', borderRadius: 10, background: '#111827', color: '#fff',
+                        fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                      }}>
+                        <div style={{ width: 10, height: 10, borderRadius: 2, background: '#fff' }} /> Stop & Upload
+                      </button>
+                      <button type="button" onClick={handleCancelRecording} style={{
+                        padding: '10px 18px', borderRadius: 10, background: '#fff', color: '#6b7280',
+                        fontSize: 13, fontWeight: 600, border: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                      }}>
+                        <X size={14} /> Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+                {voiceError && <p style={{ fontSize: 12, color: '#dc2626', margin: 0, textAlign: 'center' }}>{voiceError}</p>}
+              </div>
+            ) : (
+              /* Default: Record + Upload options */
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+                <Mic size={24} style={{ color: '#9ca3af' }} />
+                <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, textAlign: 'center' }}>
+                  Record your voice or upload an audio sample (MP3, WAV, M4A)
+                </p>
+                {voiceError && <p style={{ fontSize: 12, color: '#dc2626', margin: 0 }}>{voiceError}</p>}
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <button type="button" onClick={() => { setShowRecorder(true); setVoiceError(''); }} style={{
+                    padding: '8px 20px', borderRadius: 10, background: '#ff3e48', color: '#fff',
+                    fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <Mic size={14} /> Record Voice
+                  </button>
+                  <input ref={voiceFileRef} type="file" accept="audio/mpeg,audio/wav,audio/x-m4a,audio/mp4,.mp3,.wav,.m4a" style={{ display: 'none' }} onChange={handleVoiceUpload} />
+                  <button type="button" onClick={() => voiceFileRef.current?.click()} style={{
+                    padding: '8px 20px', borderRadius: 10, background: '#fff', color: '#374151',
+                    fontSize: 13, fontWeight: 600, border: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
+                  }}>
+                    <Upload size={14} /> Upload Audio
+                  </button>
+                </div>
+                <p style={{ fontSize: 11, color: '#d1d5db', margin: 0 }}>Minimum 1 minute of clear speech recommended</p>
+              </div>
+            )}
           </div>
         )}
       </div>

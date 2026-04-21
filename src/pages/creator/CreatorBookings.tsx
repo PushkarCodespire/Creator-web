@@ -30,6 +30,11 @@ const CreatorBookings = () => {
   const [calYear, setCalYear] = useState(new Date().getFullYear());
   const [selectedDate, setSelectedDate] = useState<string | null>(null); // "YYYY-MM-DD"
 
+  // Meeting link per pending request (keyed by request id)
+  const [meetingLinks, setMeetingLinks] = useState<Record<string, string>>({});
+  // Edit state for confirmed bookings — maps requestId -> draft link while editing
+  const [editingLinks, setEditingLinks] = useState<Record<string, string>>({});
+
   // Modal state
   const [showModal, setShowModal] = useState(false);
   const [modalDate, setModalDate] = useState('');
@@ -60,8 +65,42 @@ const CreatorBookings = () => {
   useEffect(() => { fetchData(); }, []);
 
   const handleAccept = async (id: string, name: string) => {
-    try { await bookingApi.acceptRequest(id); antMessage.success(`Accepted booking from ${name}`); fetchData(); }
-    catch { antMessage.error('Failed to accept'); }
+    const linkInput = (meetingLinks[id] || '').trim();
+    // Basic client-side URL validation
+    if (linkInput) {
+      try {
+        const u = new URL(linkInput);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('bad protocol');
+      } catch {
+        antMessage.error('Meeting link must be a valid http:// or https:// URL');
+        return;
+      }
+    }
+    try {
+      await bookingApi.acceptRequest(id, linkInput ? { meetingLink: linkInput } : undefined);
+      antMessage.success(`Accepted booking from ${name}`);
+      setMeetingLinks(prev => { const next = { ...prev }; delete next[id]; return next; });
+      fetchData();
+    } catch { antMessage.error('Failed to accept'); }
+  };
+
+  const handleSaveLink = async (id: string) => {
+    const link = (editingLinks[id] || '').trim();
+    if (link) {
+      try {
+        const u = new URL(link);
+        if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('bad protocol');
+      } catch {
+        antMessage.error('Meeting link must be a valid http:// or https:// URL');
+        return;
+      }
+    }
+    try {
+      await bookingApi.updateMeetingLink(id, link || null);
+      antMessage.success(link ? 'Meeting link updated' : 'Meeting link removed');
+      setEditingLinks(prev => { const next = { ...prev }; delete next[id]; return next; });
+      fetchData();
+    } catch { antMessage.error('Failed to save meeting link'); }
   };
 
   const handleDecline = async (id: string, name: string) => {
@@ -353,6 +392,18 @@ const CreatorBookings = () => {
                 </div>
               </div>
               {req.message && <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, marginBottom: 14, fontStyle: 'italic' }}>"{req.message}"</p>}
+              <div style={{ marginBottom: 10 }}>
+                <label style={{ display: 'block', fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>
+                  Meeting link (optional)
+                </label>
+                <input
+                  type="url"
+                  placeholder="https://meet.google.com/..."
+                  value={meetingLinks[req.id] || ''}
+                  onChange={(e) => setMeetingLinks(prev => ({ ...prev, [req.id]: e.target.value }))}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ede8e3', fontSize: 12, outline: 'none', background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box' }}
+                />
+              </div>
               <div style={{ display: 'flex', gap: 10 }}>
                 <button type="button" onClick={() => handleAccept(req.id, req.user?.name)} style={{ flex: 1, padding: '8px 0', borderRadius: 8, background: '#ff3e48', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>Accept</button>
                 <button type="button" onClick={() => handleDecline(req.id, req.user?.name)} style={{ flex: 1, padding: '8px 0', borderRadius: 8, background: '#fff', color: '#374151', fontSize: 12, fontWeight: 600, border: '1px solid #ede8e3', cursor: 'pointer' }}>Decline</button>
@@ -386,7 +437,40 @@ const CreatorBookings = () => {
                 </div>
                 <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: '#ecfdf5', padding: '3px 10px', borderRadius: 6 }}>Confirmed</span>
               </div>
-              {req.message && <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, fontStyle: 'italic', margin: 0 }}>"{req.message}"</p>}
+              {req.message && <p style={{ fontSize: 12, color: '#6b7280', lineHeight: 1.5, fontStyle: 'italic', margin: '0 0 10px' }}>"{req.message}"</p>}
+
+              {/* Meeting link section */}
+              {editingLinks[req.id] !== undefined ? (
+                <div>
+                  <input
+                    type="url"
+                    placeholder="https://meet.google.com/..."
+                    value={editingLinks[req.id]}
+                    onChange={(e) => setEditingLinks(prev => ({ ...prev, [req.id]: e.target.value }))}
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ede8e3', fontSize: 12, outline: 'none', background: '#fff', fontFamily: 'inherit', boxSizing: 'border-box', marginBottom: 8 }}
+                  />
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <button type="button" onClick={() => handleSaveLink(req.id)} style={{ padding: '6px 14px', borderRadius: 6, background: '#10b981', color: '#fff', fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer' }}>Save</button>
+                    <button type="button" onClick={() => setEditingLinks(prev => { const n = { ...prev }; delete n[req.id]; return n; })} style={{ padding: '6px 14px', borderRadius: 6, background: '#fff', color: '#6b7280', fontSize: 11, fontWeight: 600, border: '1px solid #ede8e3', cursor: 'pointer' }}>Cancel</button>
+                  </div>
+                </div>
+              ) : req.meetingLink ? (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <a
+                    href={req.meetingLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#3b82f6', fontWeight: 600, textDecoration: 'none' }}
+                  >
+                    Open Meeting →
+                  </a>
+                  <button type="button" onClick={() => setEditingLinks(prev => ({ ...prev, [req.id]: req.meetingLink || '' }))} style={{ fontSize: 11, color: '#6b7280', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>Edit</button>
+                </div>
+              ) : (
+                <button type="button" onClick={() => setEditingLinks(prev => ({ ...prev, [req.id]: '' }))} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 12, color: '#3b82f6', fontWeight: 600, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                  + Add Meeting Link
+                </button>
+              )}
             </div>
           ))}
         </div>

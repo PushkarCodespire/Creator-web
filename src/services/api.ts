@@ -249,7 +249,13 @@ export const creatorApi = {
     api.post(`/creators/conversations/me/${conversationId}/generate-ai-reply`),
 
   getEngagementTrend: (days: number = 7) =>
-    api.get('/creators/analytics/engagement', { params: { days } })
+    api.get('/creators/analytics/engagement', { params: { days } }),
+
+  generateBio: (data: { tagline: string; displayName?: string; category?: string; tags?: string[] }) =>
+    api.post('/creators/generate-bio', data),
+
+  generateAiPersonality: (data: { displayName?: string; category?: string; tagline?: string; bio?: string; aiTone?: string; tags?: string[] }) =>
+    api.post('/creators/generate-ai-personality', data),
 };
 
 // ===========================================
@@ -469,7 +475,8 @@ export const bookingApi = {
   deleteSlot: (id: string) => api.delete(`/bookings/slots/${id}`),
   getRequests: () => api.get('/bookings/requests'),
   requestBooking: (data: { slotId: string; message?: string; type?: string }) => api.post('/bookings/request', data),
-  acceptRequest: (id: string) => api.post(`/bookings/requests/${id}/accept`),
+  acceptRequest: (id: string, data?: { meetingLink?: string }) => api.post(`/bookings/requests/${id}/accept`, data || {}),
+  updateMeetingLink: (id: string, meetingLink: string | null) => api.patch(`/bookings/requests/${id}/meeting-link`, { meetingLink }),
   declineRequest: (id: string) => api.post(`/bookings/requests/${id}/decline`),
   getStats: () => api.get('/bookings/stats'),
 };

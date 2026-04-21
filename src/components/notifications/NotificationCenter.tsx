@@ -15,6 +15,8 @@ import {
   BulbOutlined,
   StarFilled,
   CheckCircleOutlined,
+  CalendarFilled,
+  VideoCameraOutlined,
 } from '@ant-design/icons';
 import { Badge, Dropdown, Empty, Spin, Button, Tooltip } from 'antd';
 import { useSelector } from 'react-redux';
@@ -287,6 +289,7 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
   const getIcon = (type: string) => {
     const normalized = (type || '').toLowerCase();
+    if (normalized.includes('booking')) return <CalendarFilled style={{ color: colors.success.solid }} />;
     if (normalized.includes('opportunity')) return <BulbOutlined style={{ color: colors.warning.solid }} />;
     if (normalized.includes('review')) return <StarFilled style={{ color: colors.warning.solid }} />;
     if (normalized.includes('system') || normalized.includes('announcement')) {
@@ -299,6 +302,17 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
       return <HeartFilled style={{ color: colors.success.solid }} />;
     }
     return <BellFilled style={{ color: colors.primary.solid }} />;
+  };
+
+  // Extract meetingLink from notification data (safely)
+  const getMeetingLink = (n: { data?: unknown; type?: string }): string | null => {
+    if (!n || n.type !== 'BOOKING_CONFIRMED') return null;
+    const d = n.data as { meetingLink?: string } | string | null | undefined;
+    if (!d) return null;
+    if (typeof d === 'string') {
+      try { const parsed = JSON.parse(d); return parsed?.meetingLink || null; } catch { return null; }
+    }
+    return typeof d === 'object' && d.meetingLink ? d.meetingLink : null;
   };
 
   const formatTime = (timestamp: string) => {
@@ -346,25 +360,39 @@ const NotificationCenter: React.FC<NotificationCenterProps> = ({
             />
           </div>
         ) : (
-          filteredNotifications.map(n => (
-            <div
-              key={n.id}
-              className={`notification-item ${!n.isRead ? 'unread' : ''}`}
-              onClick={() => handleClick(n)}
-            >
-              <div className="notification-icon-wrapper">
-                {getIcon(n.type)}
-              </div>
-              <div className="notification-content">
-                <div className="notification-title">{n.title}</div>
-                <div className="notification-message">{n.message}</div>
-                <div className="notification-time">
-                  <BulbOutlined style={{ fontSize: 10 }} />
-                  {formatTime(n.createdAt)}
+          filteredNotifications.map(n => {
+            const meetingLink = getMeetingLink(n);
+            return (
+              <div
+                key={n.id}
+                className={`notification-item ${!n.isRead ? 'unread' : ''}`}
+                onClick={() => handleClick(n)}
+              >
+                <div className="notification-icon-wrapper">
+                  {getIcon(n.type)}
+                </div>
+                <div className="notification-content">
+                  <div className="notification-title">{n.title}</div>
+                  <div className="notification-message">{n.message}</div>
+                  {meetingLink && (
+                    <a
+                      href={meetingLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={(e) => e.stopPropagation()}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 6, fontSize: 12, fontWeight: 600, color: colors.success.solid, textDecoration: 'none' }}
+                    >
+                      <VideoCameraOutlined /> Join Meeting →
+                    </a>
+                  )}
+                  <div className="notification-time">
+                    <BulbOutlined style={{ fontSize: 10 }} />
+                    {formatTime(n.createdAt)}
+                  </div>
                 </div>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

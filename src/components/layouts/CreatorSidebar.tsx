@@ -12,12 +12,10 @@ interface Props {
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Dashboard', path: '/creator-dashboard' },
   { icon: 'yourai', label: 'Your AI', path: '/creator-dashboard/your-ai' },
-  { icon: 'analytics', label: 'Insights', path: '/creator-dashboard/analytics' },
   { icon: 'content', label: 'Bookings', path: '/creator-dashboard/content' },
   { icon: 'messages', label: 'Revenue', path: '/creator-dashboard/revenue' },
   { icon: 'deals', label: 'Products', path: '/creator-dashboard/products' },
   { icon: 'payouts', label: 'Payouts', path: '/creator-dashboard/payouts' },
-  { icon: 'posts', label: 'Analytics', path: '/creator-dashboard/detailed-analytics' },
 ];
 
 function NavIcon({ type, size = 20 }: { type: string; size?: number }) {

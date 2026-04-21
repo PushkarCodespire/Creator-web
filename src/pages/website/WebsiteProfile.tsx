@@ -501,6 +501,8 @@ export default function WebsiteProfile() {
                           const timeStr = `${start.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })} – ${end.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}`;
                           const isSelected = bookingSlotId === slot.id;
                           const isBooked = slot.isAvailable === false;
+                          const isBookedByMe = slot.bookedByMe === true;
+                          const meetingLink = slot.meetingLink || null;
 
                           return (
                             <div
@@ -508,30 +510,45 @@ export default function WebsiteProfile() {
                               onClick={() => { if (!isBooked) { setBookingSlotId(isSelected ? null : slot.id); setBookingMsg(''); } }}
                               style={{
                                 padding: '14px 16px', borderRadius: 12,
-                                cursor: isBooked ? 'not-allowed' : 'pointer',
-                                border: isSelected ? '2px solid #ff3e48' : isBooked ? '1px solid #e5e7eb' : '1px solid #ede8e3',
-                                background: isSelected ? '#fff5f5' : isBooked ? '#f3f4f6' : '#fafaf8',
-                                opacity: isBooked ? 0.5 : 1,
+                                cursor: isBooked ? (isBookedByMe && meetingLink ? 'default' : 'not-allowed') : 'pointer',
+                                border: isSelected ? '2px solid #ff3e48' : isBookedByMe ? '1px solid #10b981' : isBooked ? '1px solid #e5e7eb' : '1px solid #ede8e3',
+                                background: isSelected ? '#fff5f5' : isBookedByMe ? '#ecfdf5' : isBooked ? '#f3f4f6' : '#fafaf8',
+                                opacity: isBooked && !isBookedByMe ? 0.5 : 1,
                                 transition: 'all 0.15s ease',
                               }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: isBooked ? '#9ca3af' : '#111827' }}>{timeStr}</span>
-                                {isBooked && <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', background: '#fef2f2', padding: '2px 8px', borderRadius: 4 }}>Booked</span>}
+                                <span style={{ fontSize: 14, fontWeight: 600, color: isBooked && !isBookedByMe ? '#9ca3af' : '#111827' }}>{timeStr}</span>
+                                {isBookedByMe && <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: '#fff', padding: '2px 8px', borderRadius: 4, border: '1px solid #bbf7d0' }}>Your Booking</span>}
+                                {isBooked && !isBookedByMe && <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', background: '#fef2f2', padding: '2px 8px', borderRadius: 4 }}>Booked</span>}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: isBooked ? '#9ca3af' : '#ff3e48', background: isBooked ? '#f3f4f6' : '#fff5f5', padding: '2px 8px', borderRadius: 6 }}>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: isBooked && !isBookedByMe ? '#9ca3af' : '#ff3e48', background: isBooked && !isBookedByMe ? '#f3f4f6' : '#fff5f5', padding: '2px 8px', borderRadius: 6 }}>
                                   {slot.type || 'Consultation'}
                                 </span>
                                 {Number(slot.price) > 0 && (
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: isBooked ? '#9ca3af' : '#111827' }}>₹{Number(slot.price).toFixed(0)}</span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: isBooked && !isBookedByMe ? '#9ca3af' : '#111827' }}>₹{Number(slot.price).toFixed(0)}</span>
                                 )}
                                 {Number(slot.price) === 0 && (
-                                  <span style={{ fontSize: 12, fontWeight: 600, color: isBooked ? '#9ca3af' : '#10b981' }}>Free</span>
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: isBooked && !isBookedByMe ? '#9ca3af' : '#10b981' }}>Free</span>
                                 )}
                               </div>
                               {slot.title && slot.title !== 'Available' && (
                                 <div style={{ fontSize: 12, color: '#6b7280', marginTop: 4 }}>{slot.title}</div>
+                              )}
+                              {isBookedByMe && meetingLink && (
+                                <a
+                                  href={meetingLink}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ display: 'inline-flex', alignItems: 'center', gap: 4, marginTop: 8, fontSize: 12, fontWeight: 600, color: '#10b981', textDecoration: 'none' }}
+                                >
+                                  Join Meeting →
+                                </a>
+                              )}
+                              {isBookedByMe && !meetingLink && (
+                                <div style={{ marginTop: 8, fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>Meeting link coming soon</div>
                               )}
                             </div>
                           );

@@ -71,12 +71,10 @@ const UserSettings = lazy(() => import('./pages/user/UserSettings'));
 // Creator Dashboard
 const CreatorDashboardHome = lazy(() => import('./pages/creator/CreatorDashboardHome'));
 const CreatorBookings = lazy(() => import('./pages/creator/CreatorBookings'));
-const CreatorAnalytics = lazy(() => import('./pages/creator/CreatorAnalytics'));
 const CreatorSettings = lazy(() => import('./pages/creator/CreatorSettings'));
 const CreatorPayouts = lazy(() => import('./pages/creator/CreatorPayouts'));
 const CreatorRevenue = lazy(() => import('./pages/creator/CreatorRevenue'));
 const CreatorProducts = lazy(() => import('./pages/creator/CreatorProducts'));
-const CreatorDetailedAnalytics = lazy(() => import('./pages/creator/CreatorDetailedAnalytics'));
 const CreatorYourAI = lazy(() => import('./pages/creator/CreatorYourAI'));
 
 // Company Dashboard
@@ -214,8 +212,6 @@ function App() {
         >
           <Route index element={<CreatorDashboardHome />} />
           <Route path="content" element={<CreatorBookings />} />
-          <Route path="analytics" element={<CreatorAnalytics />} />
-          <Route path="detailed-analytics" element={<CreatorDetailedAnalytics />} />
           <Route path="revenue" element={<CreatorRevenue />} />
           <Route path="products" element={<CreatorProducts />} />
           <Route path="payouts" element={<CreatorPayouts />} />
