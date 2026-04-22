@@ -7,6 +7,7 @@ import api, { creatorApi, contentApi } from '../../services/api';
 import { RootState } from '../../store';
 import { updateUser, setProfileComplete } from '../../store/slices/authSlice';
 import OnboardingProcessing from './OnboardingProcessing';
+import { VoiceCloneSection } from '../VoiceCloneSection/VoiceCloneSection';
 import '../../styles/Auth.css';
 
 const { TextArea } = Input;
@@ -74,6 +75,7 @@ export const CreatorOnboardingWizard: React.FC = () => {
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [generatingBio, setGeneratingBio] = useState(false);
   const [generatingPersonality, setGeneratingPersonality] = useState(false);
+  const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const taglineValue = Form.useWatch('tagline', form);
 
@@ -384,6 +386,29 @@ export const CreatorOnboardingWizard: React.FC = () => {
                       >
                         {youtubeTranscripts[idx]?.loading ? 'Fetching...' : youtubeTranscripts[idx]?.text ? '✓ Fetched' : 'Fetch Transcript'}
                       </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (youtubeUrls.length === 1) {
+                            setYoutubeUrls(['']);
+                            setYoutubeTranscripts({});
+                          } else {
+                            setYoutubeUrls(prev => prev.filter((_, i) => i !== idx));
+                            setYoutubeTranscripts(prev => {
+                              const next: Record<number, { text: string; loading: boolean; error: string }> = {};
+                              Object.entries(prev).forEach(([key, val]) => {
+                                const k = Number(key);
+                                if (k < idx) next[k] = val;
+                                else if (k > idx) next[k - 1] = val;
+                              });
+                              return next;
+                            });
+                          }
+                        }}
+                        style={{ padding: '0 12px', borderRadius: 8, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', background: 'none', border: '1px solid #e5e7eb', color: '#6b7280', cursor: 'pointer' }}
+                      >
+                        Remove
+                      </button>
                     </div>
                     {/* Transcript preview */}
                     {youtubeTranscripts[idx]?.error && (
@@ -480,6 +505,22 @@ export const CreatorOnboardingWizard: React.FC = () => {
       case 'intelligence':
         return (
           <Form form={form} layout="vertical" requiredMark={false}>
+            {/* Voice Clone — required for launch */}
+            <div style={{ marginBottom: 20, padding: 16, background: '#fff5f5', borderRadius: 12, border: '1px solid #fecaca' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                <span style={labelStyle}>
+                  Voice Clone <span style={{ color: '#dc2626' }}>*</span>
+                </span>
+                {voiceStatus === 'READY' && (
+                  <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: '#ecfdf5', padding: '2px 10px', borderRadius: 6 }}>Active</span>
+                )}
+              </div>
+              <p style={{ fontSize: 12, color: '#6b7280', marginTop: 0, marginBottom: 12 }}>
+                Upload or record a sample of your voice. Your AI will speak in your voice when chatting with fans.
+              </p>
+              <VoiceCloneSection compact onStatusChange={setVoiceStatus} />
+            </div>
+
             <Form.Item name="aiTone" label={<span style={labelStyle}>Communication Tone</span>} rules={[{ required: true }]} style={{ marginBottom: 14 }}>
               <Select placeholder="Select tone" size="middle">
                 <Option value="friendly">Friendly & Approachable</Option>
@@ -524,12 +565,17 @@ export const CreatorOnboardingWizard: React.FC = () => {
             <p style={{ color: '#6b7280', fontSize: 14, maxWidth: 400, margin: '0 auto 24px' }}>
               Your AI creator profile is configured. Hit launch to go live and start receiving chats.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-              {['Identity', 'Knowledge', 'Intelligence'].map((label, i) => (
-                <div key={i} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: 16, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Identity', done: completedTabs.has('identity') },
+                { label: 'Knowledge', done: completedTabs.has('knowledge') },
+                { label: 'Voice', done: voiceStatus === 'READY' },
+                { label: 'Intelligence', done: completedTabs.has('intelligence') },
+              ].map(({ label, done }) => (
+                <div key={label} style={{ background: '#f9fafb', border: '1px solid #e5e7eb', borderRadius: 10, padding: '10px 20px', textAlign: 'center' }}>
                   <div style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', color: '#ff3e48', marginBottom: 2 }}>{label}</div>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>
-                    {completedTabs.has(label.toLowerCase()) ? '✓ Done' : 'Pending'}
+                  <div style={{ fontSize: 13, fontWeight: 600, color: done ? '#10b981' : '#111827' }}>
+                    {done ? '✓ Done' : 'Pending'}
                   </div>
                 </div>
               ))}
@@ -660,13 +706,25 @@ export const CreatorOnboardingWizard: React.FC = () => {
           {activeTab === 'launch' ? (
             <button
               type="button"
-              onClick={handleFinish}
+              onClick={() => {
+                if (voiceStatus !== 'READY') {
+                  antMessage.warning('Please set up your voice clone in the Intelligence tab before launching.');
+                  setActiveTab('intelligence');
+                  return;
+                }
+                handleFinish();
+              }}
               disabled={loading}
+              title={voiceStatus !== 'READY' ? 'Voice clone required to launch' : undefined}
               style={{
-                padding: '11px 36px', borderRadius: 10, border: 'none', cursor: 'pointer',
-                background: 'linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%)', color: '#fff',
-                fontSize: 14, fontWeight: 600, boxShadow: '0 4px 12px rgba(255,62,72,0.3)',
+                padding: '11px 36px', borderRadius: 10, border: 'none',
+                cursor: voiceStatus !== 'READY' ? 'not-allowed' : 'pointer',
+                background: voiceStatus !== 'READY' ? '#d1d5db' : 'linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%)',
+                color: '#fff',
+                fontSize: 14, fontWeight: 600,
+                boxShadow: voiceStatus !== 'READY' ? 'none' : '0 4px 12px rgba(255,62,72,0.3)',
                 transition: 'all 0.15s ease',
+                opacity: voiceStatus !== 'READY' ? 0.7 : 1,
               }}
             >
               {loading ? 'Launching...' : '🚀 Launch My AI'}

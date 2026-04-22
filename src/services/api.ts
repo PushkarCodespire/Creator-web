@@ -269,19 +269,17 @@ export const reviewApi = {
     params?: { page?: number; limit?: number; sort?: 'newest' | 'oldest' | 'highest' | 'lowest' }
   ) => api.get(`/creators/${creatorId}/reviews`, { params }),
 
-  // Get current user's review for a creator (auth)
-  getMyReview: (creatorId: string) => api.get(`/creators/${creatorId}/reviews/me`),
-
   // Create a review (auth)
-  create: (creatorId: string, data: { rating: number; review?: string }) =>
+  create: (creatorId: string, data: { rating: number; comment?: string }) =>
     api.post(`/creators/${creatorId}/reviews`, data),
 
-  // Update current user's review (auth)
-  updateMyReview: (creatorId: string, data: { rating: number; review?: string }) =>
-    api.put(`/creators/${creatorId}/reviews/me`, data),
+  // Update a specific review (auth, owner only)
+  update: (creatorId: string, reviewId: string, data: { rating: number; comment?: string }) =>
+    api.put(`/creators/${creatorId}/reviews/${reviewId}`, data),
 
-  // Delete current user's review (auth)
-  deleteMyReview: (creatorId: string) => api.delete(`/creators/${creatorId}/reviews/me`)
+  // Delete a specific review (auth, owner only)
+  delete: (creatorId: string, reviewId: string) =>
+    api.delete(`/creators/${creatorId}/reviews/${reviewId}`)
 };
 
 // ===========================================
@@ -775,7 +773,11 @@ export const reactionApi = {
 export const linkPreviewApi = {
   // Get link preview by URL
   getPreview: (url: string) =>
-    api.get('/link-preview', { params: { url } })
+    api.get('/link-preview', { params: { url } }),
+
+  // Generate AI description from a URL
+  generateDescription: (url: string, title?: string, siteName?: string) =>
+    api.post('/link-preview/generate-description', { url, title, siteName }),
 };
 
 // ===========================================

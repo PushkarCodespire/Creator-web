@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { creatorApi, reviewApi, programApi, bookingApi, getImageUrl } from '../../services/api';
+import { creatorApi, reviewApi, programApi, bookingApi, followApi, getImageUrl } from '../../services/api';
 import styles from './WebsiteProfile.module.css';
 
 /* ---------- SVG Icons ---------- */
@@ -120,7 +120,16 @@ export default function WebsiteProfile() {
   const [reviewText, setReviewText] = useState('');
   const [reviewSubmitting, setReviewSubmitting] = useState(false);
   const [reviewMsg, setReviewMsg] = useState('');
-  const { isAuthenticated } = useSelector((state: RootState) => state.auth);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState(0);
+  const [editHover, setEditHover] = useState(0);
+  const [editText, setEditText] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -134,7 +143,9 @@ export default function WebsiteProfile() {
         programApi.getByCreator(creatorId).catch(() => ({ data: { data: [] } })),
         bookingApi.getPublicSlots(creatorId).catch(() => ({ data: { data: [] } })),
       ]);
-      setCreator(profileRes.data.data);
+      const profile = profileRes.data.data;
+      setCreator(profile);
+      setFollowerCount(profile.followers?.count ?? profile.followersCount ?? 0);
       setPrograms(programsRes.data.data || []);
       setSlots(slotsRes.data.data || []);
     } catch {
@@ -155,16 +166,43 @@ export default function WebsiteProfile() {
     return () => window.removeEventListener('focus', onFocus);
   }, [creatorId]);
 
+  useEffect(() => {
+    if (!isAuthenticated || !creatorId) return;
+    followApi.checkFollowing(creatorId)
+      .then(res => setIsFollowing(res.data.data.isFollowing))
+      .catch(() => {});
+  }, [creatorId, isAuthenticated]);
+
+  const handleFollow = async () => {
+    if (!isAuthenticated) {
+      window.location.href = `/login?from=${encodeURIComponent(window.location.pathname)}`;
+      return;
+    }
+    if (followLoading) return;
+    const next = !isFollowing;
+    setIsFollowing(next);
+    setFollowerCount(c => next ? c + 1 : Math.max(0, c - 1));
+    setFollowLoading(true);
+    try {
+      if (next) await followApi.followCreator(creatorId!);
+      else await followApi.unfollowCreator(creatorId!);
+    } catch {
+      setIsFollowing(!next);
+      setFollowerCount(c => next ? Math.max(0, c - 1) : c + 1);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
   const handleSubmitReview = async () => {
     if (!reviewRating || !creatorId) return;
     setReviewSubmitting(true);
     setReviewMsg('');
     try {
-      await reviewApi.create(creatorId, { rating: reviewRating, review: reviewText.trim() || undefined });
+      await reviewApi.create(creatorId, { rating: reviewRating, comment: reviewText.trim() || undefined });
       setReviewMsg('Review submitted!');
       setReviewRating(0);
       setReviewText('');
-      // Refresh profile to get updated reviews
       const res = await creatorApi.getById(creatorId);
       setCreator(res.data.data);
     } catch (err: unknown) {
@@ -172,6 +210,51 @@ export default function WebsiteProfile() {
       setReviewMsg(e?.response?.data?.error?.message || e?.response?.data?.message || 'Failed to submit review');
     } finally {
       setReviewSubmitting(false);
+    }
+  };
+
+  const handleStartEdit = (r: { id: string; rating: number; comment?: string }) => {
+    setEditingReviewId(r.id);
+    setEditRating(r.rating);
+    setEditText(r.comment || '');
+    setReviewMsg('');
+  };
+
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+    setEditRating(0);
+    setEditText('');
+  };
+
+  const handleSaveEdit = async (reviewId: string) => {
+    if (!editRating || !creatorId) return;
+    setEditSubmitting(true);
+    try {
+      await reviewApi.update(creatorId, reviewId, { rating: editRating, comment: editText.trim() || undefined });
+      setEditingReviewId(null);
+      setEditRating(0);
+      setEditText('');
+      const res = await creatorApi.getById(creatorId);
+      setCreator(res.data.data);
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
+      setReviewMsg(e?.response?.data?.error?.message || e?.response?.data?.message || 'Failed to update review');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!creatorId) return;
+    setDeletingReviewId(reviewId);
+    try {
+      await reviewApi.delete(creatorId, reviewId);
+      const res = await creatorApi.getById(creatorId);
+      setCreator(res.data.data);
+    } catch {
+      setReviewMsg('Failed to delete review');
+    } finally {
+      setDeletingReviewId(null);
     }
   };
 
@@ -268,9 +351,19 @@ export default function WebsiteProfile() {
             )}
           </div>
 
-          <Link to={`/website-chat/${creatorId}`} className={styles.chatBtn}>
-            <MessageIcon /> Chat Now
-          </Link>
+          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+            <Link to={`/website-chat/${creatorId}`} className={styles.chatBtn}>
+              <MessageIcon /> Chat Now
+            </Link>
+            <button
+              type="button"
+              onClick={handleFollow}
+              disabled={followLoading}
+              className={`${styles.followBtn} ${isFollowing ? styles.followBtnActive : ''}`}
+            >
+              {followLoading ? '...' : isFollowing ? '✓ Following' : '+ Follow'}
+            </button>
+          </div>
         </div>
 
         {/* STATS */}
@@ -284,7 +377,7 @@ export default function WebsiteProfile() {
             <span className={styles.statLabel}>Chats</span>
           </div>
           <div className={styles.stat}>
-            <span className={styles.statValue}>{followers.count || creator.followersCount || 0}</span>
+            <span className={styles.statValue}>{followerCount}</span>
             <span className={styles.statLabel}>Followers</span>
           </div>
           {perf.responseRate !== undefined && (
@@ -502,35 +595,46 @@ export default function WebsiteProfile() {
                           const isSelected = bookingSlotId === slot.id;
                           const isBooked = slot.isAvailable === false;
                           const isBookedByMe = slot.bookedByMe === true;
+                          const isRequestedByMe = slot.requestedByMe === true;
                           const meetingLink = slot.meetingLink || null;
+                          const isDisabled = isBooked || isRequestedByMe;
 
                           return (
                             <div
                               key={slot.id}
-                              onClick={() => { if (!isBooked) { setBookingSlotId(isSelected ? null : slot.id); setBookingMsg(''); } }}
+                              onClick={() => { if (!isDisabled) { setBookingSlotId(isSelected ? null : slot.id); setBookingMsg(''); } }}
                               style={{
                                 padding: '14px 16px', borderRadius: 12,
-                                cursor: isBooked ? (isBookedByMe && meetingLink ? 'default' : 'not-allowed') : 'pointer',
-                                border: isSelected ? '2px solid #ff3e48' : isBookedByMe ? '1px solid #10b981' : isBooked ? '1px solid #e5e7eb' : '1px solid #ede8e3',
-                                background: isSelected ? '#fff5f5' : isBookedByMe ? '#ecfdf5' : isBooked ? '#f3f4f6' : '#fafaf8',
-                                opacity: isBooked && !isBookedByMe ? 0.5 : 1,
+                                cursor: isDisabled ? 'not-allowed' : 'pointer',
+                                border: isSelected ? '2px solid #ff3e48'
+                                  : isBookedByMe ? '1px solid #10b981'
+                                  : isRequestedByMe ? '1px solid #f59e0b'
+                                  : isBooked ? '1px solid #e5e7eb'
+                                  : '1px solid #ede8e3',
+                                background: isSelected ? '#fff5f5'
+                                  : isBookedByMe ? '#ecfdf5'
+                                  : isRequestedByMe ? '#fffbeb'
+                                  : isBooked ? '#f3f4f6'
+                                  : '#fafaf8',
+                                opacity: isBooked && !isBookedByMe && !isRequestedByMe ? 0.5 : 1,
                                 transition: 'all 0.15s ease',
                               }}
                             >
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontSize: 14, fontWeight: 600, color: isBooked && !isBookedByMe ? '#9ca3af' : '#111827' }}>{timeStr}</span>
+                                <span style={{ fontSize: 14, fontWeight: 600, color: isBooked && !isBookedByMe && !isRequestedByMe ? '#9ca3af' : '#111827' }}>{timeStr}</span>
                                 {isBookedByMe && <span style={{ fontSize: 10, fontWeight: 700, color: '#10b981', background: '#fff', padding: '2px 8px', borderRadius: 4, border: '1px solid #bbf7d0' }}>Your Booking</span>}
-                                {isBooked && !isBookedByMe && <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', background: '#fef2f2', padding: '2px 8px', borderRadius: 4 }}>Booked</span>}
+                                {isRequestedByMe && <span style={{ fontSize: 10, fontWeight: 700, color: '#d97706', background: '#fff', padding: '2px 8px', borderRadius: 4, border: '1px solid #fcd34d' }}>Requested</span>}
+                                {isBooked && !isBookedByMe && !isRequestedByMe && <span style={{ fontSize: 10, fontWeight: 700, color: '#ef4444', background: '#fef2f2', padding: '2px 8px', borderRadius: 4 }}>Booked</span>}
                               </div>
                               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6 }}>
-                                <span style={{ fontSize: 11, fontWeight: 600, color: isBooked && !isBookedByMe ? '#9ca3af' : '#ff3e48', background: isBooked && !isBookedByMe ? '#f3f4f6' : '#fff5f5', padding: '2px 8px', borderRadius: 6 }}>
+                                <span style={{ fontSize: 11, fontWeight: 600, color: isDisabled && !isBookedByMe && !isRequestedByMe ? '#9ca3af' : '#ff3e48', background: isDisabled && !isBookedByMe && !isRequestedByMe ? '#f3f4f6' : '#fff5f5', padding: '2px 8px', borderRadius: 6 }}>
                                   {slot.type || 'Consultation'}
                                 </span>
                                 {Number(slot.price) > 0 && (
-                                  <span style={{ fontSize: 12, fontWeight: 700, color: isBooked && !isBookedByMe ? '#9ca3af' : '#111827' }}>₹{Number(slot.price).toFixed(0)}</span>
+                                  <span style={{ fontSize: 12, fontWeight: 700, color: isDisabled && !isBookedByMe && !isRequestedByMe ? '#9ca3af' : '#111827' }}>₹{Number(slot.price).toFixed(0)}</span>
                                 )}
                                 {Number(slot.price) === 0 && (
-                                  <span style={{ fontSize: 12, fontWeight: 600, color: isBooked && !isBookedByMe ? '#9ca3af' : '#10b981' }}>Free</span>
+                                  <span style={{ fontSize: 12, fontWeight: 600, color: isDisabled && !isBookedByMe && !isRequestedByMe ? '#9ca3af' : '#10b981' }}>Free</span>
                                 )}
                               </div>
                               {slot.title && slot.title !== 'Available' && (
@@ -549,6 +653,9 @@ export default function WebsiteProfile() {
                               )}
                               {isBookedByMe && !meetingLink && (
                                 <div style={{ marginTop: 8, fontSize: 11, color: '#6b7280', fontStyle: 'italic' }}>Meeting link coming soon</div>
+                              )}
+                              {isRequestedByMe && (
+                                <div style={{ marginTop: 8, fontSize: 11, color: '#d97706', fontStyle: 'italic' }}>Awaiting creator confirmation</div>
                               )}
                             </div>
                           );
@@ -679,47 +786,94 @@ export default function WebsiteProfile() {
             {reviewList.length === 0 ? (
               <div className={styles.reviewEmpty}>No reviews yet. Be the first!</div>
             ) : (
-              reviewList.map((r: { id: string; rating: number; comment?: string; createdAt: string; user?: { name?: string } }) => (
-                <div key={r.id} className={styles.reviewCard}>
-                  <div className={styles.reviewUser}>
-                    <div className={styles.reviewAvatar}>
-                      {r.user?.name?.charAt(0)?.toUpperCase() || '?'}
-                    </div>
-                    <div>
-                      <div className={styles.reviewName}>{r.user?.name || 'Anonymous'}</div>
-                      <div className={styles.reviewDate}>
-                        <Stars rating={r.rating} size={12} />
-                        {' '}{new Date(r.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+              reviewList.map((r: { id: string; rating: number; comment?: string; createdAt: string; user?: { id?: string; name?: string } }) => {
+                const isOwn = !!(user?.id && r.user?.id === user.id);
+                const isEditing = editingReviewId === r.id;
+                const isDeleting = deletingReviewId === r.id;
+                return (
+                  <div key={r.id} className={styles.reviewCard} style={isOwn ? { border: '1px solid #fecaca', background: '#fff5f5' } : {}}>
+                    <div className={styles.reviewUser}>
+                      <div className={styles.reviewAvatar}>{r.user?.name?.charAt(0)?.toUpperCase() || '?'}</div>
+                      <div style={{ flex: 1 }}>
+                        <div className={styles.reviewName}>{r.user?.name || 'Anonymous'}{isOwn && <span style={{ fontSize: 10, fontWeight: 700, color: '#ff3e48', background: '#fff', border: '1px solid #fecaca', borderRadius: 4, padding: '1px 6px', marginLeft: 6 }}>You</span>}</div>
+                        <div className={styles.reviewDate}>
+                          <Stars rating={r.rating} size={12} />
+                          {' '}{new Date(r.createdAt).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </div>
                       </div>
+                      {isOwn && !isEditing && (
+                        <div style={{ display: 'flex', gap: 8, flexShrink: 0 }}>
+                          <button type="button" onClick={() => handleStartEdit(r)}
+                            style={{ fontSize: 12, fontWeight: 600, color: '#ff3e48', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                            Edit
+                          </button>
+                          <button type="button" onClick={() => handleDeleteReview(r.id)} disabled={isDeleting}
+                            style={{ fontSize: 12, fontWeight: 600, color: '#ef4444', background: 'none', border: 'none', cursor: isDeleting ? 'not-allowed' : 'pointer', padding: 0, opacity: isDeleting ? 0.5 : 1 }}>
+                            {isDeleting ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      )}
                     </div>
+                    {isEditing ? (
+                      <div style={{ marginTop: 10 }}>
+                        <div style={{ display: 'flex', gap: 4, marginBottom: 10 }}>
+                          {[1, 2, 3, 4, 5].map(star => (
+                            <button key={star} type="button"
+                              onClick={() => setEditRating(star)}
+                              onMouseEnter={() => setEditHover(star)}
+                              onMouseLeave={() => setEditHover(0)}
+                              style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
+                              <svg viewBox="0 0 20 20" width="24" height="24">
+                                <path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27 5.23 15.71l.91-5.32L2.27 6.62l5.34-.78z"
+                                  fill={star <= (editHover || editRating) ? '#fbbf24' : '#e5e7eb'} />
+                              </svg>
+                            </button>
+                          ))}
+                        </div>
+                        <textarea value={editText} onChange={(e) => setEditText(e.target.value)}
+                          placeholder="Share your experience (optional)" rows={3}
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: 8, border: '1px solid #ede8e3', fontSize: 13, resize: 'vertical', fontFamily: 'inherit', outline: 'none', background: '#fff', marginBottom: 10 }} />
+                        <div style={{ display: 'flex', gap: 8 }}>
+                          <button type="button" onClick={() => handleSaveEdit(r.id)} disabled={!editRating || editSubmitting}
+                            style={{ padding: '6px 16px', borderRadius: 8, background: !editRating ? '#d1d5db' : 'linear-gradient(135deg, #ff5b1f, #ff3e48)', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: !editRating ? 'not-allowed' : 'pointer' }}>
+                            {editSubmitting ? 'Saving...' : 'Save'}
+                          </button>
+                          <button type="button" onClick={handleCancelEdit}
+                            style={{ padding: '6px 16px', borderRadius: 8, background: '#fff', border: '1px solid #ede8e3', color: '#6b7280', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}>
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    ) : r.comment ? (
+                      <p className={styles.reviewComment}>{r.comment}</p>
+                    ) : isOwn ? (
+                      <p className={styles.reviewComment} style={{ color: '#9ca3af', fontStyle: 'italic' }}>No comment left</p>
+                    ) : null}
                   </div>
-                  {r.comment && <p className={styles.reviewComment}>{r.comment}</p>}
-                </div>
-              ))
+                );
+              })
             )}
 
-            {/* Write a Review */}
+            {/* Write a new Review */}
             <div className={styles.sectionCard} style={{ marginTop: 20 }}>
-              <h3 className={styles.sectionTitle}>Write a Review</h3>
-              {isAuthenticated ? (
+              {!isAuthenticated ? (
+                <p style={{ fontSize: 14, color: '#9ca3af' }}>
+                  <Link to="/login" style={{ color: '#ff3e48', fontWeight: 600 }}>Sign in</Link> to leave a review
+                </p>
+              ) : (
                 <div>
-                  {/* Star selector */}
+                  <h3 className={styles.sectionTitle}>Write a Review</h3>
                   <div style={{ display: 'flex', gap: 4, marginBottom: 12 }}>
                     {[1, 2, 3, 4, 5].map(star => (
-                      <button
-                        key={star}
-                        type="button"
+                      <button key={star} type="button"
                         onClick={() => setReviewRating(star)}
                         onMouseEnter={() => setReviewHover(star)}
                         onMouseLeave={() => setReviewHover(0)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}
-                      >
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 2 }}>
                         <svg viewBox="0 0 20 20" width="28" height="28">
-                          <path
-                            d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27 5.23 15.71l.91-5.32L2.27 6.62l5.34-.78z"
+                          <path d="M10 1l2.39 4.84 5.34.78-3.87 3.77.91 5.32L10 13.27 5.23 15.71l.91-5.32L2.27 6.62l5.34-.78z"
                             fill={star <= (reviewHover || reviewRating) ? '#fbbf24' : '#e5e7eb'}
-                            style={{ transition: 'fill 0.1s' }}
-                          />
+                            style={{ transition: 'fill 0.1s' }} />
                         </svg>
                       </button>
                     ))}
@@ -729,44 +883,19 @@ export default function WebsiteProfile() {
                       </span>
                     )}
                   </div>
-                  {/* Comment */}
-                  <textarea
-                    value={reviewText}
-                    onChange={(e) => setReviewText(e.target.value)}
-                    placeholder="Share your experience (optional)"
-                    rows={3}
-                    style={{
-                      width: '100%', padding: '10px 14px', borderRadius: 10,
-                      border: '1px solid #ede8e3', fontSize: 14, resize: 'vertical',
-                      fontFamily: 'inherit', outline: 'none', background: '#fafaf8',
-                      marginBottom: 12,
-                    }}
-                  />
+                  <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)}
+                    placeholder="Share your experience (optional)" rows={3}
+                    style={{ width: '100%', padding: '10px 14px', borderRadius: 10, border: '1px solid #ede8e3', fontSize: 14, resize: 'vertical', fontFamily: 'inherit', outline: 'none', background: '#fafaf8', marginBottom: 12 }} />
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <button
-                      type="button"
-                      onClick={handleSubmitReview}
-                      disabled={!reviewRating || reviewSubmitting}
-                      style={{
-                        padding: '10px 24px', borderRadius: 10,
-                        background: !reviewRating ? '#d1d5db' : 'linear-gradient(135deg, #ff5b1f, #ff3e48)',
-                        color: '#fff', fontSize: 14, fontWeight: 600, border: 'none',
-                        cursor: !reviewRating ? 'not-allowed' : 'pointer',
-                      }}
-                    >
+                    <button type="button" onClick={handleSubmitReview} disabled={!reviewRating || reviewSubmitting}
+                      style={{ padding: '10px 24px', borderRadius: 10, background: !reviewRating ? '#d1d5db' : 'linear-gradient(135deg, #ff5b1f, #ff3e48)', color: '#fff', fontSize: 14, fontWeight: 600, border: 'none', cursor: !reviewRating ? 'not-allowed' : 'pointer' }}>
                       {reviewSubmitting ? 'Submitting...' : 'Submit Review'}
                     </button>
                     {reviewMsg && (
-                      <span style={{ fontSize: 13, color: reviewMsg.includes('submitted') ? '#10b981' : '#ef4444' }}>
-                        {reviewMsg}
-                      </span>
+                      <span style={{ fontSize: 13, color: reviewMsg.includes('Failed') ? '#ef4444' : '#10b981' }}>{reviewMsg}</span>
                     )}
                   </div>
                 </div>
-              ) : (
-                <p style={{ fontSize: 14, color: '#9ca3af' }}>
-                  <Link to="/login" style={{ color: '#ff3e48', fontWeight: 600 }}>Sign in</Link> to leave a review
-                </p>
               )}
             </div>
           </>

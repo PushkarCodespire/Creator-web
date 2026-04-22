@@ -166,6 +166,42 @@
   color: #fff;
 }
 
+.followBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  background: #fff;
+  color: #ff3e48;
+  font-size: 15px;
+  font-weight: 600;
+  border: 2px solid #ff3e48;
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 4px 16px rgba(255, 62, 72, 0.10);
+  transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease, color 0.15s ease;
+  margin-top: 8px;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.followBtn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(255, 62, 72, 0.20);
+  background: #fff5f5;
+}
+
+.followBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.followBtnActive {
+  background: #fff5f5;
+  color: #ff3e48;
+}
+
 /* ---- STATS ROW ---- */
 .statsRow {
   display: flex;

@@ -1,10 +1,11 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
 import { creatorApi, contentApi } from '../../services/api';
-import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, ChevronUp, Mic, Upload, Brain, MessageSquare } from 'lucide-react';
+import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, ChevronUp, Mic, Brain, MessageSquare } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import { VoiceCloneSection } from '../../components/VoiceCloneSection/VoiceCloneSection';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -64,20 +65,8 @@ const CreatorYourAI = () => {
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [_summaryLoaded, setSummaryLoaded] = useState(false);
 
-  // Voice Clone
+  // Voice clone status — owned and updated by <VoiceCloneSection />
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
-  const [voiceUploading, setVoiceUploading] = useState(false);
-  const [voiceError, setVoiceError] = useState('');
-  const voiceFileRef = useRef<HTMLInputElement>(null);
-
-  // Voice Recording
-  const [showRecorder, setShowRecorder] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const mediaStreamRef = useRef<MediaStream | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Auto-poll when any content is PROCESSING
   useEffect(() => {
@@ -91,14 +80,21 @@ const CreatorYourAI = () => {
 
   useEffect(() => {
     fetchContents();
-    // Load voice clone status
+    // Fetch fresh creator profile so AI fields are always up-to-date
+    // (the Redux store only stores a subset of creator fields at login)
     (async () => {
       try {
-        const res = await contentApi.getVoiceClone();
-        const data = res.data.data;
-        if (data?.status) setVoiceStatus(data.status);
+        const res = await creatorApi.getDashboard();
+        const creator = res.data.data;
+        if (creator) {
+          if (creator.aiTone) setAiTone(creator.aiTone);
+          if (creator.aiPersonality) setAiPersonality(creator.aiPersonality);
+          if (creator.welcomeMessage) setWelcomeMessage(creator.welcomeMessage);
+          dispatch(updateUser({ creator: { ...user?.creator, ...creator } } as Parameters<typeof updateUser>[0]));
+        }
       } catch {}
     })();
+    // Voice clone status is now loaded inside <VoiceCloneSection />
     // Load cached summary from DB
     (async () => {
       try {
@@ -123,119 +119,6 @@ const CreatorYourAI = () => {
   };
 
   const showMsg = (text: string) => { setMsg(text); setTimeout(() => setMsg(''), 3000); };
-
-  const handleVoiceUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setVoiceUploading(true);
-    setVoiceError('');
-    try {
-      const formData = new FormData();
-      formData.append('audio', file);
-      const res = await contentApi.uploadVoiceClone(formData);
-      setVoiceStatus(res.data.data?.status || 'READY');
-      showMsg('Voice clone created successfully!');
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setVoiceError(e?.response?.data?.error?.message || 'Voice clone failed');
-    } finally {
-      setVoiceUploading(false);
-      if (voiceFileRef.current) voiceFileRef.current.value = '';
-    }
-  };
-
-  const handleDeleteVoice = async () => {
-    setVoiceUploading(true);
-    try {
-      await contentApi.deleteVoiceClone();
-      setVoiceStatus(null);
-      showMsg('Voice clone removed');
-    } catch (err: unknown) {
-      const e = err as { response?: { data?: { error?: { message?: string } } } };
-      setVoiceError(e?.response?.data?.error?.message || 'Failed to delete');
-    } finally {
-      setVoiceUploading(false);
-    }
-  };
-
-  const getReadingScript = () => {
-    const name = user?.creator?.displayName || user?.name || 'there';
-    const category = user?.creator?.category || 'fitness';
-    const tagline = user?.creator?.tagline || '';
-    return `Hi, I'm ${name}. I'm passionate about ${category} and helping people achieve their goals.${tagline ? ` ${tagline}.` : ''} Whether you're just starting your journey or looking to take things to the next level, I'm here to guide you every step of the way. I believe everyone deserves access to expert guidance and personalized support. Let's work together to build healthy habits, stay consistent, and unlock your full potential. I'm excited to be part of your journey and can't wait to help you become the best version of yourself.`;
-  };
-
-  const handleStartRecording = async () => {
-    setVoiceError('');
-    audioChunksRef.current = [];
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      mediaStreamRef.current = stream;
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) audioChunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        mediaStreamRef.current?.getTracks().forEach(t => t.stop());
-        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-
-        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
-        if (blob.size < 1000) {
-          setVoiceError('Recording too short. Please record at least 30 seconds.');
-          return;
-        }
-
-        setVoiceUploading(true);
-        setShowRecorder(false);
-        setIsRecording(false);
-        setRecordingTime(0);
-        try {
-          const formData = new FormData();
-          formData.append('audio', blob, 'voice-recording.webm');
-          const res = await contentApi.uploadVoiceClone(formData);
-          setVoiceStatus(res.data.data?.status || 'READY');
-          showMsg('Voice clone created from recording!');
-        } catch (err: unknown) {
-          const e = err as { response?: { data?: { error?: { message?: string } } } };
-          setVoiceError(e?.response?.data?.error?.message || 'Voice clone failed');
-        } finally {
-          setVoiceUploading(false);
-        }
-      };
-
-      mediaRecorder.start(1000); // collect chunks every second
-      setIsRecording(true);
-      setRecordingTime(0);
-      timerRef.current = setInterval(() => setRecordingTime(t => t + 1), 1000);
-    } catch {
-      setVoiceError('Microphone access is required to record your voice. Please allow microphone access and try again.');
-    }
-  };
-
-  const handleStopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.stop();
-    }
-  };
-
-  const handleCancelRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-      mediaRecorderRef.current.ondataavailable = null;
-      mediaRecorderRef.current.onstop = null;
-      mediaRecorderRef.current.stop();
-      mediaStreamRef.current?.getTracks().forEach(t => t.stop());
-    }
-    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
-    setShowRecorder(false);
-    setIsRecording(false);
-    setRecordingTime(0);
-    audioChunksRef.current = [];
-  };
-
-  const formatTime = (s: number) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
   const handleOpenSummary = () => {
     // If we have a cached summary and it doesn't need regenerating, just show it
@@ -570,104 +453,7 @@ const CreatorYourAI = () => {
           )}
         </div>
 
-        {voiceStatus === 'READY' ? (
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', background: '#f0fdf4', borderRadius: 12, border: '1px solid #bbf7d0' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <Mic size={18} style={{ color: '#10b981' }} />
-              <div>
-                <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: 0 }}>Voice clone is active</p>
-                <p style={{ fontSize: 12, color: '#6b7280', margin: 0 }}>Your AI will respond with your voice in chat</p>
-              </div>
-            </div>
-            <button type="button" onClick={handleDeleteVoice} disabled={voiceUploading} style={{
-              padding: '6px 14px', borderRadius: 8, background: '#fef2f2', color: '#dc2626', fontSize: 12, fontWeight: 600, border: '1px solid #fecaca', cursor: 'pointer',
-            }}>
-              <Trash2 size={12} style={{ marginRight: 4 }} /> Remove
-            </button>
-          </div>
-        ) : (
-          <div style={{ border: '2px dashed #ede8e3', borderRadius: 14, padding: '28px 24px', background: '#fafaf8' }}>
-            {voiceStatus === 'PROCESSING' || voiceUploading ? (
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                <div style={{ width: 32, height: 32, border: '3px solid #e5e7eb', borderTopColor: '#ff3e48', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
-                <p style={{ fontSize: 13, color: '#9ca3af', margin: 0 }}>{voiceUploading ? 'Uploading your voice...' : 'Processing your voice...'}</p>
-              </div>
-            ) : showRecorder ? (
-              /* Recording Panel */
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: '#374151', margin: 0 }}>Read the following paragraph aloud:</p>
-                <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 10, padding: '16px 18px', fontSize: 14, lineHeight: 1.7, color: '#374151', fontStyle: 'italic' }}>
-                  &ldquo;{getReadingScript()}&rdquo;
-                </div>
-
-                {!isRecording ? (
-                  <div style={{ display: 'flex', justifyContent: 'center', gap: 10 }}>
-                    <button type="button" onClick={handleStartRecording} style={{
-                      padding: '10px 24px', borderRadius: 10, background: '#ff3e48', color: '#fff',
-                      fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                    }}>
-                      <Mic size={14} /> Start Recording
-                    </button>
-                    <button type="button" onClick={handleCancelRecording} style={{
-                      padding: '10px 18px', borderRadius: 10, background: '#fff', color: '#6b7280',
-                      fontSize: 13, fontWeight: 600, border: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                    }}>
-                      <X size={14} /> Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 10 }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                      <div style={{ width: 10, height: 10, borderRadius: '50%', background: '#dc2626', animation: 'pulse 1.5s ease-in-out infinite' }} />
-                      <span style={{ fontSize: 20, fontWeight: 700, color: '#111827', fontVariantNumeric: 'tabular-nums' }}>{formatTime(recordingTime)}</span>
-                      <span style={{ fontSize: 12, color: '#9ca3af' }}>/ 01:00 min recommended</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: 10 }}>
-                      <button type="button" onClick={handleStopRecording} style={{
-                        padding: '10px 24px', borderRadius: 10, background: '#111827', color: '#fff',
-                        fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                      }}>
-                        <div style={{ width: 10, height: 10, borderRadius: 2, background: '#fff' }} /> Stop & Upload
-                      </button>
-                      <button type="button" onClick={handleCancelRecording} style={{
-                        padding: '10px 18px', borderRadius: 10, background: '#fff', color: '#6b7280',
-                        fontSize: 13, fontWeight: 600, border: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                      }}>
-                        <X size={14} /> Cancel
-                      </button>
-                    </div>
-                  </div>
-                )}
-                {voiceError && <p style={{ fontSize: 12, color: '#dc2626', margin: 0, textAlign: 'center' }}>{voiceError}</p>}
-              </div>
-            ) : (
-              /* Default: Record + Upload options */
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
-                <Mic size={24} style={{ color: '#9ca3af' }} />
-                <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, textAlign: 'center' }}>
-                  Record your voice or upload an audio sample (MP3, WAV, M4A)
-                </p>
-                {voiceError && <p style={{ fontSize: 12, color: '#dc2626', margin: 0 }}>{voiceError}</p>}
-                <div style={{ display: 'flex', gap: 10 }}>
-                  <button type="button" onClick={() => { setShowRecorder(true); setVoiceError(''); }} style={{
-                    padding: '8px 20px', borderRadius: 10, background: '#ff3e48', color: '#fff',
-                    fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                  }}>
-                    <Mic size={14} /> Record Voice
-                  </button>
-                  <input ref={voiceFileRef} type="file" accept="audio/mpeg,audio/wav,audio/x-m4a,audio/mp4,.mp3,.wav,.m4a" style={{ display: 'none' }} onChange={handleVoiceUpload} />
-                  <button type="button" onClick={() => voiceFileRef.current?.click()} style={{
-                    padding: '8px 20px', borderRadius: 10, background: '#fff', color: '#374151',
-                    fontSize: 13, fontWeight: 600, border: '1px solid #e5e7eb', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6,
-                  }}>
-                    <Upload size={14} /> Upload Audio
-                  </button>
-                </div>
-                <p style={{ fontSize: 11, color: '#d1d5db', margin: 0 }}>Minimum 1 minute of clear speech recommended</p>
-              </div>
-            )}
-          </div>
-        )}
+        <VoiceCloneSection onStatusChange={setVoiceStatus} />
       </div>
 
       {/* Knowledge Base */}
@@ -810,9 +596,30 @@ const CreatorYourAI = () => {
                 </div>
                 {/* Expanded preview */}
                 {expandedId === c.id && (
-                  <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: '#fff', border: '1px solid #ede8e3', fontSize: 12, color: '#6b7280', lineHeight: 1.6, maxHeight: 200, overflowY: 'auto' }}>
-                    {c.rawText ? c.rawText.substring(0, 2000) : c.sourceUrl ? `Source: ${c.sourceUrl}` : 'No preview available'}
-                    {c.rawText && c.rawText.length > 2000 && <span style={{ color: '#9ca3af' }}>... ({c.rawText.length} total chars)</span>}
+                  <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: '#fff', border: '1px solid #ede8e3', fontSize: 12, color: '#6b7280', lineHeight: 1.6, maxHeight: 240, overflowY: 'auto' }}>
+                    {c.type === 'FAQ' && c.rawText ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {c.rawText.split('\n\n').filter(Boolean).map((pair: string, i: number) => {
+                          const qLine = pair.split('\n').find((l: string) => l.startsWith('Q:'));
+                          const aLine = pair.split('\n').find((l: string) => l.startsWith('A:'));
+                          return (
+                            <div key={i} style={{ borderLeft: '3px solid #fbbf24', paddingLeft: 10 }}>
+                              <div style={{ fontWeight: 600, color: '#111827', marginBottom: 2 }}>{qLine?.replace(/^Q:\s*/, '') || pair}</div>
+                              {aLine && <div style={{ color: '#6b7280' }}>{aLine.replace(/^A:\s*/, '')}</div>}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : c.rawText ? (
+                      <>
+                        {c.rawText.substring(0, 2000)}
+                        {c.rawText.length > 2000 && <span style={{ color: '#9ca3af' }}> ... ({c.rawText.length} total chars)</span>}
+                      </>
+                    ) : c.sourceUrl ? (
+                      <span>Source: {c.sourceUrl}</span>
+                    ) : (
+                      <span style={{ color: '#9ca3af' }}>No preview available</span>
+                    )}
                   </div>
                 )}
               </div>

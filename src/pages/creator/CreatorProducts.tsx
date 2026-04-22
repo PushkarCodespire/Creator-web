@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Package, Dumbbell, ExternalLink, Tag } from 'lucide-react';
-import { programApi } from '../../services/api';
+import { programApi, linkPreviewApi } from '../../services/api';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -42,12 +42,14 @@ const CreatorProducts = () => {
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [productForm, setProductForm] = useState(emptyProductForm);
   const [savingProduct, setSavingProduct] = useState(false);
+  const [fetchingProductDesc, setFetchingProductDesc] = useState(false);
 
   // Program form
   const [showProgramForm, setShowProgramForm] = useState(false);
   const [editingProgramId, setEditingProgramId] = useState<string | null>(null);
   const [programForm, setProgramForm] = useState(emptyProgramForm);
   const [savingProgram, setSavingProgram] = useState(false);
+  const [fetchingProgramDesc, setFetchingProgramDesc] = useState(false);
 
   const fetchItems = async () => {
     try {
@@ -150,6 +152,30 @@ const CreatorProducts = () => {
     } catch {}
   };
 
+  const handleFetchProductDesc = async () => {
+    if (!productForm.link.trim()) return;
+    setFetchingProductDesc(true);
+    try {
+      const preview = await linkPreviewApi.getPreview(productForm.link).then(r => r.data.data).catch(() => null);
+      const res = await linkPreviewApi.generateDescription(productForm.link, preview?.title, preview?.siteName);
+      const { description } = res.data.data;
+      if (description) setProductForm(f => ({ ...f, description }));
+    } catch {}
+    finally { setFetchingProductDesc(false); }
+  };
+
+  const handleFetchProgramDesc = async () => {
+    if (!programForm.link.trim()) return;
+    setFetchingProgramDesc(true);
+    try {
+      const preview = await linkPreviewApi.getPreview(programForm.link).then(r => r.data.data).catch(() => null);
+      const res = await linkPreviewApi.generateDescription(programForm.link, preview?.title, preview?.siteName);
+      const { description } = res.data.data;
+      if (description) setProgramForm(f => ({ ...f, description }));
+    } catch {}
+    finally { setFetchingProgramDesc(false); }
+  };
+
   const parseDesc = (item: { description?: string }) => {
     try { return JSON.parse(item.description || '{}'); } catch { return { desc: item.description }; }
   };
@@ -199,7 +225,13 @@ const CreatorProducts = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Product Link (URL)</label>
-                <input type="url" value={productForm.link} onChange={(e) => setProductForm(f => ({ ...f, link: e.target.value }))} placeholder="https://amazon.in/..." style={inputStyle} />
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <input type="url" value={productForm.link} onChange={(e) => setProductForm(f => ({ ...f, link: e.target.value }))} placeholder="https://amazon.in/..." style={{ ...inputStyle, flex: 1 }} />
+                  <button type="button" onClick={handleFetchProductDesc} disabled={!productForm.link.trim() || fetchingProductDesc}
+                    style={{ padding: '0 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', background: fetchingProductDesc ? '#d1d5db' : '#ff3e48', color: '#fff', border: 'none', cursor: !productForm.link.trim() || fetchingProductDesc ? 'not-allowed' : 'pointer' }}>
+                    {fetchingProductDesc ? 'Generating...' : 'Fill with AI'}
+                  </button>
+                </div>
               </div>
               <div>
                 <label style={labelStyle}>Promo Code</label>
@@ -296,6 +328,16 @@ const CreatorProducts = () => {
                 <input type="number" value={programForm.price} onChange={(e) => setProgramForm(f => ({ ...f, price: e.target.value }))} placeholder="4999" min="0" style={inputStyle} />
               </div>
             </div>
+            <div style={{ marginBottom: 12 }}>
+              <label style={labelStyle}>Program Link (URL)</label>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <input type="url" value={programForm.link} onChange={(e) => setProgramForm(f => ({ ...f, link: e.target.value }))} placeholder="https://yoursite.com/program" style={{ ...inputStyle, flex: 1 }} />
+                <button type="button" onClick={handleFetchProgramDesc} disabled={!programForm.link.trim() || fetchingProgramDesc}
+                  style={{ padding: '0 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, whiteSpace: 'nowrap', background: fetchingProgramDesc ? '#d1d5db' : '#10b981', color: '#fff', border: 'none', cursor: !programForm.link.trim() || fetchingProgramDesc ? 'not-allowed' : 'pointer' }}>
+                  {fetchingProgramDesc ? 'Generating...' : 'Fill with AI'}
+                </button>
+              </div>
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Duration</label>
@@ -320,15 +362,9 @@ const CreatorProducts = () => {
               <label style={labelStyle}>Description</label>
               <textarea value={programForm.description} onChange={(e) => setProgramForm(f => ({ ...f, description: e.target.value }))} placeholder="Describe what this program includes, who it's for, expected results..." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 16 }}>
-              <div>
-                <label style={labelStyle}>Program Link (URL)</label>
-                <input type="url" value={programForm.link} onChange={(e) => setProgramForm(f => ({ ...f, link: e.target.value }))} placeholder="https://yoursite.com/program" style={inputStyle} />
-              </div>
-              <div>
-                <label style={labelStyle}>Promo Code (optional)</label>
-                <input type="text" value={programForm.promoCode} onChange={(e) => setProgramForm(f => ({ ...f, promoCode: e.target.value }))} placeholder="e.g. FIT20" style={inputStyle} />
-              </div>
+            <div style={{ marginBottom: 16 }}>
+              <label style={labelStyle}>Promo Code (optional)</label>
+              <input type="text" value={programForm.promoCode} onChange={(e) => setProgramForm(f => ({ ...f, promoCode: e.target.value }))} placeholder="e.g. FIT20" style={inputStyle} />
             </div>
             <div style={{ display: 'flex', gap: 10 }}>
               <button type="button" onClick={handleSaveProgram} disabled={savingProgram} style={{ padding: '10px 24px', borderRadius: 8, background: '#10b981', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}>

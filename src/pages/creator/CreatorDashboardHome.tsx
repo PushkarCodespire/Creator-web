@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
-import { creatorApi, payoutApi } from '../../services/api';
+import { creatorApi, payoutApi, reviewApi } from '../../services/api';
 import { useDashboardFilter } from '../../components/layouts/DashboardFilterContext';
-import { MessageSquare, DollarSign, Plus, Bot, Share2, Star, Users, Pencil, HelpCircle, Zap, Clock, ThumbsUp } from 'lucide-react';
+import { MessageSquare, DollarSign, Plus, Bot, Share2, Star, Users, Pencil, HelpCircle, Zap, Clock, ThumbsUp, X } from 'lucide-react';
 
 const cardStyle: React.CSSProperties = {
   background: '#ffffff',
@@ -24,6 +24,20 @@ const CreatorDashboardHome = () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [comparison, setComparison] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [followersModal, setFollowersModal] = useState(false);
+  const [reviewsModal, setReviewsModal] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [followerItems, setFollowerItems] = useState<any[]>([]);
+  const [followerPage, setFollowerPage] = useState(1);
+  const [followerTotalPages, setFollowerTotalPages] = useState(1);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [reviewItems, setReviewItems] = useState<any[]>([]);
+  const [reviewPage, setReviewPage] = useState(1);
+  const [reviewTotalPages, setReviewTotalPages] = useState(1);
+  const [followersModalLoading, setFollowersModalLoading] = useState(false);
+  const [reviewsModalLoading, setReviewsModalLoading] = useState(false);
+  const [expandedReviews, setExpandedReviews] = useState<Set<string>>(new Set());
+  const toggleReview = (id: string) => setExpandedReviews(prev => { const s = new Set(prev); s.has(id) ? s.delete(id) : s.add(id); return s; });
 
   useEffect(() => {
     (async () => {
@@ -65,6 +79,52 @@ const CreatorDashboardHome = () => {
   if (loading) {
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh', color: '#9ca3af', fontSize: 15 }}>Loading dashboard...</div>;
   }
+
+  const fetchFollowers = async (page: number) => {
+    setFollowersModalLoading(true);
+    try {
+      const res = await creatorApi.getFollowers({ page, limit: 10 });
+      const d = res.data.data;
+      setFollowerItems(d?.followers || d || []);
+      setFollowerTotalPages(d?.pagination?.totalPages || 1);
+    } catch {}
+    finally { setFollowersModalLoading(false); }
+  };
+
+  const openFollowersModal = () => {
+    setFollowersModal(true);
+    setFollowerPage(1);
+    fetchFollowers(1);
+  };
+
+  const goFollowerPage = (p: number) => {
+    setFollowerPage(p);
+    fetchFollowers(p);
+  };
+
+  const fetchReviews = async (page: number) => {
+    setReviewsModalLoading(true);
+    try {
+      const creatorId = data?.id;
+      if (!creatorId) return;
+      const res = await reviewApi.getReviews(creatorId, { page, limit: 10 });
+      const d = res.data.data;
+      setReviewItems(d?.reviews || []);
+      setReviewTotalPages(d?.pagination?.totalPages || 1);
+    } catch {}
+    finally { setReviewsModalLoading(false); }
+  };
+
+  const openReviewsModal = () => {
+    setReviewsModal(true);
+    setReviewPage(1);
+    fetchReviews(1);
+  };
+
+  const goReviewPage = (p: number) => {
+    setReviewPage(p);
+    fetchReviews(p);
+  };
 
   const topQuestions: { question: string; count: number }[] = data?.topQuestions || [];
   const totalAiAnswers = data?.stats?.totalAiAnswers || data?.totalChats || 0;
@@ -236,6 +296,81 @@ const CreatorDashboardHome = () => {
         </div>
       </div>
 
+      {/* Followers */}
+      <div style={{ ...cardStyle, marginBottom: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Followers</h3>
+          <button type="button" onClick={openFollowersModal} style={{ fontSize: 12, fontWeight: 600, color: '#ff3e48', background: 'none', border: 'none', cursor: 'pointer' }}>View all ({followersCount}) →</button>
+        </div>
+        {(data?.followers?.top || []).length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '28px 0', color: '#9ca3af', fontSize: 13 }}>
+            <Users size={24} style={{ marginBottom: 8, opacity: 0.4 }} />
+            <p style={{ margin: 0 }}>No followers yet</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 10 }}>
+            {(data.followers.top as { followerId: string; name?: string; avatar?: string; followedAt: string }[]).slice(0, 5).map((f) => (
+              <div key={f.followerId} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 12px', background: '#fafaf8', borderRadius: 10 }}>
+                <div style={{ width: 34, height: 34, borderRadius: '50%', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: '#8b5cf6', flexShrink: 0, overflow: 'hidden' }}>
+                  {f.avatar ? <img src={f.avatar} alt={f.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (f.name?.charAt(0)?.toUpperCase() || '?')}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{f.name || 'User'}</div>
+                  <div style={{ fontSize: 11, color: '#9ca3af' }}>{new Date(f.followedAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Reviews */}
+      <div style={{ ...cardStyle, marginBottom: 24 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Reviews</h3>
+            {reviewRating > 0 && <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>{reviewRating.toFixed(1)} ★ average · {totalReviews} review{totalReviews !== 1 ? 's' : ''}</p>}
+          </div>
+          <button type="button" onClick={openReviewsModal} style={{ fontSize: 12, fontWeight: 600, color: '#ff3e48', background: 'none', border: 'none', cursor: 'pointer' }}>View all ({totalReviews}) →</button>
+        </div>
+        {(data?.reviews?.reviews || []).length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '28px 0', color: '#9ca3af', fontSize: 13 }}>
+            <Star size={24} style={{ marginBottom: 8, opacity: 0.4 }} />
+            <p style={{ margin: 0 }}>No reviews yet</p>
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
+            {(data.reviews.reviews as { id: string; rating: number; comment?: string; createdAt: string; user: { name?: string; avatar?: string } }[]).slice(0, 6).map((r) => {
+              const isExpanded = expandedReviews.has(r.id);
+              const LIMIT = 120;
+              const needsTruncate = (r.comment?.length || 0) > LIMIT;
+              return (
+                <div key={r.id} style={{ padding: '14px 16px', border: '1px solid #ede8e3', borderRadius: 12, background: '#fafaf8' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                    <div style={{ width: 32, height: 32, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 12, color: '#ff3e48', flexShrink: 0, overflow: 'hidden' }}>
+                      {r.user?.avatar ? <img src={r.user.avatar} alt={r.user.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (r.user?.name?.charAt(0)?.toUpperCase() || '?')}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{r.user?.name || 'User'}</div>
+                      <div style={{ fontSize: 11, color: '#9ca3af' }}>{new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#fbbf24', letterSpacing: 1, flexShrink: 0 }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
+                  </div>
+                  <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.6 }}>
+                    {r.comment ? (isExpanded || !needsTruncate ? r.comment : r.comment.substring(0, LIMIT) + '…') : <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>No comment left</span>}
+                  </p>
+                  {needsTruncate && (
+                    <button type="button" onClick={() => toggleReview(r.id)} style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: '#ff3e48', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                      {isExpanded ? 'Show less' : 'Read more'}
+                    </button>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
       {/* Earnings Breakdown */}
       <div style={cardStyle}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -268,6 +403,117 @@ const CreatorDashboardHome = () => {
           </div>
         )}
       </div>
+      {/* Followers Modal */}
+      {followersModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setFollowersModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 480, background: '#fff', borderRadius: 20, boxShadow: '0 25px 60px -15px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #ede8e3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: 0 }}>All Followers</h2>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>{followersCount} total</p>
+              </div>
+              <button type="button" onClick={() => setFollowersModal(false)} style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #ede8e3', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280' }}><X size={15} /></button>
+            </div>
+            {/* Fixed height scrollable list — exactly 10 rows visible */}
+            <div style={{ height: 520, overflowY: 'auto', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 8 }}>
+              {followersModalLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: 13 }}>Loading...</div>
+              ) : followerItems.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: 13 }}>No followers yet</div>
+              ) : followerItems.map((f: { id?: string; followerId?: string; name?: string; avatar?: string; followedAt?: string; createdAt?: string }) => (
+                <div key={f.id || f.followerId} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', background: '#fafaf8', borderRadius: 10, flexShrink: 0 }}>
+                  <div style={{ width: 40, height: 40, borderRadius: '50%', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 14, color: '#8b5cf6', flexShrink: 0, overflow: 'hidden' }}>
+                    {f.avatar ? <img src={f.avatar} alt={f.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (f.name?.charAt(0)?.toUpperCase() || '?')}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>{f.name || 'User'}</div>
+                    <div style={{ fontSize: 11, color: '#9ca3af' }}>Followed {new Date(f.followedAt || f.createdAt || '').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {followerTotalPages > 1 && (
+              <div style={{ padding: '12px 24px', borderTop: '1px solid #ede8e3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button type="button" disabled={followerPage <= 1 || followersModalLoading} onClick={() => goFollowerPage(followerPage - 1)}
+                  style={{ padding: '6px 16px', borderRadius: 8, border: '1px solid #ede8e3', background: followerPage <= 1 ? '#f9fafb' : '#fff', color: followerPage <= 1 ? '#d1d5db' : '#374151', fontSize: 13, fontWeight: 600, cursor: followerPage <= 1 ? 'not-allowed' : 'pointer' }}>
+                  ← Prev
+                </button>
+                <span style={{ fontSize: 12, color: '#9ca3af' }}>Page {followerPage} of {followerTotalPages}</span>
+                <button type="button" disabled={followerPage >= followerTotalPages || followersModalLoading} onClick={() => goFollowerPage(followerPage + 1)}
+                  style={{ padding: '6px 16px', borderRadius: 8, border: '1px solid #ede8e3', background: followerPage >= followerTotalPages ? '#f9fafb' : '#fff', color: followerPage >= followerTotalPages ? '#d1d5db' : '#374151', fontSize: 13, fontWeight: 600, cursor: followerPage >= followerTotalPages ? 'not-allowed' : 'pointer' }}>
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reviews Modal */}
+      {reviewsModal && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}
+          onClick={() => setReviewsModal(false)}>
+          <div onClick={e => e.stopPropagation()} style={{ width: '100%', maxWidth: 560, background: '#fff', borderRadius: 20, boxShadow: '0 25px 60px -15px rgba(0,0,0,0.3)', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div style={{ padding: '18px 24px', borderBottom: '1px solid #ede8e3', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <h2 style={{ fontSize: 17, fontWeight: 700, color: '#111827', margin: 0 }}>All Reviews</h2>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
+                  {reviewRating ? `${reviewRating.toFixed(1)} ★ average · ` : ''}{totalReviews} review{totalReviews !== 1 ? 's' : ''}
+                </p>
+              </div>
+              <button type="button" onClick={() => setReviewsModal(false)} style={{ width: 32, height: 32, borderRadius: 8, border: '1px solid #ede8e3', background: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280' }}><X size={15} /></button>
+            </div>
+            {/* Fixed height scrollable list — exactly 10 rows visible */}
+            <div style={{ height: 560, overflowY: 'auto', padding: '12px 24px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {reviewsModalLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: 13 }}>Loading...</div>
+              ) : reviewItems.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#9ca3af', fontSize: 13 }}>No reviews yet</div>
+              ) : reviewItems.map((r: { id: string; rating: number; comment?: string; createdAt: string; user?: { name?: string; avatar?: string } }) => {
+                const isExpanded = expandedReviews.has(`modal-${r.id}`);
+                const LIMIT = 160;
+                const needsTruncate = (r.comment?.length || 0) > LIMIT;
+                return (
+                  <div key={r.id} style={{ padding: '14px 16px', border: '1px solid #ede8e3', borderRadius: 12, background: '#fff', flexShrink: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 13, color: '#ff3e48', flexShrink: 0, overflow: 'hidden' }}>
+                        {r.user?.avatar ? <img src={r.user.avatar} alt={r.user?.name || ''} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (r.user?.name?.charAt(0)?.toUpperCase() || '?')}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{r.user?.name || 'User'}</div>
+                        <div style={{ fontSize: 11, color: '#9ca3af' }}>{new Date(r.createdAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</div>
+                      </div>
+                      <div style={{ fontSize: 14, color: '#fbbf24', letterSpacing: 1 }}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</div>
+                    </div>
+                    <p style={{ fontSize: 13, color: '#374151', margin: 0, lineHeight: 1.6 }}>
+                      {r.comment ? (isExpanded || !needsTruncate ? r.comment : r.comment.substring(0, LIMIT) + '…') : <span style={{ color: '#9ca3af', fontStyle: 'italic' }}>No comment left</span>}
+                    </p>
+                    {needsTruncate && (
+                      <button type="button" onClick={() => toggleReview(`modal-${r.id}`)} style={{ marginTop: 6, fontSize: 12, fontWeight: 600, color: '#ff3e48', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
+                        {isExpanded ? 'Show less' : 'Read more'}
+                      </button>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            {reviewTotalPages > 1 && (
+              <div style={{ padding: '12px 24px', borderTop: '1px solid #ede8e3', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <button type="button" disabled={reviewPage <= 1 || reviewsModalLoading} onClick={() => goReviewPage(reviewPage - 1)}
+                  style={{ padding: '6px 16px', borderRadius: 8, border: '1px solid #ede8e3', background: reviewPage <= 1 ? '#f9fafb' : '#fff', color: reviewPage <= 1 ? '#d1d5db' : '#374151', fontSize: 13, fontWeight: 600, cursor: reviewPage <= 1 ? 'not-allowed' : 'pointer' }}>
+                  ← Prev
+                </button>
+                <span style={{ fontSize: 12, color: '#9ca3af' }}>Page {reviewPage} of {reviewTotalPages}</span>
+                <button type="button" disabled={reviewPage >= reviewTotalPages || reviewsModalLoading} onClick={() => goReviewPage(reviewPage + 1)}
+                  style={{ padding: '6px 16px', borderRadius: 8, border: '1px solid #ede8e3', background: reviewPage >= reviewTotalPages ? '#f9fafb' : '#fff', color: reviewPage >= reviewTotalPages ? '#d1d5db' : '#374151', fontSize: 13, fontWeight: 600, cursor: reviewPage >= reviewTotalPages ? 'not-allowed' : 'pointer' }}>
+                  Next →
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -181,7 +181,8 @@ export function ChatUI({ creatorId }: Props) {
                 time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
               }));
             setMessages(existingMsgs);
-            setAiResponseCount(existingMsgs.filter(m => m.role === 'ai').length);
+            const aiMsgs = existingMsgs.filter(m => m.role === 'ai');
+            setAiResponseCount(Math.max(0, aiMsgs.length - 1)); // exclude welcome message
           }
         } catch {
           // No messages yet — that's fine
@@ -253,15 +254,7 @@ export function ChatUI({ creatorId }: Props) {
         return [...filtered, aiMsg];
       });
 
-      setAiResponseCount((n) => {
-        const next = n + 1;
-        if (next >= FREE_MESSAGE_LIMIT) {
-          if (!rateLimitStatus || rateLimitStatus.subscription?.plan === 'FREE') {
-            setTrialExpired(true);
-          }
-        }
-        return next;
-      });
+      setAiResponseCount((n) => n + 1);
 
       if (data.message) dispatch(addMessage(data.message as unknown as Parameters<typeof addMessage>[0]));
     };
@@ -428,8 +421,13 @@ export function ChatUI({ creatorId }: Props) {
               {Math.max(0, FREE_MESSAGE_LIMIT - aiResponseCount)} / {FREE_MESSAGE_LIMIT} free
             </span>
           )}
-          <span className={styles.headerIcon}><FeedbackIcon /></span>
-          <span className={styles.headerIcon}><ShieldIcon /></span>
+          {rateLimitStatus?.subscription?.plan !== 'PREMIUM' && (
+            <button type="button" onClick={() => { localStorage.setItem('checkoutReturnTo', window.location.pathname); navigate('/pricing'); }} style={{
+              fontSize: 12, fontWeight: 600, padding: '5px 14px', borderRadius: 99,
+              background: 'linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%)',
+              color: '#fff', border: 'none', cursor: 'pointer',
+            }}>Subscribe</button>
+          )}
           {creatorAvatar && (
             <div className={styles.headerAvatar}>
               <img src={creatorAvatar} alt={creatorName} className={styles.headerAvatarImg} />
@@ -544,7 +542,7 @@ export function ChatUI({ creatorId }: Props) {
                 localStorage.setItem('checkoutReturnTo', window.location.pathname);
                 navigate('/pricing');
               }}>View Plans</button>
-              <button type="button" className={styles.modalSecondary} onClick={() => navigate(-1)}>Go back</button>
+              <button type="button" className={styles.modalSecondary} onClick={() => setTrialExpired(false)}>Go back</button>
             </div>
           </div>
         </div>

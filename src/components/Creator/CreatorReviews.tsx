@@ -152,20 +152,23 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
   };
 
   const fetchMyReview = async () => {
+    if (!user?.id) {
+      setMyReview(null);
+      form.setFieldsValue({ rating: 5, review: '' });
+      return;
+    }
     try {
-      const response = await reviewApi.getMyReview(creatorId);
-      const payload = response?.data?.data || response?.data || {};
-      const review = payload.review || payload.data || payload;
-      setMyReview(review || null);
+      const response = await reviewApi.getReviews(creatorId, { page: 1, limit: 50, sort: 'newest' });
+      const payload = response?.data?.data || {};
+      const list: Review[] = payload.reviews || [];
+      const mine = list.find((r: Review) => (r as { user?: { id?: string } }).user?.id === user.id) || null;
+      setMyReview(mine);
       form.setFieldsValue({
-        rating: review?.rating ?? 5,
-        review: review?.review ?? ''
+        rating: mine?.rating ?? 5,
+        review: (mine as { comment?: string; review?: string } | null)?.comment ?? (mine as { review?: string } | null)?.review ?? ''
       });
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number } };
-      if (err?.response?.status !== 404) {
-        logger.error('Failed to fetch your review:', error);
-      }
+      logger.error('Failed to fetch your review:', error);
       setMyReview(null);
       form.setFieldsValue({ rating: 5, review: '' });
     }
@@ -174,11 +177,12 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
   const handleSubmitReview = async (values: { rating: number; review?: string }) => {
     try {
       setSubmitting(true);
-      if (myReview) {
-        await reviewApi.updateMyReview(creatorId, values);
+      const payload = { rating: values.rating, comment: values.review };
+      if (myReview?.id) {
+        await reviewApi.update(creatorId, myReview.id, payload);
         antMessage.success('Review updated');
       } else {
-        await reviewApi.create(creatorId, values);
+        await reviewApi.create(creatorId, payload);
         antMessage.success('Review submitted');
       }
       await fetchReviews();
@@ -193,8 +197,9 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
   };
 
   const handleDeleteReview = async () => {
+    if (!myReview?.id) return;
     try {
-      await reviewApi.deleteMyReview(creatorId);
+      await reviewApi.delete(creatorId, myReview.id);
       antMessage.success('Review deleted');
       setMyReview(null);
       form.setFieldsValue({ rating: 5, review: '' });

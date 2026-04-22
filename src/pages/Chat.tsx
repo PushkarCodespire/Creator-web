@@ -250,19 +250,17 @@ const FanChatView = () => {
   };
 
   const loadMyReview = async () => {
-    if (!creatorId || !isAuthenticated) return;
+    if (!creatorId || !isAuthenticated || !user?.id) return;
     try {
-      const response = await reviewApi.getMyReview(creatorId);
-      const payload = response?.data?.data || response?.data || {};
-      const review = payload.review || payload.data || payload;
-      setMyReview(review || null);
-      setReviewRating(review?.rating ?? 5);
-      setReviewText(review?.review ?? '');
+      const response = await reviewApi.getReviews(creatorId, { page: 1, limit: 50, sort: 'newest' });
+      const payload = response?.data?.data || {};
+      const list = payload.reviews || [];
+      const mine = list.find((r: { user?: { id?: string } }) => r.user?.id === user.id) || null;
+      setMyReview(mine);
+      setReviewRating(mine?.rating ?? 5);
+      setReviewText(mine?.comment ?? mine?.review ?? '');
     } catch (error: unknown) {
-      const err = error as { response?: { status?: number } };
-      if (err?.response?.status !== 404) {
-        logger.error('Failed to load review:', error);
-      }
+      logger.error('Failed to load review:', error);
       setMyReview(null);
       setReviewRating(5);
       setReviewText('');
@@ -582,10 +580,10 @@ const FanChatView = () => {
 
     try {
       setReviewSubmitting(true);
-      const payload = { rating: reviewRating, review: reviewText };
+      const payload = { rating: reviewRating, comment: reviewText };
 
-      if (myReview) {
-        await reviewApi.updateMyReview(creatorId, payload);
+      if (myReview?.id) {
+        await reviewApi.update(creatorId, myReview.id, payload);
       } else {
         await reviewApi.create(creatorId, payload);
       }

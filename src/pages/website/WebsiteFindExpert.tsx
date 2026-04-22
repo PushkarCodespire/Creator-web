@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from './WebsiteFindExpert.module.css';
 import { creatorApi, getImageUrl } from '../../services/api';
 import { CREATORS } from './data/creators-data';
@@ -44,6 +44,11 @@ export default function WebsiteFindExpert() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const listRef = useRef<HTMLElement>(null);
+
+  const scrollToList = () => {
+    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   useEffect(() => {
     (async () => {
@@ -65,7 +70,7 @@ export default function WebsiteFindExpert() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // search state already triggers the useEffect
+    scrollToList();
   };
 
   return (
@@ -115,7 +120,7 @@ export default function WebsiteFindExpert() {
                     <button
                       key={cat}
                       type="button"
-                      onMouseDown={() => { setSearch(cat); setActiveCategory(cat); setShowSuggestions(false); }}
+                      onMouseDown={() => { setSearch(cat); setActiveCategory(cat); setShowSuggestions(false); scrollToList(); }}
                       style={{
                         display: 'flex', alignItems: 'center', gap: 10, width: '100%',
                         padding: '11px 18px', textAlign: 'left',
@@ -143,7 +148,7 @@ export default function WebsiteFindExpert() {
                 role="tab"
                 aria-selected={activeCategory === cat}
                 className={`${styles.categoryBtn} ${activeCategory === cat ? styles.categoryBtnActive : ""}`}
-                onClick={() => setActiveCategory(cat)}
+                onClick={() => { setActiveCategory(cat); scrollToList(); }}
               >
                 {cat}
               </button>
@@ -175,7 +180,7 @@ export default function WebsiteFindExpert() {
       </section>
 
       {/* EXPERT LIST */}
-      <section className={styles.expertList}>
+      <section ref={listRef} className={styles.expertList}>
         {loading ? (
           <div style={{ textAlign: 'center', padding: '48px 0', color: '#6b7280', fontSize: 15 }}>
             Loading creators...
