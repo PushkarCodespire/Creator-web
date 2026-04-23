@@ -321,7 +321,7 @@ export default function WebsiteProfile() {
           <div className={styles.profileInfo}>
             <div className={styles.nameRow}>
               <h1 className={styles.name}>{creator.displayName}</h1>
-              {creator.isVerified && <VerifiedIcon />}
+              {creator.isFeatured && <VerifiedIcon />}
             </div>
             {creator.tagline && <p className={styles.tagline}>{creator.tagline}</p>}
             <div>

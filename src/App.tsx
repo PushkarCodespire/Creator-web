@@ -89,16 +89,8 @@ const CompanyDeals = lazy(() => import('./pages/company/CompanyDeals'));
 // Let's target the lazy load block first
 
 
-// Admin Dashboard
-const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
-const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
-const AdminCreators = lazy(() => import('./pages/admin/AdminCreators'));
-const AdminCompanies = lazy(() => import('./pages/admin/AdminCompanies'));
-const AdminDeals = lazy(() => import('./pages/admin/AdminDeals'));
-const AdminRevenue = lazy(() => import('./pages/admin/AdminRevenue'));
-const AdminModeration = lazy(() => import('./pages/admin/AdminModeration'));
-const AdminAIModeration = lazy(() => import('./pages/admin/AdminAIModeration'));
-const AdminEmailPreview = lazy(() => import('./pages/admin/AdminEmailPreview'));
+// Admin
+const AdminHomePage = lazy(() => import('./pages/admin/AdminHomePage'));
 
 // Protected Route Component
 const ProtectedRoute = ({
@@ -235,25 +227,15 @@ function App() {
           <Route path="discover" element={<CompanyDiscover />} />
         </Route>
 
-        {/* Admin Dashboard */}
+        {/* Admin Home Page management — standalone (no legacy dashboard shell) */}
         <Route
-          path="/admin"
+          path="/admin/home-page"
           element={
             <ProtectedRoute allowedRoles={['ADMIN']}>
-              <DashboardLayout type="admin" />
+              <AdminHomePage />
             </ProtectedRoute>
           }
-        >
-          <Route index element={<AdminDashboard />} />
-          <Route path="users" element={<AdminUsers />} />
-          <Route path="creators" element={<AdminCreators />} />
-          <Route path="companies" element={<AdminCompanies />} />
-          <Route path="deals" element={<AdminDeals />} />
-          <Route path="revenue" element={<AdminRevenue />} />
-          <Route path="moderation" element={<AdminModeration />} />
-          <Route path="ai-moderation" element={<AdminAIModeration />} />
-          <Route path="email-preview" element={<AdminEmailPreview />} />
-        </Route>
+        />
 
         {/* Error Pages */}
         <Route path="/500" element={<ServerError />} />

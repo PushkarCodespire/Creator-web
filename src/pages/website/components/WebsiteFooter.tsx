@@ -45,9 +45,11 @@ export function WebsiteFooter() {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerTopRow}>
+        {/* Create your AI CTA hidden — not ready for public users yet
         <Link to="/create-your-ai" className={styles.footerCtaPrimary}>
           Create your AI
         </Link>
+        */}
         <Link to="/find-expert" className={styles.footerCtaOutline}>
           Browse Experts
         </Link>

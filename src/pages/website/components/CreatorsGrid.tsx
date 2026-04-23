@@ -1,11 +1,34 @@
 import { Link } from 'react-router-dom';
 import { useEffect, useState } from "react";
 import styles from '../WebsiteHome.module.css';
-import { CREATORS, type Creator } from "../data/creators-data";
+import { CREATORS, type Creator as LegacyCreator } from "../data/creators-data";
 import { getBackendIdForSlug } from "../data/config";
+import { getImageUrl } from "../../../services/api";
 
 export { CREATORS };
-export type { Creator };
+export type { LegacyCreator as Creator };
+
+// API-driven creator shape (matches /home/featured response)
+export interface ApiCreator {
+  id: string;
+  displayName: string;
+  category?: string | null;
+  tagline?: string | null;
+  bio?: string | null;
+  profileImage?: string | null;
+  tags?: string[];
+  suggestedQuestions?: string[];
+  totalChats?: number;
+}
+
+function formatChats(total?: number): string {
+  if (!total || total < 10) return '';
+  if (total >= 1000) return `${Math.floor(total / 1000)}K+ Chats`;
+  const rounded = Math.floor(total / 100) * 100;
+  if (rounded >= 100) return `${rounded}+ Chats`;
+  const roundedTen = Math.floor(total / 10) * 10;
+  return `${roundedTen}+ Chats`;
+}
 
 function VerifiedBadge() {
   return (
@@ -24,7 +47,24 @@ function CloseIcon() {
   );
 }
 
-function CreatorModal({ creator, onClose }: { creator: Creator; onClose: () => void }) {
+// Convert an ApiCreator to the shape the legacy modal expects.
+function adaptApiCreator(api: ApiCreator): LegacyCreator {
+  const slug = api.id; // use DB id (getBackendIdForSlug handles both)
+  const img = api.profileImage ? getImageUrl(api.profileImage) : '';
+  return {
+    id: slug,
+    name: api.displayName,
+    title: api.tagline || api.category || 'Creator',
+    chats: formatChats(api.totalChats),
+    about: api.bio || '',
+    tags: api.tags || [],
+    questions: api.suggestedQuestions || [],
+    cardImg: img,
+    modalImg: img,
+  };
+}
+
+function CreatorModal({ creator, onClose }: { creator: LegacyCreator; onClose: () => void }) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") onClose();
@@ -38,8 +78,6 @@ function CreatorModal({ creator, onClose }: { creator: Creator; onClose: () => v
     };
   }, [onClose]);
 
-  const _firstName = creator.name.split(" ")[0];
-
   return (
     <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby={`creator-modal-${creator.id}-name`} onClick={onClose}>
       <div className={styles.modalCard} onClick={(e) => e.stopPropagation()}>
@@ -48,7 +86,18 @@ function CreatorModal({ creator, onClose }: { creator: Creator; onClose: () => v
         </button>
 
         <div className={styles.modalPhoto}>
-          <img src={creator.modalImg} alt={creator.name} className={styles.modalPhotoImg} />
+          {creator.modalImg ? (
+            <img src={creator.modalImg} alt={creator.name} className={styles.modalPhotoImg} />
+          ) : (
+            <div style={{
+              width: '100%', height: '100%',
+              background: '#ffb4b8',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#ff3e48', fontSize: 160, fontWeight: 700,
+            }}>
+              {creator.name?.charAt(0)?.toUpperCase() || '?'}
+            </div>
+          )}
         </div>
 
         <div className={styles.modalBody}>
@@ -56,30 +105,42 @@ function CreatorModal({ creator, onClose }: { creator: Creator; onClose: () => v
             {creator.name}
             <VerifiedBadge />
           </h3>
-          <p className={styles.modalTitle}>{creator.title}</p>
-          <p className={styles.modalChats}>{creator.chats}</p>
+          {creator.title && <p className={styles.modalTitle}>{creator.title}</p>}
+          {creator.chats && <p className={styles.modalChats}>{creator.chats}</p>}
 
-          <h4 className={styles.modalHeading}>About</h4>
-          <p className={styles.modalAbout}>{creator.about}</p>
+          {creator.about && (
+            <>
+              <h4 className={styles.modalHeading}>About</h4>
+              <p className={styles.modalAbout}>{creator.about}</p>
+            </>
+          )}
 
-          <h4 className={styles.modalHeading}>Topics</h4>
-          <p className={styles.modalTags}>
-            {creator.tags.map((t, i) => (
-              <span key={t}>
-                {t}
-                {i < creator.tags.length - 1 && (
-                  <span className={styles.modalTagSep} aria-hidden>{" | "}</span>
-                )}
-              </span>
-            ))}
-          </p>
+          {creator.tags.length > 0 && (
+            <>
+              <h4 className={styles.modalHeading}>Topics</h4>
+              <p className={styles.modalTags}>
+                {creator.tags.map((t, i) => (
+                  <span key={t}>
+                    {t}
+                    {i < creator.tags.length - 1 && (
+                      <span className={styles.modalTagSep} aria-hidden>{" | "}</span>
+                    )}
+                  </span>
+                ))}
+              </p>
+            </>
+          )}
 
-          <h4 className={styles.modalHeading}>Frequently Asked Questions (FAQ)</h4>
-          <div className={styles.modalQuestions}>
-            {creator.questions.map((q) => (
-              <span key={q} className={styles.modalQuestion}>{q}</span>
-            ))}
-          </div>
+          {creator.questions.length > 0 && (
+            <>
+              <h4 className={styles.modalHeading}>Frequently Asked Questions (FAQ)</h4>
+              <div className={styles.modalQuestions}>
+                {creator.questions.map((q) => (
+                  <span key={q} className={styles.modalQuestion}>{q}</span>
+                ))}
+              </div>
+            </>
+          )}
 
           <div className={styles.modalInputRow}>
             <input type="text" placeholder="Ask Anything" className={styles.modalInput} readOnly />
@@ -93,16 +154,38 @@ function CreatorModal({ creator, onClose }: { creator: Creator; onClose: () => v
   );
 }
 
-export function CreatorsGrid() {
+interface Props {
+  /** API-driven creators (preferred). Falls back to hardcoded CREATORS if not provided. */
+  creators?: ApiCreator[];
+}
+
+export function CreatorsGrid({ creators }: Props = {}) {
   const [activeId, setActiveId] = useState<string | null>(null);
-  const active = CREATORS.find((c) => c.id === activeId) ?? null;
+
+  // Use API data when provided, otherwise fall back to hardcoded
+  const list: LegacyCreator[] = creators && creators.length > 0
+    ? creators.map(adaptApiCreator)
+    : CREATORS;
+
+  const active = list.find((c) => c.id === activeId) ?? null;
 
   return (
     <>
       <section className={styles.expertCards}>
-        {CREATORS.map((c) => (
+        {list.map((c) => (
           <button key={c.id} type="button" className={styles.expertCard} onClick={() => setActiveId(c.id)} aria-label={`View ${c.name}`}>
-            <img src={c.cardImg} alt={c.name} className={styles.expertPhoto} />
+            {c.cardImg ? (
+              <img src={c.cardImg} alt={c.name} className={styles.expertPhoto} />
+            ) : (
+              <div style={{
+                width: '100%', height: '100%',
+                background: '#ffb4b8',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#ff3e48', fontSize: 140, fontWeight: 700,
+              }}>
+                {c.name?.charAt(0)?.toUpperCase() || '?'}
+              </div>
+            )}
           </button>
         ))}
       </section>

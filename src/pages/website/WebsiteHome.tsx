@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../../services/api';
+import api, { homeApi, getImageUrl } from '../../services/api';
 import styles from './WebsiteHome.module.css';
 import { CountdownTimer } from './components/CountdownTimer';
-import { CreatorsGrid } from './components/CreatorsGrid';
+import { CreatorsGrid, type ApiCreator } from './components/CreatorsGrid';
 import { getBackendIdForSlug } from './data/config';
 
 const ASSETS = {
@@ -92,6 +92,22 @@ function NewsletterSection() {
 }
 
 export default function WebsiteHome() {
+  const [featured, setFeatured] = useState<ApiCreator[]>([]);
+  const [mainHighlight, setMainHighlight] = useState<ApiCreator | null>(null);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await homeApi.getFeatured();
+        const data = res.data?.data || {};
+        setFeatured(data.featured || []);
+        setMainHighlight(data.mainHighlight || null);
+      } catch {
+        // Silent fail — CreatorsGrid falls back to hardcoded list
+      }
+    })();
+  }, []);
+
   return (
     <div className={styles.page}>
       {/* HERO */}
@@ -105,8 +121,8 @@ export default function WebsiteHome() {
         <Link to="/find-expert" className={styles.heroCta}>Find right expert</Link>
       </section>
 
-      {/* EXPERT CARDS */}
-      <CreatorsGrid />
+      {/* EXPERT CARDS — home shows the top 3 (order 1–3) */}
+      <CreatorsGrid creators={featured.slice(0, 3)} />
 
       {/* MEDIA LOGOS */}
       <section className={styles.media}>
@@ -129,34 +145,70 @@ export default function WebsiteHome() {
       </section>
 
       {/* INTERACT */}
-      <section className={styles.interact}>
-        <article className={styles.interactCard}>
-          <div className={styles.interactCardPhoto}>
-            <img src={ASSETS.interactCreator} alt="Raghav Bhudhraja" className={styles.interactCardImg} />
-          </div>
-        </article>
+      {(() => {
+        const highlightImg = mainHighlight?.profileImage
+          ? getImageUrl(mainHighlight.profileImage)
+          : !mainHighlight
+            ? ASSETS.interactCreator
+            : null;
+        const highlightName = mainHighlight?.displayName || 'Raghav Bhudhraja';
+        const highlightCategory = mainHighlight?.category || mainHighlight?.tagline || '';
+        const highlightTags = mainHighlight?.tags && mainHighlight.tags.length > 0
+          ? mainHighlight.tags
+          : EXPERTISE;
+        const highlightChatId = mainHighlight?.id
+          || getBackendIdForSlug('raghav')
+          || 'raghav';
 
-        <div className={styles.interactBody}>
-          <h2 className={styles.interactHeading}>Interact, don&apos;t just consume.</h2>
-          <ul className={styles.interactList}>
-            {INTERACT_POINTS.map((p) => (
-              <li key={p}>
-                <CheckCircle />
-                <span>{p}</span>
-              </li>
-            ))}
-          </ul>
-          <p className={styles.interactLabel}>Expertise</p>
-          <div className={styles.interactTags}>
-            {EXPERTISE.map((e) => (
-              <span key={e} className={styles.interactTag}>{e}</span>
-            ))}
-          </div>
-          <Link to={`/website-chat/${getBackendIdForSlug('raghav') || 'raghav'}`} className={styles.interactChat}>
-            Chat Now <ArrowRight />
-          </Link>
-        </div>
-      </section>
+        return (
+          <section className={styles.interact}>
+            <article className={styles.interactCard}>
+              <div className={styles.interactCardPhoto}>
+                {highlightImg ? (
+                  <img src={highlightImg} alt={highlightName} className={styles.interactCardImg} />
+                ) : (
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: '#ffb4b8',
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    color: '#ff3e48', textAlign: 'center', padding: 24,
+                  }}>
+                    <div style={{ fontSize: 220, fontWeight: 700, lineHeight: 1, marginBottom: 24 }}>
+                      {highlightName.charAt(0).toUpperCase()}
+                    </div>
+                    <div style={{ fontSize: 28, fontWeight: 700, marginBottom: 6, color: '#7f1d1d' }}>{highlightName}</div>
+                    {highlightCategory && (
+                      <div style={{ fontSize: 16, color: '#7f1d1d', opacity: 0.8 }}>{highlightCategory}</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </article>
+
+            <div className={styles.interactBody}>
+              <h2 className={styles.interactHeading}>Interact, don&apos;t just consume.</h2>
+              <ul className={styles.interactList}>
+                {INTERACT_POINTS.map((p) => (
+                  <li key={p}>
+                    <CheckCircle />
+                    <span>{p}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className={styles.interactLabel}>Expertise</p>
+              <div className={styles.interactTags}>
+                {highlightTags.map((e) => (
+                  <span key={e} className={styles.interactTag}>{e}</span>
+                ))}
+              </div>
+              <Link to={`/website-chat/${highlightChatId}`} className={styles.interactChat}>
+                Chat Now <ArrowRight />
+              </Link>
+            </div>
+          </section>
+        );
+      })()}
 
       {/* NEWSLETTER */}
       <NewsletterSection />

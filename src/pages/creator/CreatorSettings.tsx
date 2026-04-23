@@ -42,8 +42,10 @@ const CreatorSettings = () => {
   const [msg, setMsg] = useState('');
 
   useEffect(() => {
-    const name = user?.creator?.displayName || user?.name || 'creator';
-    setProfileLink(`creatorpal.ai/${name.toLowerCase().replace(/\s+/g, '-')}`);
+    const creatorId = user?.creator?.id;
+    if (creatorId) {
+      setProfileLink(`${window.location.origin}/creator/${creatorId}`);
+    }
 
     // Load FAQs from API
     (async () => {
@@ -79,7 +81,7 @@ const CreatorSettings = () => {
 
   const handleShareNative = () => {
     if (navigator.share) {
-      navigator.share({ title: 'My CreatorPal', url: `https://${profileLink}` });
+      navigator.share({ title: 'My CreatorPal', url: profileLink });
     } else {
       handleCopyLink();
     }

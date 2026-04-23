@@ -1,9 +1,9 @@
 import { Link } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
 import styles from './WebsiteFindExpert.module.css';
-import { creatorApi, getImageUrl } from '../../services/api';
-import { CREATORS } from './data/creators-data';
+import { creatorApi, homeApi, getImageUrl } from '../../services/api';
 import type { Creator } from '../../types';
+import type { ApiCreator } from './components/CreatorsGrid';
 
 const CATEGORIES = [
   "All", "Fat Loss", "Muscle Gain", "PCOS", "Gut Health",
@@ -39,6 +39,7 @@ function ArrowRight() {
 
 export default function WebsiteFindExpert() {
   const [creators, setCreators] = useState<Creator[]>([]);
+  const [featured, setFeatured] = useState<ApiCreator[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [activeCategory, setActiveCategory] = useState('All');
@@ -46,8 +47,22 @@ export default function WebsiteFindExpert() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const listRef = useRef<HTMLElement>(null);
 
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await homeApi.getFeatured();
+        setFeatured(res.data?.data?.featured || []);
+      } catch {
+        setFeatured([]);
+      }
+    })();
+  }, []);
+
   const scrollToList = () => {
-    listRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!listRef.current) return;
+    const offset = 96; // breathing room + sticky nav clearance
+    const top = listRef.current.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top, behavior: 'smooth' });
   };
 
   useEffect(() => {
@@ -164,20 +179,42 @@ export default function WebsiteFindExpert() {
         </div>
       </section>
 
-      {/* FEATURED EXPERTS — static design cards */}
-      <section className={styles.featured}>
-        <div className={styles.featuredHeader}>
-          <h2 className={styles.featuredTitle}>Featured Experts</h2>
-          <a href="#all" className={styles.viewAll}>View all <ArrowRight /></a>
-        </div>
-        <div className={styles.featuredRow}>
-          {[...CREATORS, ...CREATORS].map((c, i) => (
-            <div key={`${c.id}-${i}`} className={styles.featuredCard}>
-              <img src={c.cardImg} alt={c.name} className={styles.featuredCardImg} />
-            </div>
-          ))}
-        </div>
-      </section>
+      {/* FEATURED EXPERTS — admin-managed, click = View Profile */}
+      {featured.length > 0 && (
+        <section className={styles.featured}>
+          <div className={styles.featuredHeader}>
+            <h2 className={styles.featuredTitle}>Featured Experts</h2>
+            <a href="#all" className={styles.viewAll}>View all <ArrowRight /></a>
+          </div>
+          <div className={styles.featuredRow}>
+            {featured.map((c) => (
+              <Link
+                key={c.id}
+                to={`/creator/${c.id}`}
+                className={styles.featuredCard}
+                aria-label={`View ${c.displayName}'s profile`}
+              >
+                {c.profileImage ? (
+                  <img
+                    src={getImageUrl(c.profileImage)}
+                    alt={c.displayName}
+                    className={styles.featuredCardImg}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%', height: '100%',
+                    background: '#ffb4b8',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#ff3e48', fontSize: 96, fontWeight: 700,
+                  }}>
+                    {c.displayName?.charAt(0)?.toUpperCase() || '?'}
+                  </div>
+                )}
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* EXPERT LIST */}
       <section ref={listRef} className={styles.expertList}>
@@ -213,7 +250,7 @@ export default function WebsiteFindExpert() {
                 </div>
                 <div className={styles.expertNameWrap}>
                   <h3 className={styles.expertName}>{c.displayName}</h3>
-                  {c.isVerified && <VerifiedIcon />}
+                  {c.isFeatured && <VerifiedIcon />}
                 </div>
                 <p className={styles.expertTitle}>{c.category || c.tagline || 'Creator'}</p>
                 <div className={styles.expertBtns}>

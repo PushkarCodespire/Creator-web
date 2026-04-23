@@ -120,6 +120,29 @@ export function WebsiteNav() {
                       Dashboard
                     </Link>
                   )}
+                  {user?.role === 'ADMIN' && (
+                    <Link
+                      to="/admin/home-page"
+                      onClick={() => setDropdownOpen(false)}
+                      style={{
+                        display: 'block',
+                        width: '100%',
+                        padding: '10px 16px',
+                        textAlign: 'left',
+                        fontSize: 14,
+                        color: '#111827',
+                        textDecoration: 'none',
+                        cursor: 'pointer',
+                        background: 'none',
+                        borderBottom: '1px solid #f3f4f6',
+                        transition: 'background 120ms ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f9fafb')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      Admin
+                    </Link>
+                  )}
                   <button
                     type="button"
                     onClick={() => { dispatch(logout()); setDropdownOpen(false); }}
@@ -145,9 +168,11 @@ export function WebsiteNav() {
           ) : (
             <Link to="/login">Sign in</Link>
           )}
+          {/* Create your AI CTA hidden — not ready for public users yet
           <Link to="/create-your-ai" className={styles.navCta}>
             Create your AI
           </Link>
+          */}
         </nav>
       </div>
     </header>

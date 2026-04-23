@@ -562,10 +562,21 @@ export const companyApi = {
 // ADMIN API
 // ===========================================
 
+export const homeApi = {
+  getFeatured: () => api.get('/home/featured'),
+};
+
 export const adminApi = {
   getStats: () => api.get('/admin/stats'),
   getRevenue: () => api.get('/admin/revenue'),
   getConfig: () => api.get('/admin/config'),
+
+  // Home page management
+  getHomeCreators: () => api.get('/admin/home/creators'),
+  updateHomeFeatured: (data: {
+    featured: Array<{ creatorId: string; order: number }>;
+    mainHighlightId: string | null;
+  }) => api.put('/admin/home/featured', data),
 
   // Users
   getUsers: (params?: { page?: number; limit?: number; role?: string; search?: string }) => api.get('/admin/users', { params }),

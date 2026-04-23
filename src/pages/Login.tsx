@@ -53,7 +53,7 @@ const Login = () => {
       } else if (user.role === 'COMPANY') {
         navigate('/company-dashboard', { replace: true });
       } else if (user.role === 'ADMIN') {
-        navigate('/admin', { replace: true });
+        navigate('/admin/home-page', { replace: true });
       } else {
         navigate('/', { replace: true });
       }
