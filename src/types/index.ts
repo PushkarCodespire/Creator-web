@@ -47,6 +47,7 @@ export interface Creator {
   category?: string;
   tags: string[];
   isVerified: boolean;
+  isFeatured?: boolean;
   totalChats: number;
   rating?: number;
   welcomeMessage?: string;
