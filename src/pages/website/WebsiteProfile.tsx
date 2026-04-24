@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useSearchParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../store';
 import { creatorApi, reviewApi, programApi, bookingApi, followApi, getImageUrl } from '../../services/api';
@@ -104,10 +104,16 @@ const CONTENT_ICONS: Record<string, { bg: string; color: string; label: string }
 
 export default function WebsiteProfile() {
   const { creatorId } = useParams<{ creatorId: string }>();
+  const [searchParams] = useSearchParams();
   const [creator, setCreator] = useState<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [activeTab, setActiveTab] = useState<'about' | 'faqs' | 'reviews' | 'offerings' | 'bookings'>('about');
+  const initialTab = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState<'about' | 'faqs' | 'reviews' | 'offerings' | 'bookings'>(
+    (['about', 'faqs', 'reviews', 'offerings', 'bookings'] as const).includes(initialTab as never)
+      ? (initialTab as 'about' | 'faqs' | 'reviews' | 'offerings' | 'bookings')
+      : 'about'
+  );
   const [programs, setPrograms] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [slots, setSlots] = useState<any[]>([]); // eslint-disable-line @typescript-eslint/no-explicit-any
   const [openFaq, setOpenFaq] = useState<string | null>(null);

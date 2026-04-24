@@ -1,10 +1,10 @@
 import { useNavigate } from 'react-router-dom';
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from 'react-redux';
 import ReactMarkdown from 'react-markdown';
 import { RootState, AppDispatch } from '../../../store';
 import { addMessage } from '../../../store/slices/chatSlice';
-import { chatApi, creatorApi, getImageUrl } from '../../../services/api';
+import { chatApi, creatorApi, programApi, getImageUrl } from '../../../services/api';
 import socketService from '../../../services/socket';
 import type { Creator } from '../../../types';
 import type { RateLimitStatus } from '../../../types/chat';
@@ -13,6 +13,40 @@ import VoiceModeModal from './VoiceModeModal';
 
 const FREE_MESSAGE_LIMIT = 5;
 
+type VoiceProvider = 'chatterbox' | 'inworld' | 'elevenlabs';
+
+type SuggestedCard =
+  | { type: 'program'; id: string; name: string; price: number; link?: string; promoCode?: string; description?: string; duration?: string; level?: string }
+  | { type: 'product'; id: string; name: string; price: number; link?: string; promoCode?: string; imageUrl?: string; description?: string }
+  | { type: 'booking'; creatorId: string };
+
+const BOOKING_KW = ['book', 'booking', 'meet', 'meeting', 'schedule', 'appointment', 'slot', 'availability', 'available', 'consult', 'consultation', 'session', '1:1', 'one-on-one', 'call', 'video call', 'zoom', 'google meet', 'calendar', 'reschedule', 'free time', 'hop on', 'connect live', 'talk live', 'live chat', 'when are you', 'what day', 'what time', 'free slot', 'speak to you', 'speak with you', 'talk to you', 'talk with you', 'chat with you', 'get in touch', 'catch up', 'connect with', 'arrange a', 'set up a', 'fix a time', 'find a time'];
+const PROGRAM_KW = ['program', 'programmes', 'course', 'courses', 'coaching', 'training', 'workout', 'workouts', 'fitness plan', 'fitness program', 'challenge', 'diet plan', 'meal plan', 'nutrition plan', 'routine', 'regime', 'transformation', 'weight loss', 'lose weight', 'build muscle', 'gain muscle', 'get fit', 'get in shape', 'enroll', 'sign up', 'join', 'membership', 'class', 'lesson', 'tutorial', 'guide me', 'help me train', 'help me lose', 'help me gain'];
+const PRODUCT_KW = ['product', 'products', 'buy', 'purchase', 'order', 'supplement', 'supplements', 'protein', 'vitamins', 'gear', 'equipment', 'recommend', 'recommendation', 'suggest', 'suggestion', 'shop', 'store', 'sell', 'selling', 'discount', 'promo code', 'promo', 'offer', 'deal', 'what do you sell', 'do you have', 'how much', 'price', 'cost'];
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function buildSuggestedCards(text: string, creatorIdParam: string, programs: any[]): SuggestedCard[] {
+  const lower = text.toLowerCase();
+  const cards: SuggestedCard[] = [];
+  const hasBooking = BOOKING_KW.some(kw => lower.includes(kw));
+  const hasProgram = PROGRAM_KW.some(kw => lower.includes(kw));
+  const hasProduct = PRODUCT_KW.some(kw => lower.includes(kw));
+  if (hasBooking) cards.push({ type: 'booking', creatorId: creatorIdParam });
+  if (hasProgram || hasProduct) {
+    for (const p of programs) {
+      let d: Record<string, string> = {};
+      try { d = JSON.parse(p.description || '{}'); } catch { d = {}; }
+      const isProduct = p.category === '__product__';
+      if (isProduct && hasProduct) {
+        cards.push({ type: 'product', id: p.id, name: p.name, price: Number(p.price || 0), link: d.link || undefined, promoCode: d.promoCode || undefined, imageUrl: d.imageUrl || undefined, description: d.desc || undefined });
+      } else if (!isProduct && hasProgram) {
+        cards.push({ type: 'program', id: p.id, name: p.name, price: Number(p.price || 0), link: d.link || undefined, promoCode: d.promoCode || undefined, description: d.desc || undefined, duration: d.duration || undefined, level: d.level || undefined });
+      }
+    }
+  }
+  return cards;
+}
+
 type UIMessage = {
   id: string;
   role: "user" | "ai";
@@ -20,6 +54,8 @@ type UIMessage = {
   pending?: boolean;
   error?: boolean;
   time?: string;
+  voiceProviderUsed?: VoiceProvider | null;
+  suggestedCards?: SuggestedCard[];
 };
 
 type Props = {
@@ -123,6 +159,12 @@ export function ChatUI({ creatorId }: Props) {
   const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  // Which voice engine the listener wants the AI reply spoken with.
+  // Persisted per-user in localStorage so the choice sticks across sessions.
+  const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('voiceProvider') : null;
+    return saved === 'elevenlabs' ? 'elevenlabs' : saved === 'inworld' ? 'inworld' : 'chatterbox';
+  });
   const [_tokenGrant, setTokenGrant] = useState<number>(0);
   const [tokensPerMessage, setTokensPerMessage] = useState<number>(800);
 
@@ -131,10 +173,18 @@ export function ChatUI({ creatorId }: Props) {
   const conversationIdRef = useRef<string | null>(null);
 
   /* ---------- auto-scroll ---------- */
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  // Fires when initial load completes (loading flips false while messages already set)
+  useLayoutEffect(() => {
+    if (!loading && scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [loading]);
+
+  // Fires on new messages or streaming updates
+  useLayoutEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
   }, [messages, streamingContent]);
 
   useEffect(() => { inputRef.current?.focus(); }, [loading]);
@@ -147,11 +197,16 @@ export function ChatUI({ creatorId }: Props) {
       try {
         setLoading(true);
 
-        // 1. Fetch creator data from API
-        const creatorRes = await creatorApi.getById(creatorId);
+        // 1. Fetch creator data and programs in parallel
+        const [creatorRes, programsRes] = await Promise.all([
+          creatorApi.getById(creatorId),
+          programApi.getByCreator(creatorId).catch(() => ({ data: { data: [] } })),
+        ]);
         if (cancelled) return;
         const creatorData: Creator = creatorRes.data.data;
         setCreator(creatorData);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const historyPrograms: any[] = (programsRes as any).data?.data || [];
 
         // 2. Create or get conversation
         const convRes = await chatApi.createConversation(creatorId);
@@ -164,22 +219,31 @@ export function ChatUI({ creatorId }: Props) {
         try {
           const msgRes = await chatApi.getConversation(convId);
           if (!cancelled && msgRes.data.data?.messages) {
-            const existingMsgs: UIMessage[] = msgRes.data.data.messages
-              .filter((m: { role: string; content?: string; id: string; createdAt: string }) => {
-                // Skip error/failed AI messages from previous sessions
-                if (m.role !== 'USER' && m.content && (
-                  m.content.includes('AI failed') ||
-                  m.content.includes('syntax error') ||
-                  m.content.includes('ECONNREFUSED')
-                )) return false;
-                return true;
-              })
-              .map((m: { role: string; content?: string; id: string; createdAt: string }) => ({
+            const rawMsgs = msgRes.data.data.messages.filter((m: { role: string; content?: string }) => {
+              if (m.role !== 'USER' && m.content && (
+                m.content.includes('AI failed') ||
+                m.content.includes('syntax error') ||
+                m.content.includes('ECONNREFUSED')
+              )) return false;
+              return true;
+            });
+            let lastUserText = '';
+            const existingMsgs: UIMessage[] = rawMsgs.map((m: { role: string; content?: string; id: string; createdAt: string }) => {
+              const msg: UIMessage = {
                 id: m.id,
                 role: m.role === 'USER' ? 'user' as const : 'ai' as const,
-                content: m.content,
+                content: m.content || '',
                 time: new Date(m.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              }));
+              };
+              if (m.role === 'USER') {
+                lastUserText = m.content || '';
+              } else if (lastUserText) {
+                const cards = buildSuggestedCards(lastUserText, creatorId, historyPrograms);
+                if (cards.length > 0) msg.suggestedCards = cards;
+                lastUserText = '';
+              }
+              return msg;
+            });
             setMessages(existingMsgs);
             const aiMsgs = existingMsgs.filter(m => m.role === 'ai');
             setAiResponseCount(Math.max(0, aiMsgs.length - 1)); // exclude welcome message
@@ -237,7 +301,7 @@ export function ChatUI({ creatorId }: Props) {
       setIsStreaming(true);
     };
 
-    const onComplete = (data: { message: { id?: string; content?: string } }) => {
+    const onComplete = (data: { message: { id?: string; content?: string; voiceProviderUsed?: VoiceProvider | null; suggestedCards?: SuggestedCard[] } }) => {
       setStreamingContent("");
       setIsStreaming(false);
       setIsSending(false);
@@ -248,6 +312,8 @@ export function ChatUI({ creatorId }: Props) {
         role: "ai",
         content: data.message?.content || "",
         time: aiTime,
+        voiceProviderUsed: data.message?.voiceProviderUsed ?? null,
+        suggestedCards: data.message?.suggestedCards,
       };
       setMessages((prev) => {
         const filtered = prev.filter(m => !m.pending);
@@ -319,7 +385,7 @@ export function ChatUI({ creatorId }: Props) {
     setIsSending(true);
 
     try {
-      const res = await chatApi.sendMessage(conversationId, text);
+      const res = await chatApi.sendMessage(conversationId, text, undefined, false, voiceProvider);
       const aiMsg = res.data?.data?.aiMessage;
 
       // If socket delivers the response, the socket handler will update the UI.
@@ -332,7 +398,7 @@ export function ChatUI({ creatorId }: Props) {
             if (!stillPending) return prev; // Socket already handled it
             return prev.map((m) =>
               m.id === pendingAi.id
-                ? { ...m, content: aiMsg.content, pending: false, time: getTimeStr(), id: aiMsg.id || m.id }
+                ? { ...m, content: aiMsg.content, pending: false, time: getTimeStr(), id: aiMsg.id || m.id, voiceProviderUsed: aiMsg.voiceProviderUsed ?? null, suggestedCards: aiMsg.suggestedCards }
                 : m
             );
           });
@@ -367,7 +433,7 @@ export function ChatUI({ creatorId }: Props) {
         : raw;
       setMessages((prev) => prev.map((m) => m.id === pendingAi.id ? { ...m, content: friendly, pending: false, error: true } : m));
     }
-  }, [conversationId, isSending, trialExpired, aiResponseCount, rateLimitStatus]);
+  }, [conversationId, isSending, trialExpired, aiResponseCount, rateLimitStatus, voiceProvider, tokenBalance, tokensPerMessage]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend(input); }
@@ -402,6 +468,47 @@ export function ChatUI({ creatorId }: Props) {
           </button>
         </div>
         <div className={styles.headerRight}>
+          {/* Voice provider toggle — sits between the counter and Subscribe.
+              Choice is per-listener; falls back to the other provider if the
+              selected one fails or isn't cloned. */}
+          <div
+            role="group"
+            aria-label="Voice provider"
+            style={{
+              display: 'flex', background: 'rgba(255,255,255,0.06)',
+              borderRadius: 99, padding: 2, gap: 2,
+              border: '1px solid rgba(255,255,255,0.08)',
+            }}
+          >
+            {(['chatterbox', 'inworld', 'elevenlabs'] as VoiceProvider[]).map((p) => {
+              const active = voiceProvider === p;
+              const label = p === 'chatterbox' ? 'Chatterbox' : p === 'inworld' ? 'Inworld' : 'ElevenLabs';
+              const title = p === 'chatterbox' ? 'Chatterbox — free, open-source' : p === 'inworld' ? 'Inworld TTS-1.5 Mini' : 'ElevenLabs — premium quality';
+              return (
+                <button
+                  key={p}
+                  type="button"
+                  onClick={() => {
+                    setVoiceProvider(p);
+                    try { localStorage.setItem('voiceProvider', p); } catch { /* ignore */ }
+                  }}
+                  aria-pressed={active}
+                  title={title}
+                  style={{
+                    fontSize: 10, fontWeight: 700, letterSpacing: 0.3,
+                    padding: '4px 10px', borderRadius: 99, cursor: 'pointer',
+                    border: 'none',
+                    background: active ? '#fff' : 'transparent',
+                    color: active ? '#111' : 'rgba(255,255,255,0.7)',
+                    textTransform: 'uppercase',
+                  }}
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
+
           {/* Token/Message counter */}
           {rateLimitStatus?.subscription?.plan === 'PREMIUM' ? (
             <span style={{
@@ -494,6 +601,69 @@ export function ChatUI({ creatorId }: Props) {
                 <ReactMarkdown components={mdComponents}>{m.content}</ReactMarkdown>
               )}
             </div>
+            {m.role === 'ai' && !m.pending && m.suggestedCards && m.suggestedCards.length > 0 && (
+              <div style={{ marginTop: 8, marginLeft: 44, display: 'flex', flexDirection: 'column', gap: 8 }}>
+                {m.suggestedCards.map((card, idx) => {
+                  if (card.type === 'booking') {
+                    return (
+                      <a key={idx} href={`/creator/${card.creatorId}?tab=bookings`}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 8,
+                          padding: '7px 14px', borderRadius: 99,
+                          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.14)',
+                          textDecoration: 'none', color: 'rgba(255,255,255,0.85)',
+                          fontSize: 12, fontWeight: 600,
+                          width: 'fit-content',
+                        }}
+                      >
+                        <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                          <rect x="2" y="3" width="12" height="11" rx="2" />
+                          <path d="M5 1v3M11 1v3M2 7h12" />
+                        </svg>
+                        Book a meeting
+                        <span style={{ opacity: 0.5 }}>&#8594;</span>
+                      </a>
+                    );
+                  }
+                  if (card.type === 'product' || card.type === 'program') {
+                    return (
+                      <div key={idx} style={{
+                        padding: '10px 14px', borderRadius: 12,
+                        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>{card.name}</div>
+                            {card.description && (
+                              <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)', marginTop: 2, lineHeight: 1.4 }}>{card.description}</div>
+                            )}
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>&#8377;{card.price.toFixed(0)}</span>
+                              {card.type === 'program' && card.duration && (
+                                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(59,130,246,0.2)', color: '#93c5fd' }}>{card.duration}</span>
+                              )}
+                              {card.type === 'program' && card.level && (
+                                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(16,185,129,0.2)', color: '#6ee7b7' }}>{card.level}</span>
+                              )}
+                              {card.promoCode && (
+                                <span style={{ fontSize: 10, padding: '1px 6px', borderRadius: 4, background: 'rgba(251,191,36,0.2)', color: '#fcd34d', fontWeight: 700 }}>Code: {card.promoCode}</span>
+                              )}
+                            </div>
+                          </div>
+                          {card.link && (
+                            <a href={card.link} target="_blank" rel="noopener noreferrer"
+                              style={{ fontSize: 11, fontWeight: 600, color: '#ff3e48', textDecoration: 'none', flexShrink: 0, marginLeft: 12, paddingTop: 2 }}>
+                              {card.type === 'product' ? 'Buy Now \u2192' : 'View \u2192'}
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                })}
+              </div>
+            )}
           </div>
         ))}
 
@@ -555,6 +725,7 @@ export function ChatUI({ creatorId }: Props) {
         conversationId={conversationId}
         creatorName={creatorName}
         creatorAvatar={creator?.profileImage || null}
+        voiceProvider={voiceProvider}
         onMessageSent={() => {
           // Refresh messages after voice message
           if (conversationId) {

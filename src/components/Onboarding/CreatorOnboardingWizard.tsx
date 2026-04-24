@@ -8,6 +8,7 @@ import { RootState } from '../../store';
 import { updateUser, setProfileComplete } from '../../store/slices/authSlice';
 import OnboardingProcessing from './OnboardingProcessing';
 import { VoiceCloneSection } from '../VoiceCloneSection/VoiceCloneSection';
+import { SCENARIO_QUESTIONS } from '../../pages/creator/CreatorYourAI';
 import '../../styles/Auth.css';
 
 const { TextArea } = Input;
@@ -74,8 +75,18 @@ export const CreatorOnboardingWizard: React.FC = () => {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.creator?.profileImage || user?.avatar || null);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [generatingBio, setGeneratingBio] = useState(false);
-  const [generatingPersonality, setGeneratingPersonality] = useState(false);
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+
+  // Structured persona config
+  const [energyLevel, setEnergyLevel] = useState<'calm' | 'balanced' | 'high-energy' | ''>('');
+  const [honestyStyle, setHonestyStyle] = useState<'supportive' | 'direct' | 'tough-love' | ''>('');
+  const [humor, setHumor] = useState<'none' | 'light' | 'sarcastic' | ''>('');
+  const [responseFormat, setResponseFormat] = useState<'short-punchy' | 'detailed' | 'bullet-lists' | ''>('');
+  const [signaturePhrases, setSignaturePhrases] = useState<string[]>(['', '', '']);
+  const [opinionatedTopics, setOpinionatedTopics] = useState<string[]>([]);
+  const [topicInput, setTopicInput] = useState('');
+  const [fewShotAnswers, setFewShotAnswers] = useState<string[]>(Array(10).fill(''));
+  const [currentScenario, setCurrentScenario] = useState(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const taglineValue = Form.useWatch('tagline', form);
 
@@ -117,8 +128,6 @@ export const CreatorOnboardingWizard: React.FC = () => {
         bio: user.creator?.bio || prefill.about || '',
         tagline: user.creator?.tagline || prefill.expertise || '',
         category: user.creator?.category || (prefill.topics?.split(',')?.[0]?.trim()) || '',
-        aiPersonality: user.creator?.aiPersonality,
-        aiTone: user.creator?.aiTone,
         welcomeMessage: user.creator?.welcomeMessage,
         bankName: user.creator?.bankAccount?.bankName,
         accountHolderName: user.creator?.bankAccount?.accountHolderName,
@@ -129,20 +138,31 @@ export const CreatorOnboardingWizard: React.FC = () => {
         discountFirstFive: user.creator?.discountFirstFive || 0,
         tags: user.creator?.tags || (prefill.topics ? prefill.topics.split(',').map((t: string) => t.trim()).filter(Boolean) : []),
       });
+      // Load saved persona config if present
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pc = (user.creator as any)?.personaConfig;
+      if (pc) {
+        if (pc.energyLevel) setEnergyLevel(pc.energyLevel);
+        if (pc.honestyStyle) setHonestyStyle(pc.honestyStyle);
+        if (pc.humor) setHumor(pc.humor);
+        if (pc.responseFormat) setResponseFormat(pc.responseFormat);
+        if (pc.signaturePhrases) setSignaturePhrases([...pc.signaturePhrases, '', '', ''].slice(0, 3));
+        if (pc.opinionatedTopics) setOpinionatedTopics(pc.opinionatedTopics);
+      }
+      // Load saved few-shot Q&A if present
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const fqa = (user.creator as any)?.fewShotQA as { scenario: string; answer: string }[] | null;
+      if (fqa && Array.isArray(fqa)) {
+        const answers = Array(10).fill('');
+        fqa.forEach(({ scenario, answer }) => {
+          const idx = SCENARIO_QUESTIONS.indexOf(scenario);
+          if (idx !== -1) answers[idx] = answer;
+        });
+        setFewShotAnswers(answers);
+      }
       setIsInitialized(true);
     }
   }, [user, form, isInitialized]);
-
-  // Auto-generate AI personality when Intelligence tab opens (if empty)
-  useEffect(() => {
-    if (activeTab === 'intelligence' && isInitialized) {
-      const currentPersonality = form.getFieldValue('aiPersonality');
-      if (!currentPersonality && !generatingPersonality) {
-        handleGeneratePersonality();
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab]);
 
   const handleSave = async () => {
     try {
@@ -182,8 +202,20 @@ export const CreatorOnboardingWizard: React.FC = () => {
         antMessage.success('Economics saved');
         setCompletedTabs(prev => new Set(prev).add('economics'));
       } else if (activeTab === 'intelligence') {
-        const values = await form.validateFields(['aiPersonality', 'aiTone', 'welcomeMessage']);
-        await creatorApi.updateProfile(values);
+        const values = await form.validateFields(['welcomeMessage']);
+        const filledPhrases = signaturePhrases.filter(p => p.trim());
+        const personaConfig = {
+          ...(energyLevel && { energyLevel }),
+          ...(honestyStyle && { honestyStyle }),
+          ...(humor && { humor }),
+          ...(responseFormat && { responseFormat }),
+          ...(filledPhrases.length > 0 && { signaturePhrases: filledPhrases }),
+          ...(opinionatedTopics.length > 0 && { opinionatedTopics }),
+        };
+        const fewShotQA = fewShotAnswers
+          .map((answer, i) => ({ scenario: SCENARIO_QUESTIONS[i], answer: answer.trim() }))
+          .filter(qa => qa.answer.length > 0);
+        await creatorApi.updateProfile({ ...values, personaConfig, fewShotQA });
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         dispatch(updateUser({ creator: { ...user?.creator, ...values } } as any));
         antMessage.success('Intelligence configured');
@@ -249,28 +281,6 @@ export const CreatorOnboardingWizard: React.FC = () => {
       antMessage.error('Failed to generate bio');
     } finally {
       setGeneratingBio(false);
-    }
-  };
-
-  const handleGeneratePersonality = async () => {
-    setGeneratingPersonality(true);
-    try {
-      const res = await creatorApi.generateAiPersonality({
-        displayName: form.getFieldValue('displayName'),
-        category: form.getFieldValue('category'),
-        tagline: form.getFieldValue('tagline'),
-        bio: form.getFieldValue('bio'),
-        aiTone: form.getFieldValue('aiTone'),
-        tags: form.getFieldValue('tags'),
-      });
-      if (res.data?.success && res.data.data?.aiPersonality) {
-        form.setFieldsValue({ aiPersonality: res.data.data.aiPersonality });
-        antMessage.success('AI personality generated! Feel free to customize it.');
-      }
-    } catch {
-      antMessage.error('Failed to generate AI personality');
-    } finally {
-      setGeneratingPersonality(false);
     }
   };
 
@@ -521,38 +531,185 @@ export const CreatorOnboardingWizard: React.FC = () => {
               <VoiceCloneSection compact onStatusChange={setVoiceStatus} />
             </div>
 
-            <Form.Item name="aiTone" label={<span style={labelStyle}>Communication Tone</span>} rules={[{ required: true }]} style={{ marginBottom: 14 }}>
-              <Select placeholder="Select tone" size="middle">
-                <Option value="friendly">Friendly & Approachable</Option>
-                <Option value="professional">Professional</Option>
-                <Option value="casual">Casual & Genuine</Option>
-                <Option value="inspiring">Inspiring & High-Energy</Option>
-                <Option value="educational">Educational</Option>
-              </Select>
-            </Form.Item>
-            <Form.Item name="aiPersonality" label={<span style={labelStyle}>AI Personality (System Prompt)</span>} rules={[{ required: true }]} style={{ marginBottom: 4 }}>
-              <TextArea rows={4} placeholder={generatingPersonality ? 'Generating AI personality...' : 'Describe your AI persona...'} style={textareaStyle} disabled={generatingPersonality} />
-            </Form.Item>
-            <div style={{ marginBottom: 14, textAlign: 'right' }}>
-              <button
-                type="button"
-                onClick={handleGeneratePersonality}
-                disabled={generatingPersonality}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: 6,
-                  padding: '6px 14px', borderRadius: 8,
-                  border: '1px solid #e5e7eb',
-                  background: generatingPersonality ? '#f3f4f6' : '#fff',
-                  color: generatingPersonality ? '#9ca3af' : '#ff3e48',
-                  fontSize: 12, fontWeight: 600,
-                  cursor: generatingPersonality ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <Sparkles size={12} />
-                {generatingPersonality ? 'Generating...' : 'Generate with AI'}
-              </button>
+            {/* Persona style — 2×2 grid */}
+            <div style={{ marginBottom: 16 }}>
+              <span style={{ ...labelStyle, display: 'block', marginBottom: 10 }}>Personality Style</span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                {/* Energy Level */}
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                  <div style={{ ...labelStyle, marginBottom: 8, display: 'block' }}>Energy Level</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {(['calm', 'balanced', 'high-energy'] as const).map(opt => (
+                      <button key={opt} type="button" onClick={() => setEnergyLevel(energyLevel === opt ? '' : opt)} style={{
+                        padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                        borderColor: energyLevel === opt ? '#8b5cf6' : '#e5e7eb',
+                        background: energyLevel === opt ? '#f5f3ff' : '#fff',
+                        color: energyLevel === opt ? '#8b5cf6' : '#6b7280',
+                      }}>
+                        {opt === 'calm' ? '😌 Calm' : opt === 'balanced' ? '⚖️ Balanced' : '⚡ High-Energy'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Honesty Style */}
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                  <div style={{ ...labelStyle, marginBottom: 8, display: 'block' }}>Honesty Style</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {(['supportive', 'direct', 'tough-love'] as const).map(opt => (
+                      <button key={opt} type="button" onClick={() => setHonestyStyle(honestyStyle === opt ? '' : opt)} style={{
+                        padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                        borderColor: honestyStyle === opt ? '#f59e0b' : '#e5e7eb',
+                        background: honestyStyle === opt ? '#fffbeb' : '#fff',
+                        color: honestyStyle === opt ? '#d97706' : '#6b7280',
+                      }}>
+                        {opt === 'supportive' ? '🤗 Supportive' : opt === 'direct' ? '🎯 Direct' : '💪 Tough Love'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Humor */}
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                  <div style={{ ...labelStyle, marginBottom: 8, display: 'block' }}>Humor</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {(['none', 'light', 'sarcastic'] as const).map(opt => (
+                      <button key={opt} type="button" onClick={() => setHumor(humor === opt ? '' : opt)} style={{
+                        padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                        borderColor: humor === opt ? '#10b981' : '#e5e7eb',
+                        background: humor === opt ? '#ecfdf5' : '#fff',
+                        color: humor === opt ? '#059669' : '#6b7280',
+                      }}>
+                        {opt === 'none' ? '🧱 None' : opt === 'light' ? '😄 Light' : '😏 Sarcastic'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* Response Format */}
+                <div style={{ padding: '12px 14px', borderRadius: 10, background: '#f9fafb', border: '1px solid #e5e7eb' }}>
+                  <div style={{ ...labelStyle, marginBottom: 8, display: 'block' }}>Response Format</div>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5 }}>
+                    {(['short-punchy', 'detailed', 'bullet-lists'] as const).map(opt => (
+                      <button key={opt} type="button" onClick={() => setResponseFormat(responseFormat === opt ? '' : opt)} style={{
+                        padding: '4px 10px', borderRadius: 6, fontSize: 11, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                        borderColor: responseFormat === opt ? '#3b82f6' : '#e5e7eb',
+                        background: responseFormat === opt ? '#eff6ff' : '#fff',
+                        color: responseFormat === opt ? '#2563eb' : '#6b7280',
+                      }}>
+                        {opt === 'short-punchy' ? '⚡ Short & Punchy' : opt === 'detailed' ? '📝 Detailed' : '• Bullet Lists'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-            <Form.Item name="welcomeMessage" label={<span style={labelStyle}>Welcome Message</span>} rules={[{ required: true }]} style={{ marginBottom: 0 }}>
+
+            {/* Signature Phrases */}
+            <div style={{ marginBottom: 14 }}>
+              <span style={{ ...labelStyle, display: 'block', marginBottom: 6 }}>
+                Signature Phrases <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#9ca3af', fontSize: 10 }}>— things you actually say (optional)</span>
+              </span>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+                {signaturePhrases.map((phrase, i) => (
+                  <Input key={i} value={phrase} onChange={(e) => {
+                    const next = [...signaturePhrases];
+                    next[i] = e.target.value;
+                    setSignaturePhrases(next);
+                  }} placeholder={`e.g. "${["Let's get it", "No excuses", "Consistency is king"][i]}"`} style={inputStyle} />
+                ))}
+              </div>
+            </div>
+
+            {/* Opinionated Topics */}
+            <div style={{ marginBottom: 14 }}>
+              <span style={{ ...labelStyle, display: 'block', marginBottom: 6 }}>
+                Strong Opinion Topics <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#9ca3af', fontSize: 10 }}>— AI speaks with conviction here</span>
+              </span>
+              <div style={{ display: 'flex', gap: 8, marginBottom: 6 }}>
+                <Input value={topicInput} onChange={e => setTopicInput(e.target.value)}
+                  onPressEnter={() => {
+                    if (topicInput.trim()) { setOpinionatedTopics(prev => [...prev, topicInput.trim()]); setTopicInput(''); }
+                  }}
+                  placeholder="Type a topic and press Enter" style={{ ...inputStyle, flex: 1 }} />
+                <button type="button" onClick={() => {
+                  if (topicInput.trim()) { setOpinionatedTopics(prev => [...prev, topicInput.trim()]); setTopicInput(''); }
+                }} style={{ padding: '0 14px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', height: 40 }}>
+                  Add
+                </button>
+              </div>
+              {opinionatedTopics.length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                  {opinionatedTopics.map((t, i) => (
+                    <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, padding: '3px 10px', borderRadius: 99, background: '#f3f4f6', fontSize: 11, fontWeight: 600, color: '#374151' }}>
+                      {t}
+                      <button type="button" onClick={() => setOpinionatedTopics(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', lineHeight: 1, padding: 0, fontSize: 14 }}>×</button>
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Scenario Training */}
+            {(() => {
+              const answered = fewShotAnswers.filter(a => a.trim().length > 0).length;
+              const pct = Math.round((answered / 10) * 100);
+              const strengthLabel = answered === 0 ? 'Not started' : answered <= 3 ? 'Weak' : answered <= 6 ? 'Getting there' : answered <= 9 ? 'Strong' : 'Fully trained';
+              const strengthColor = answered === 0 ? '#9ca3af' : answered <= 3 ? '#ef4444' : answered <= 6 ? '#f59e0b' : answered <= 9 ? '#3b82f6' : '#10b981';
+              return (
+                <div style={{ marginBottom: 14, padding: '14px 14px 12px', borderRadius: 10, border: '1px solid #e5e7eb', background: '#fafafa' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+                    <span style={{ ...labelStyle, display: 'block' }}>
+                      Scenario Training <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#9ca3af', fontSize: 10 }}>— teach your AI how you actually talk</span>
+                    </span>
+                    <span style={{ fontSize: 10, fontWeight: 700, color: strengthColor }}>{answered}/10 · {strengthLabel}</span>
+                  </div>
+                  <div style={{ height: 4, borderRadius: 99, background: '#f3f4f6', marginBottom: 12, overflow: 'hidden' }}>
+                    <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: `linear-gradient(90deg, ${strengthColor}, ${strengthColor}cc)`, transition: 'width 0.4s ease' }} />
+                  </div>
+                  {/* Single question view */}
+                  <div style={{ minHeight: 100, marginBottom: 12 }}>
+                    <div style={{ fontSize: 11, fontWeight: 600, color: '#374151', marginBottom: 6, lineHeight: 1.5 }}>
+                      {currentScenario + 1}. {SCENARIO_QUESTIONS[currentScenario]}
+                    </div>
+                    <TextArea
+                      rows={3}
+                      value={fewShotAnswers[currentScenario]}
+                      onChange={e => { const next = [...fewShotAnswers]; next[currentScenario] = e.target.value; setFewShotAnswers(next); }}
+                      placeholder="Your answer in your own words..."
+                      style={{ ...textareaStyle, fontSize: 12 }}
+                    />
+                  </div>
+                  {/* Numbered pagination */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <button type="button" onClick={() => setCurrentScenario(i => Math.max(0, i - 1))} disabled={currentScenario === 0}
+                      style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, border: '1px solid #e5e7eb', background: '#fff', color: currentScenario === 0 ? '#d1d5db' : '#374151', cursor: currentScenario === 0 ? 'not-allowed' : 'pointer' }}>
+                      ← Prev
+                    </button>
+                    <div style={{ display: 'flex', gap: 4 }}>
+                      {SCENARIO_QUESTIONS.map((_, i) => {
+                        const isActive = i === currentScenario;
+                        const isDone = fewShotAnswers[i]?.trim().length > 0;
+                        return (
+                          <button key={i} type="button" onClick={() => setCurrentScenario(i)} style={{
+                            width: 24, height: 24, borderRadius: 6, fontSize: 10, fontWeight: 700, border: '1.5px solid',
+                            borderColor: isActive ? '#ff3e48' : isDone ? '#10b981' : '#e5e7eb',
+                            background: isActive ? '#ff3e48' : isDone ? '#ecfdf5' : '#fff',
+                            color: isActive ? '#fff' : isDone ? '#10b981' : '#9ca3af',
+                            cursor: 'pointer', transition: 'all 0.15s ease',
+                          }}>
+                            {i + 1}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <button type="button" onClick={() => setCurrentScenario(i => Math.min(9, i + 1))} disabled={currentScenario === 9}
+                      style={{ padding: '4px 12px', borderRadius: 6, fontSize: 11, fontWeight: 600, border: '1px solid #e5e7eb', background: '#fff', color: currentScenario === 9 ? '#d1d5db' : '#374151', cursor: currentScenario === 9 ? 'not-allowed' : 'pointer' }}>
+                      Next →
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
+
+            <Form.Item name="welcomeMessage" label={<span style={labelStyle}>Welcome Message</span>} rules={[{ required: true, message: 'Add a welcome message' }]} style={{ marginBottom: 0 }}>
               <Input placeholder="First thing your AI says to new fans" style={inputStyle} />
             </Form.Item>
           </Form>

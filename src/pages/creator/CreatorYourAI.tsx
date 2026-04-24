@@ -23,6 +23,19 @@ const labelStyle: React.CSSProperties = {
   fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6, display: 'block',
 };
 
+export const SCENARIO_QUESTIONS = [
+  "A fan says they keep making excuses not to show up. What do you tell them?",
+  "A fan asks what your biggest mistake was early in your journey.",
+  "A fan asks your honest opinion on a controversial topic in your space.",
+  "A complete beginner asks where to start. What's your first advice?",
+  "A fan asks how you stay motivated when you really don't feel like it.",
+  "A fan is comparing themselves to others and feeling behind. What do you say?",
+  "A fan asks what one piece of advice you'd give your younger self.",
+  "A fan wants to know what a typical day looks like for you.",
+  "A fan asks what's the most overrated thing people do in your niche.",
+  "A fan asks what separates people who succeed from those who don't.",
+];
+
 const CreatorYourAI = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
@@ -31,6 +44,17 @@ const CreatorYourAI = () => {
   const [aiTone, setAiTone] = useState(user?.creator?.aiTone || '');
   const [aiPersonality, setAiPersonality] = useState(user?.creator?.aiPersonality || '');
   const [welcomeMessage, setWelcomeMessage] = useState(user?.creator?.welcomeMessage || '');
+
+  // Structured Persona Config
+  const [energyLevel, setEnergyLevel] = useState<'calm' | 'balanced' | 'high-energy' | ''>('');
+  const [honestyStyle, setHonestyStyle] = useState<'supportive' | 'direct' | 'tough-love' | ''>('');
+  const [humor, setHumor] = useState<'none' | 'light' | 'sarcastic' | ''>('');
+  const [responseFormat, setResponseFormat] = useState<'short-punchy' | 'detailed' | 'bullet-lists' | ''>('');
+  const [signaturePhrases, setSignaturePhrases] = useState<string[]>(['', '', '']);
+  const [opinionatedTopics, setOpinionatedTopics] = useState<string[]>([]);
+  const [topicInput, setTopicInput] = useState('');
+  const [fewShotAnswers, setFewShotAnswers] = useState<string[]>(Array(10).fill(''));
+  const [currentScenario, setCurrentScenario] = useState(0);
   const [savingAi, setSavingAi] = useState(false);
 
   // Knowledge Base
@@ -90,6 +114,26 @@ const CreatorYourAI = () => {
           if (creator.aiTone) setAiTone(creator.aiTone);
           if (creator.aiPersonality) setAiPersonality(creator.aiPersonality);
           if (creator.welcomeMessage) setWelcomeMessage(creator.welcomeMessage);
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const pc = creator.personaConfig as any;
+          if (pc) {
+            if (pc.energyLevel) setEnergyLevel(pc.energyLevel);
+            if (pc.honestyStyle) setHonestyStyle(pc.honestyStyle);
+            if (pc.humor) setHumor(pc.humor);
+            if (pc.responseFormat) setResponseFormat(pc.responseFormat);
+            if (pc.signaturePhrases) setSignaturePhrases([...pc.signaturePhrases, '', '', ''].slice(0, 3));
+            if (pc.opinionatedTopics) setOpinionatedTopics(pc.opinionatedTopics);
+          }
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const qa = creator.fewShotQA as any[];
+          if (Array.isArray(qa)) {
+            const answers = Array(10).fill('');
+            qa.forEach((item: { scenario: string; answer: string }) => {
+              const idx = SCENARIO_QUESTIONS.indexOf(item.scenario);
+              if (idx !== -1) answers[idx] = item.answer || '';
+            });
+            setFewShotAnswers(answers);
+          }
           dispatch(updateUser({ creator: { ...user?.creator, ...creator } } as Parameters<typeof updateUser>[0]));
         }
       } catch {}
@@ -150,7 +194,19 @@ const CreatorYourAI = () => {
   const handleSaveAi = async () => {
     setSavingAi(true);
     try {
-      await creatorApi.updateProfile({ aiTone, aiPersonality, welcomeMessage });
+      const filledPhrases = signaturePhrases.filter(p => p.trim());
+      const personaConfig = {
+        ...(energyLevel && { energyLevel }),
+        ...(honestyStyle && { honestyStyle }),
+        ...(humor && { humor }),
+        ...(responseFormat && { responseFormat }),
+        ...(filledPhrases.length > 0 && { signaturePhrases: filledPhrases }),
+        ...(opinionatedTopics.length > 0 && { opinionatedTopics }),
+      };
+      const fewShotQA = SCENARIO_QUESTIONS
+        .map((scenario, i) => ({ scenario, answer: fewShotAnswers[i]?.trim() || '' }))
+        .filter(qa => qa.answer.length > 0);
+      await creatorApi.updateProfile({ aiTone, aiPersonality, welcomeMessage, personaConfig, fewShotQA });
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       dispatch(updateUser({ creator: { ...user?.creator, aiTone, aiPersonality, welcomeMessage } } as any));
       showMsg('AI settings saved!');
@@ -386,12 +442,17 @@ const CreatorYourAI = () => {
                 {faqCount > 0 && <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}><HelpCircle size={12} style={{ color: '#fbbf24' }} /> {faqCount} FAQ{faqCount > 1 ? 's' : ''}</div>}
               </div>
 
-              {aiPersonality && (
+              {(energyLevel || honestyStyle || humor || responseFormat) && (
                 <div style={{ marginTop: 14, padding: '12px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.06)', fontSize: 12, color: 'rgba(255,255,255,0.6)', lineHeight: 1.6 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6, color: 'rgba(255,255,255,0.4)', fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                    <MessageSquare size={10} /> AI Personality
+                    <MessageSquare size={10} /> Persona Style
                   </div>
-                  {aiPersonality.substring(0, 200)}{aiPersonality.length > 200 ? '...' : ''}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {energyLevel && <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(139,92,246,0.2)', color: '#c4b5fd', fontSize: 11, fontWeight: 600 }}>{energyLevel}</span>}
+                    {honestyStyle && <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(245,158,11,0.2)', color: '#fcd34d', fontSize: 11, fontWeight: 600 }}>{honestyStyle}</span>}
+                    {humor && humor !== 'none' && <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(16,185,129,0.2)', color: '#6ee7b7', fontSize: 11, fontWeight: 600 }}>{humor} humor</span>}
+                    {responseFormat && <span style={{ padding: '2px 8px', borderRadius: 6, background: 'rgba(59,130,246,0.2)', color: '#93c5fd', fontSize: 11, fontWeight: 600 }}>{responseFormat}</span>}
+                  </div>
                 </div>
               )}
             </div>
@@ -405,31 +466,132 @@ const CreatorYourAI = () => {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}><Bot size={18} /></div>
           <div>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>AI Personality</h3>
-            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>How your CreatorPal talks and behaves</p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Pick how your CreatorPal sounds — the AI uses these exactly</p>
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14, marginBottom: 14 }}>
-          <div>
-            <label style={labelStyle}>Communication Tone</label>
-            <select value={aiTone} onChange={(e) => setAiTone(e.target.value)} style={{ ...inputStyle, height: 40 }}>
-              <option value="">Select tone</option>
-              <option value="friendly">Friendly & Approachable</option>
-              <option value="professional">Professional</option>
-              <option value="casual">Casual & Genuine</option>
-              <option value="inspiring">Inspiring & High-Energy</option>
-              <option value="educational">Educational</option>
-            </select>
+        {/* 2×2 button group grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
+          {/* Energy Level */}
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+            <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Energy Level</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {(['calm', 'balanced', 'high-energy'] as const).map(opt => (
+                <button key={opt} type="button" onClick={() => setEnergyLevel(energyLevel === opt ? '' : opt)} style={{
+                  padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                  borderColor: energyLevel === opt ? '#8b5cf6' : '#e5e7eb',
+                  background: energyLevel === opt ? '#f5f3ff' : '#fff',
+                  color: energyLevel === opt ? '#8b5cf6' : '#6b7280',
+                }}>
+                  {opt === 'calm' ? '😌 Calm' : opt === 'balanced' ? '⚖️ Balanced' : '⚡ High-Energy'}
+                </button>
+              ))}
+            </div>
           </div>
-          <div>
-            <label style={labelStyle}>Welcome Message</label>
-            <input type="text" value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} placeholder="First thing your AI says" style={inputStyle} />
+
+          {/* Honesty Style */}
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+            <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Honesty Style</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {(['supportive', 'direct', 'tough-love'] as const).map(opt => (
+                <button key={opt} type="button" onClick={() => setHonestyStyle(honestyStyle === opt ? '' : opt)} style={{
+                  padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                  borderColor: honestyStyle === opt ? '#f59e0b' : '#e5e7eb',
+                  background: honestyStyle === opt ? '#fffbeb' : '#fff',
+                  color: honestyStyle === opt ? '#d97706' : '#6b7280',
+                }}>
+                  {opt === 'supportive' ? '🤗 Supportive' : opt === 'direct' ? '🎯 Direct' : '💪 Tough Love'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Humor */}
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+            <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Humor</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {(['none', 'light', 'sarcastic'] as const).map(opt => (
+                <button key={opt} type="button" onClick={() => setHumor(humor === opt ? '' : opt)} style={{
+                  padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                  borderColor: humor === opt ? '#10b981' : '#e5e7eb',
+                  background: humor === opt ? '#ecfdf5' : '#fff',
+                  color: humor === opt ? '#059669' : '#6b7280',
+                }}>
+                  {opt === 'none' ? '🧱 None' : opt === 'light' ? '😄 Light' : '😏 Sarcastic'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Response Format */}
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+            <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Response Format</label>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {(['short-punchy', 'detailed', 'bullet-lists'] as const).map(opt => (
+                <button key={opt} type="button" onClick={() => setResponseFormat(responseFormat === opt ? '' : opt)} style={{
+                  padding: '5px 12px', borderRadius: 7, fontSize: 12, fontWeight: 600, cursor: 'pointer', border: '1.5px solid',
+                  borderColor: responseFormat === opt ? '#3b82f6' : '#e5e7eb',
+                  background: responseFormat === opt ? '#eff6ff' : '#fff',
+                  color: responseFormat === opt ? '#2563eb' : '#6b7280',
+                }}>
+                  {opt === 'short-punchy' ? '⚡ Short & Punchy' : opt === 'detailed' ? '📝 Detailed' : '• Bullet Lists'}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
-        <div style={{ marginBottom: 14 }}>
-          <label style={labelStyle}>AI Personality (System Prompt)</label>
-          <textarea value={aiPersonality} onChange={(e) => setAiPersonality(e.target.value)} placeholder="Describe your AI persona..." rows={3} style={{ ...inputStyle, resize: 'none' }} />
+
+        {/* Signature Phrases — 3 horizontal inputs */}
+        <div style={{ marginBottom: 16 }}>
+          <label style={labelStyle}>Signature Phrases <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#b0b8c1' }}>— things you actually say (optional)</span></label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
+            {signaturePhrases.map((phrase, i) => (
+              <input key={i} type="text" value={phrase} onChange={(e) => {
+                const next = [...signaturePhrases];
+                next[i] = e.target.value;
+                setSignaturePhrases(next);
+              }} placeholder={`e.g. "${["Let's get it", "No excuses", "Consistency is king"][i]}"`} style={inputStyle} />
+            ))}
+          </div>
         </div>
+
+        {/* Opinionated Topics */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={labelStyle}>Topics You Have Strong Opinions On <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#b0b8c1' }}>— AI speaks with conviction here</span></label>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+            <input type="text" value={topicInput} onChange={e => setTopicInput(e.target.value)}
+              onKeyDown={e => {
+                if ((e.key === 'Enter' || e.key === ',') && topicInput.trim()) {
+                  e.preventDefault();
+                  setOpinionatedTopics(prev => [...prev, topicInput.trim()]);
+                  setTopicInput('');
+                }
+              }}
+              placeholder="Type a topic and press Enter" style={{ ...inputStyle, flex: 1 }} />
+            <button type="button" onClick={() => {
+              if (topicInput.trim()) { setOpinionatedTopics(prev => [...prev, topicInput.trim()]); setTopicInput(''); }
+            }} style={{ padding: '0 16px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
+              Add
+            </button>
+          </div>
+          {opinionatedTopics.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {opinionatedTopics.map((t, i) => (
+                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, background: '#f3f4f6', fontSize: 12, fontWeight: 600, color: '#374151' }}>
+                  {t}
+                  <button type="button" onClick={() => setOpinionatedTopics(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', lineHeight: 1, padding: 0 }}>×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Welcome Message */}
+        <div style={{ marginBottom: 18 }}>
+          <label style={labelStyle}>Welcome Message</label>
+          <input type="text" value={welcomeMessage} onChange={(e) => setWelcomeMessage(e.target.value)} placeholder="First thing your AI says to a new fan" style={inputStyle} />
+        </div>
+
         <button type="button" onClick={handleSaveAi} disabled={savingAi} style={{
           display: 'flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 8,
           background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
@@ -437,6 +599,89 @@ const CreatorYourAI = () => {
           <Save size={14} /> {savingAi ? 'Saving...' : 'Save AI Settings'}
         </button>
       </div>
+
+      {/* Scenario Training */}
+      {(() => {
+        const answered = fewShotAnswers.filter(a => a.trim().length > 0).length;
+        const pct = Math.round((answered / 10) * 100);
+        const strengthLabel = answered === 0 ? 'Not started' : answered <= 3 ? 'Weak' : answered <= 6 ? 'Getting there' : answered <= 9 ? 'Strong' : 'Fully trained';
+        const strengthColor = answered === 0 ? '#9ca3af' : answered <= 3 ? '#ef4444' : answered <= 6 ? '#f59e0b' : answered <= 9 ? '#3b82f6' : '#10b981';
+        return (
+          <div style={{ ...card, marginBottom: 20 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5b1f' }}><MessageSquare size={18} /></div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Scenario Training</h3>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: strengthColor }}>{answered}/10 — {strengthLabel}</span>
+                </div>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>Answer these in your own voice — the AI learns exactly how you talk</p>
+              </div>
+            </div>
+
+            {/* Strength bar */}
+            <div style={{ height: 6, borderRadius: 99, background: '#f3f4f6', marginBottom: 16, overflow: 'hidden' }}>
+              <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: `linear-gradient(90deg, ${strengthColor}, ${strengthColor}cc)`, transition: 'width 0.4s ease' }} />
+            </div>
+
+            {/* Single question view */}
+            <div style={{ minHeight: 110, marginBottom: 14 }}>
+              <label style={{ ...labelStyle, color: '#374151', display: 'block', marginBottom: 8, lineHeight: 1.5 }}>
+                {currentScenario + 1}. {SCENARIO_QUESTIONS[currentScenario]}
+              </label>
+              <textarea
+                value={fewShotAnswers[currentScenario]}
+                onChange={e => {
+                  const next = [...fewShotAnswers];
+                  next[currentScenario] = e.target.value;
+                  setFewShotAnswers(next);
+                }}
+                placeholder="Write your answer here in your own words..."
+                rows={3}
+                style={{ ...inputStyle, resize: 'vertical', padding: '8px 12px', minHeight: 72, fontSize: 13, lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
+              />
+            </div>
+
+            {/* Numbered pagination */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <button type="button" onClick={() => setCurrentScenario(i => Math.max(0, i - 1))} disabled={currentScenario === 0}
+                style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid #e5e7eb', background: '#fff', color: currentScenario === 0 ? '#d1d5db' : '#374151', cursor: currentScenario === 0 ? 'not-allowed' : 'pointer' }}>
+                ← Prev
+              </button>
+              <div style={{ display: 'flex', gap: 5 }}>
+                {SCENARIO_QUESTIONS.map((_, i) => {
+                  const isActive = i === currentScenario;
+                  const isDone = fewShotAnswers[i]?.trim().length > 0;
+                  return (
+                    <button key={i} type="button" onClick={() => setCurrentScenario(i)} style={{
+                      width: 28, height: 28, borderRadius: 7, fontSize: 11, fontWeight: 700, border: '1.5px solid',
+                      borderColor: isActive ? '#ff5b1f' : isDone ? '#10b981' : '#e5e7eb',
+                      background: isActive ? '#ff5b1f' : isDone ? '#ecfdf5' : '#fff',
+                      color: isActive ? '#fff' : isDone ? '#10b981' : '#9ca3af',
+                      cursor: 'pointer', transition: 'all 0.15s ease',
+                    }}>
+                      {i + 1}
+                    </button>
+                  );
+                })}
+              </div>
+              <button type="button" onClick={() => setCurrentScenario(i => Math.min(9, i + 1))} disabled={currentScenario === 9}
+                style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid #e5e7eb', background: '#fff', color: currentScenario === 9 ? '#d1d5db' : '#374151', cursor: currentScenario === 9 ? 'not-allowed' : 'pointer' }}>
+                Next →
+              </button>
+            </div>
+
+            <div style={{ marginTop: 14, borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
+              <button type="button" onClick={handleSaveAi} disabled={savingAi} style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', borderRadius: 8,
+                background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+              }}>
+                <Save size={14} /> {savingAi ? 'Saving...' : 'Save Answers'}
+              </button>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Voice Clone */}
       <div style={{ ...card, marginBottom: 20 }}>

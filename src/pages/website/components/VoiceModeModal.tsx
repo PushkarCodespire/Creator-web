@@ -10,6 +10,7 @@ type Props = {
   creatorName: string;
   creatorAvatar: string | null;
   onMessageSent?: () => void;
+  voiceProvider?: 'chatterbox' | 'inworld' | 'elevenlabs';
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -31,7 +32,7 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent }: Props) {
+export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent, voiceProvider }: Props) {
   const [state, setState] = useState<ModalState>('idle');
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
@@ -219,7 +220,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     }
 
     try {
-      const res = await chatApi.sendMessage(conversationId, text, undefined, true);
+      const res = await chatApi.sendMessage(conversationId, text, undefined, true, voiceProvider);
       const aiMsg = res.data?.data?.aiMessage;
 
       if (aiMsg?.audioUrl) {

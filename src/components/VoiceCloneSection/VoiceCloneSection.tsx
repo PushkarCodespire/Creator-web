@@ -30,6 +30,7 @@ export function VoiceCloneSection({ onStatusChange, compact = false }: Props) {
 
   // Voice state
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+  const [voiceProvider, setVoiceProvider] = useState<'chatterbox' | 'inworld' | 'elevenlabs'>('chatterbox');
   const [voiceUploading, setVoiceUploading] = useState(false);
   const [voiceError, setVoiceError] = useState('');
   const [msg, setMsg] = useState('');
@@ -53,6 +54,9 @@ export function VoiceCloneSection({ onStatusChange, compact = false }: Props) {
         if (data?.status) {
           setVoiceStatus(data.status);
           onStatusChange?.(data.status);
+        }
+        if (data?.voiceProvider) {
+          setVoiceProvider(data.voiceProvider as 'chatterbox' | 'inworld' | 'elevenlabs');
         }
       } catch {
         // ignore - new creator, no voice yet
@@ -79,6 +83,7 @@ export function VoiceCloneSection({ onStatusChange, compact = false }: Props) {
     try {
       const formData = new FormData();
       formData.append('audio', file);
+      formData.append('voiceProvider', voiceProvider);
       const res = await contentApi.uploadVoiceClone(formData);
       updateStatus(res.data.data?.status || 'READY');
       setIsReplacing(false); // return to Active view after successful upload
@@ -130,6 +135,7 @@ export function VoiceCloneSection({ onStatusChange, compact = false }: Props) {
         try {
           const formData = new FormData();
           formData.append('audio', blob, 'voice-recording.webm');
+          formData.append('voiceProvider', voiceProvider);
           const res = await contentApi.uploadVoiceClone(formData);
           updateStatus(res.data.data?.status || 'READY');
           setIsReplacing(false); // return to Active view after successful recording upload
@@ -274,6 +280,7 @@ export function VoiceCloneSection({ onStatusChange, compact = false }: Props) {
       ) : (
         /* Default: Record + Upload options */
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 14 }}>
+
           <Mic size={24} style={{ color: '#9ca3af' }} />
           <p style={{ fontSize: 13, color: '#9ca3af', margin: 0, textAlign: 'center' }}>
             {isReplacing
