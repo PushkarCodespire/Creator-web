@@ -379,7 +379,7 @@ export default function WebsiteProfile() {
             <span className={styles.statLabel}>Rating</span>
           </div>
           <div className={styles.stat}>
-            <span className={styles.statValue}>{creator.totalChats || 0}</span>
+            <span className={styles.statValue}>{creator.totalAiAnswers ?? creator.performance?.totalChats ?? 0}</span>
             <span className={styles.statLabel}>Chats</span>
           </div>
           <div className={styles.stat}>
@@ -460,7 +460,7 @@ export default function WebsiteProfile() {
                     </div>
                   )}
                   <div className={styles.perfItem}>
-                    <div className={styles.perfValue}>{creator.totalChats || 0}</div>
+                    <div className={styles.perfValue}>{creator.totalAiAnswers ?? creator.performance?.totalChats ?? 0}</div>
                     <div className={styles.perfLabel}>Total Chats</div>
                   </div>
                   {creator.firstMessageFree && (

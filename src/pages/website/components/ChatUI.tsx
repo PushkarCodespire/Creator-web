@@ -159,6 +159,7 @@ export function ChatUI({ creatorId }: Props) {
   const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
+  const [showVoiceUpgradeModal, setShowVoiceUpgradeModal] = useState(false);
   // Which voice engine the listener wants the AI reply spoken with.
   // Persisted per-user in localStorage so the choice sticks across sessions.
   const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>(() => {
@@ -726,6 +727,7 @@ export function ChatUI({ creatorId }: Props) {
         creatorName={creatorName}
         creatorAvatar={creator?.profileImage || null}
         voiceProvider={voiceProvider}
+        onVoiceBlocked={() => setShowVoiceUpgradeModal(true)}
         onMessageSent={() => {
           // Refresh messages after voice message
           if (conversationId) {
@@ -741,6 +743,25 @@ export function ChatUI({ creatorId }: Props) {
           }
         }}
       />
+      {showVoiceUpgradeModal && (
+        <div className={styles.modalOverlay} role="dialog" aria-modal="true" aria-labelledby="voice-modal-title">
+          <div className={styles.modal}>
+            <div className={styles.modalIcon} aria-hidden>&#9835;</div>
+            <h2 id="voice-modal-title" className={styles.modalTitle}>Voice limit reached</h2>
+            <p className={styles.modalBody}>
+              You&apos;ve used your 2 free voice replies. Subscribe to unlock unlimited voice conversations with {firstName}.
+            </p>
+            <div className={styles.modalActions}>
+              <button type="button" className={styles.modalPrimary} onClick={() => {
+                localStorage.setItem('checkoutReturnTo', window.location.pathname);
+                setShowVoiceUpgradeModal(false);
+                navigate('/pricing');
+              }}>View Plans</button>
+              <button type="button" className={styles.modalSecondary} onClick={() => setShowVoiceUpgradeModal(false)}>Go back</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

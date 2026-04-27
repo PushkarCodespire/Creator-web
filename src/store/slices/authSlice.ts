@@ -129,6 +129,13 @@ const authSlice = createSlice({
     setProfileComplete: (state, action: PayloadAction<boolean>) => {
       state.isProfileComplete = action.payload;
       localStorage.setItem('isProfileComplete', String(action.payload));
+    },
+    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
+      state.user = action.payload.user;
+      state.token = action.payload.token;
+      state.isAuthenticated = true;
+      localStorage.setItem('user', JSON.stringify(action.payload.user));
+      localStorage.setItem('token', action.payload.token);
     }
   },
   extraReducers: (builder) => {
@@ -186,5 +193,5 @@ const authSlice = createSlice({
   }
 });
 
-export const { logout, clearError, updateUser, setProfileComplete } = authSlice.actions;
+export const { logout, clearError, updateUser, setProfileComplete, loginSuccess } = authSlice.actions;
 export default authSlice.reducer;

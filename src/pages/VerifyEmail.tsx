@@ -4,10 +4,13 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
-import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, SafetyCertificateFilled, ArrowRightOutlined, RocketOutlined } from '@ant-design/icons';
+import { CheckCircleFilled, CloseCircleFilled, LoadingOutlined, SafetyCertificateFilled, ArrowRightOutlined, RocketOutlined, MailOutlined } from '@ant-design/icons';
 import { message, Spin } from 'antd';
 import api from '../services/api';
+import { loginSuccess } from '../store/slices/authSlice';
+import type { RootState, AppDispatch } from '../store';
 import '../styles/Auth.css';
 
 const TESTIMONIALS = [
@@ -33,10 +36,13 @@ const TESTIMONIALS = [
 
 const VerifyEmail = () => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
+  const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
 
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!!token);
+  const [isPending, setIsPending] = useState(!token);
   const [isSuccess, setIsSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -55,7 +61,7 @@ const VerifyEmail = () => {
   useEffect(() => {
     const verifyEmail = async () => {
       if (!token) {
-        setError('Invalid or missing verification token.');
+        setIsPending(true);
         setIsLoading(false);
         return;
       }
@@ -65,6 +71,11 @@ const VerifyEmail = () => {
         const response = await api.post('/auth/verify-email', { token });
 
         if (response.data.success) {
+          // Log the user in on this device using the token returned by the server
+          const { user: verifiedUser, token: jwtToken } = response.data.data || {};
+          if (verifiedUser && jwtToken) {
+            dispatch(loginSuccess({ user: verifiedUser, token: jwtToken }));
+          }
           setIsSuccess(true);
           setError(null);
           setSuccessMessage(response.data.message || 'Email verified successfully.');
@@ -93,6 +104,10 @@ const VerifyEmail = () => {
   }, [token]);
 
   const handleResend = async () => {
+    if (!isAuthenticated) {
+      navigate('/login?redirect=/verify-email');
+      return;
+    }
     try {
       setResendStatus('sending');
       setResendMessage(null);
@@ -119,6 +134,7 @@ const VerifyEmail = () => {
 
   return (
     <div className="register-container">
+      <div className="auth-card">
       {/* Left Brand Panel */}
       <div className="brand-panel">
         <div className="brand-content">
@@ -183,9 +199,53 @@ const VerifyEmail = () => {
           {isLoading ? (
             <>
               <div className="form-header">
-                <Spin indicator={<LoadingOutlined style={{ fontSize: 64, color: '#667EEA' }} spin />} />
+                <Spin indicator={<LoadingOutlined style={{ fontSize: 64, color: '#ff3e48' }} spin />} />
                 <h2 className="form-title" style={{ marginTop: '32px' }}>Verifying Identity...</h2>
                 <p className="form-subtitle">Please wait while we confirm your email address.</p>
+              </div>
+            </>
+          ) : isPending ? (
+            <>
+              <div className="form-header">
+                <MailOutlined style={{ fontSize: '64px', color: '#ff3e48', marginBottom: '24px' }} />
+                <h2 className="form-title">Check your inbox</h2>
+                <p className="form-subtitle">
+                  We sent a verification link to your email address. Click the link to activate your account.
+                </p>
+              </div>
+
+              <div style={{ background: 'rgba(255,62,72,0.06)', border: '1px solid rgba(255,62,72,0.2)', borderRadius: 12, padding: 24, marginBottom: 32 }}>
+                <p style={{ margin: 0, fontSize: '0.9rem', lineHeight: '1.6' }}>
+                  The link expires in <strong>24 hours</strong>. If you don't see it, check your spam folder.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="submit-btn"
+                onClick={handleResend}
+                disabled={resendStatus === 'sent' || resendStatus === 'sending'}
+                style={{ marginBottom: '16px', background: resendStatus === 'sent' ? '#9CA3AF' : '#ff3e48' }}
+              >
+                {resendStatus === 'sending' ? (
+                  <span><LoadingOutlined /> Resending...</span>
+                ) : resendStatus === 'sent' ? (
+                  'Email Sent'
+                ) : (
+                  'Resend Verification Email'
+                )}
+              </button>
+
+              {resendMessage && (
+                <div style={{ marginTop: '8px' }}>
+                  <span style={{ color: resendStatus === 'error' ? '#EF4444' : '#10B981', fontSize: '0.875rem' }}>
+                    {resendMessage}
+                  </span>
+                </div>
+              )}
+
+              <div style={{ textAlign: 'center', marginTop: '24px' }}>
+                <Link to="/login" style={{ color: '#4B5563', fontWeight: 500 }}>Back to Login</Link>
               </div>
             </>
           ) : isSuccess ? (
@@ -198,12 +258,12 @@ const VerifyEmail = () => {
                 </p>
               </div>
 
-              <div style={{ background: '#F0FDF4', border: '1px solid #BBF7D0', borderRadius: 12, padding: 24, marginBottom: 32 }}>
+              <div style={{ background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.25)', borderRadius: 12, padding: 24, marginBottom: 32 }}>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', textAlign: 'left' }}>
                   <RocketOutlined style={{ fontSize: '24px', color: '#10B981' }} />
                   <div>
-                    <h4 style={{ margin: 0, color: '#064E3B' }}>Account Ready</h4>
-                    <p style={{ margin: 0, color: '#065F46', fontSize: '0.9rem' }}>You're all set to start your creative journey.</p>
+                    <h4 style={{ margin: 0 }}>Account Ready</h4>
+                    <p style={{ margin: 0, fontSize: '0.9rem' }}>You're all set to start your creative journey.</p>
                   </div>
                 </div>
               </div>
@@ -211,10 +271,21 @@ const VerifyEmail = () => {
               <button
                 type="button"
                 className="submit-btn"
-                onClick={() => navigate('/login')}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px' }}
+                onClick={() => {
+                  try {
+                    const u = JSON.parse(localStorage.getItem('user') || '{}');
+                    if (u?.role === 'CREATOR') navigate('/onboarding/creator');
+                    else if (u?.role === 'COMPANY') navigate('/company-dashboard');
+                    else if (u?.role === 'ADMIN') navigate('/admin');
+                    else if (u?.role === 'USER') navigate('/');
+                    else navigate('/login');
+                  } catch {
+                    navigate('/login');
+                  }
+                }}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', background: '#ff3e48', borderRadius: 10 }}
               >
-                Go to Dashboard <ArrowRightOutlined />
+                Let's Get Started <ArrowRightOutlined />
               </button>
             </>
           ) : (
@@ -227,8 +298,8 @@ const VerifyEmail = () => {
                 </p>
               </div>
 
-              <div style={{ background: '#FEF2F2', border: '1px solid #FECACA', borderRadius: 12, padding: 24, marginBottom: 32 }}>
-                <p style={{ margin: 0, color: '#991B1B', fontSize: '0.95rem', lineHeight: '1.6' }}>
+              <div style={{ background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 12, padding: 24, marginBottom: 32 }}>
+                <p style={{ margin: 0, fontSize: '0.95rem', lineHeight: '1.6' }}>
                   If your link expired, you can request a new one below. Make sure to check your spam folder.
                 </p>
               </div>
@@ -238,7 +309,7 @@ const VerifyEmail = () => {
                 className="submit-btn"
                 onClick={handleResend}
                 disabled={resendStatus === 'sent'}
-                style={{ marginBottom: '16px', background: resendStatus === 'sent' ? '#9CA3AF' : '#667EEA' }}
+                style={{ marginBottom: '16px', background: resendStatus === 'sent' ? '#9CA3AF' : '#ff3e48' }}
               >
                 {resendStatus === 'sending' ? (
                   <span><LoadingOutlined /> Resending...</span>
@@ -254,7 +325,7 @@ const VerifyEmail = () => {
                   Back to Login
                 </Link>
                 <span style={{ margin: '0 12px', color: '#D1D5DB' }}>|</span>
-                <Link to="/register" style={{ color: '#667EEA', fontWeight: 600 }}>
+                <Link to="/register" style={{ color: '#ff3e48', fontWeight: 600 }}>
                   Create New Account
                 </Link>
               </div>
@@ -269,6 +340,7 @@ const VerifyEmail = () => {
             </>
           )}
         </div>
+      </div>
       </div>
     </div>
   );

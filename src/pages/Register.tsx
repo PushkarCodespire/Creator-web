@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -45,6 +45,7 @@ const Register = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const justRegisteredRef = useRef(false);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -54,7 +55,7 @@ const Register = () => {
   }, []);
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !justRegisteredRef.current) {
       const userRole = role as string;
       if (userRole === 'CREATOR') {
         navigate('/onboarding/creator');
@@ -98,6 +99,7 @@ const Register = () => {
     if (!validateForm()) return;
 
     try {
+      justRegisteredRef.current = true;
       await dispatch(register({
         email: email.trim(),
         password,
@@ -106,7 +108,8 @@ const Register = () => {
         dateOfBirth: dateOfBirth || undefined,
         location: location.trim() || undefined,
       })).unwrap();
-      message.success('Account created successfully!');
+      message.success('Account created! Please check your email to verify.');
+      navigate('/verify-email');
     } catch (err: unknown) {
       if (typeof err === 'string' && err.includes('already exists')) {
         setErrors({ email: 'An account with this email already exists' });

@@ -10,6 +10,7 @@ type Props = {
   creatorName: string;
   creatorAvatar: string | null;
   onMessageSent?: () => void;
+  onVoiceBlocked?: () => void;
   voiceProvider?: 'chatterbox' | 'inworld' | 'elevenlabs';
 };
 
@@ -32,7 +33,7 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent, voiceProvider }: Props) {
+export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent, onVoiceBlocked, voiceProvider }: Props) {
   const [state, setState] = useState<ModalState>('idle');
   const [transcript, setTranscript] = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
@@ -221,6 +222,13 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
 
     try {
       const res = await chatApi.sendMessage(conversationId, text, undefined, true, voiceProvider);
+
+      if (res.data?.data?.voice?.blocked) {
+        onClose();
+        onVoiceBlocked?.();
+        return;
+      }
+
       const aiMsg = res.data?.data?.aiMessage;
 
       if (aiMsg?.audioUrl) {

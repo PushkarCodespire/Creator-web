@@ -104,6 +104,7 @@ const FanChatView = () => {
   const [isAIStreaming, setIsAIStreaming] = useState(false);
   const [rateLimitStatus, setRateLimitStatus] = useState<RateLimitStatus | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [upgradeModalReason, setUpgradeModalReason] = useState<'voice_limit' | undefined>(undefined);
   const [showGuestLimitModal, setShowGuestLimitModal] = useState(false);
   const [_loadingMessages, setLoadingMessages] = useState(false);
 
@@ -407,6 +408,7 @@ const FanChatView = () => {
     // Check rate limit locally if data available
     if (rateLimitStatus?.limits?.daily?.remaining !== undefined && rateLimitStatus.limits.daily.remaining <= 0) {
       if (isAuthenticated) {
+        setUpgradeModalReason(undefined);
         setShowUpgradeModal(true);
       } else {
         setShowGuestLimitModal(true);
@@ -482,6 +484,12 @@ const FanChatView = () => {
       // In non-streaming scenarios ensure typing indicator is cleared
       setIsTyping(false);
 
+      // Show upgrade modal if voice was blocked (free trial exhausted)
+      if (response.data?.data?.voice?.blocked) {
+        setUpgradeModalReason('voice_limit');
+        setShowUpgradeModal(true);
+      }
+
       // Update token usage if provided (premium users)
       if (response.data?.data?.tokens) {
         const tokens = response.data.data.tokens;
@@ -531,6 +539,7 @@ const FanChatView = () => {
       // Handle rate limit error
       if (err.response?.status === 429) {
         if (isAuthenticated) {
+          setUpgradeModalReason(undefined);
           setShowUpgradeModal(true);
         } else {
           setShowGuestLimitModal(true);
@@ -1304,8 +1313,9 @@ const FanChatView = () => {
       </Modal>
       <UpgradeModal
         visible={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
+        onClose={() => { setShowUpgradeModal(false); setUpgradeModalReason(undefined); }}
         remainingMessages={rateLimitStatus?.limits?.daily?.remaining || 0}
+        reason={upgradeModalReason}
       />
       <GuestLimitModal
         visible={showGuestLimitModal}

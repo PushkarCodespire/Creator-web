@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, DollarSign, Plus, ChevronLeft, ChevronRight, Sparkles, X, Trash2 } from 'lucide-react';
 import { bookingApi, creatorApi } from '../../services/api';
-import { message as antMessage } from 'antd';
+import { message as antMessage, Select } from 'antd';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -11,6 +11,28 @@ const card: React.CSSProperties = {
 };
 
 const SLOT_TYPES = ['consultation', 'coaching', 'review'];
+
+const getTodayDateStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+const getNowTimeStr = () => {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+
+const getNextHourStr = () => {
+  const d = new Date();
+  const next = d.getHours() + 1;
+  return next > 23 ? '23:00' : `${String(next).padStart(2, '0')}:00`;
+};
+
+// Generate hourly time options for the day.
+const TIME_OPTIONS: string[] = [];
+for (let h = 0; h < 24; h++) {
+  TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:00`);
+}
 const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
@@ -115,8 +137,9 @@ const CreatorBookings = () => {
 
   // Open modal for a date
   const openModal = (dateStr: string) => {
+    const defaultTime = dateStr === getTodayDateStr() ? getNextHourStr() : '10:00';
     setModalDate(dateStr);
-    setTimeSlots([{ startTime: '10:00', type: 'consultation', price: '' }]);
+    setTimeSlots([{ startTime: defaultTime, type: 'consultation', price: '' }]);
     setModalError('');
     setShowModal(true);
   };
@@ -504,8 +527,17 @@ const CreatorBookings = () => {
                   <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     {/* Time */}
                     <div style={{ flex: 1 }}>
-                      <input type="time" value={ts.startTime} onChange={(e) => updateTimeSlot(idx, 'startTime', e.target.value)}
-                        style={{ width: '100%', padding: '10px 12px', borderRadius: 10, border: '1px solid #ede8e3', fontSize: 14, outline: 'none', fontFamily: 'inherit', colorScheme: 'light', background: '#fafaf8' }} />
+                      <Select
+                        value={ts.startTime}
+                        onChange={(val) => updateTimeSlot(idx, 'startTime', val)}
+                        style={{ width: '100%' }}
+                        listHeight={200}
+                        popupMatchSelectWidth={false}
+                        options={TIME_OPTIONS.map(t => {
+                          const isPast = modalDate === getTodayDateStr() && t <= getNowTimeStr();
+                          return { value: t, label: t, disabled: isPast };
+                        })}
+                      />
                     </div>
                     {/* Type */}
                     <div style={{ width: 120 }}>

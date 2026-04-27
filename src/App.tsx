@@ -132,6 +132,7 @@ function App() {
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
         </Route>
         <Route path="/website-chat/:creatorId" element={<WebsiteChat />} />
 
@@ -143,7 +144,6 @@ function App() {
           <Route path="/creator/:id" element={<CreatorProfile />} />
           <Route path="/profile/:userId" element={<UserProfile />} />
           <Route path="/posts/:id" element={<Feed />} />
-          <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* Sprint 5 pages */}
           <Route path="/trending" element={<Trending />} />

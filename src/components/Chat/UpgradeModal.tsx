@@ -16,9 +16,10 @@ interface UpgradeModalProps {
     onClose: () => void;
     remainingMessages: number;
     resetAt?: string;
+    reason?: 'voice_limit';
 }
 
-const UpgradeModal: React.FC<UpgradeModalProps> = ({ visible, onClose, remainingMessages, resetAt }) => {
+const UpgradeModal: React.FC<UpgradeModalProps> = ({ visible, onClose, remainingMessages, resetAt, reason }) => {
     const navigate = useNavigate();
 
     const handleUpgrade = () => {
@@ -42,6 +43,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ visible, onClose, remaining
         { text: '5 messages/day per creator', included: true },
         { text: 'Basic AI responses', included: true },
         { text: 'Limited conversation history', included: true },
+        { text: '2 free voice replies (lifetime)', included: true },
         { text: 'Daily limit resets', included: false },
         { text: 'Priority support', included: false },
         { text: 'Advanced AI models', included: false },
@@ -49,6 +51,7 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ visible, onClose, remaining
 
     const premiumPlanFeatures = [
         { text: 'Unlimited messages', included: true },
+        { text: 'Unlimited voice replies', included: true },
         { text: 'Advanced AI responses', included: true },
         { text: 'Full conversation history', included: true },
         { text: 'No daily limits', included: true },
@@ -82,12 +85,16 @@ const UpgradeModal: React.FC<UpgradeModalProps> = ({ visible, onClose, remaining
                         <CrownOutlined />
                     </div>
                     <Title level={2} style={{ marginBottom: '8px', fontWeight: 800 }}>
-                        {remainingMessages === 0 ? 'Daily Message Limit Reached' : 'Upgrade to Premium'}
+                        {reason === 'voice_limit'
+                            ? 'Voice Limit Reached'
+                            : remainingMessages === 0 ? 'Daily Message Limit Reached' : 'Upgrade to Premium'}
                     </Title>
                     <Text style={{ color: '#64748B', fontSize: '16px' }}>
-                        {remainingMessages === 0
-                            ? `Your free messages will reset in ${getTimeUntilReset()}`
-                            : `You have ${remainingMessages} message${remainingMessages === 1 ? '' : 's'} remaining today`
+                        {reason === 'voice_limit'
+                            ? "You've used your 2 free voice replies. Upgrade to Premium for unlimited voice."
+                            : remainingMessages === 0
+                                ? `Your free messages will reset in ${getTimeUntilReset()}`
+                                : `You have ${remainingMessages} message${remainingMessages === 1 ? '' : 's'} remaining today`
                         }
                     </Text>
                 </div>
