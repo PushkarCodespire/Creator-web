@@ -45,7 +45,6 @@ Object.defineProperty(import.meta, 'env', {
   value: {
     VITE_API_URL: 'http://localhost:5000',
     VITE_SOCKET_URL: 'http://localhost:5000',
-    VITE_DEMO_MODE: 'false',
     MODE: 'test',
     DEV: true,
     PROD: false,

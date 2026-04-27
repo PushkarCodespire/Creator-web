@@ -73,6 +73,21 @@ describe('CreatorDashboardHome', () => {
     expect(screen.getByText(/here's how your creatorpal is doing today/i)).toBeInTheDocument();
   });
 
+  it('renders stat cards with data', async () => {
+    renderWithProviders(<CreatorDashboardHome />, {
+      preloadedState: {
+        auth: { user: { name: 'Test Creator' } as any, token: 'tok', isAuthenticated: true, isLoading: false, error: null },
+      },
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('Questions Answered')).toBeInTheDocument();
+    });
+
+    expect(screen.getByText('Total Earnings')).toBeInTheDocument();
+    expect(screen.getByText('Followers')).toBeInTheDocument();
+  });
+
   it('renders quick action buttons', async () => {
     renderWithProviders(<CreatorDashboardHome />, {
       preloadedState: {

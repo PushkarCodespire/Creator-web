@@ -263,6 +263,24 @@ describe('authSlice', () => {
       expect(localStorageMock.setItem).toHaveBeenCalledWith('isProfileComplete', 'false');
     });
 
+    it('handles non-wrapped response format', async () => {
+      mockedAuthApi.register.mockResolvedValueOnce({
+        data: {
+          success: false,
+          data: { user: mockUser, token: 'reg-tok-2' },
+        },
+      });
+
+      const store = createStore();
+      await store.dispatch(
+        register({ email: 'a@b.com', password: 'pw', name: 'Test' }),
+      );
+
+      const { auth } = store.getState();
+      expect(auth.user).toEqual(mockUser);
+      expect(auth.token).toBe('reg-tok-2');
+    });
+
     it('sets error on failure', async () => {
       mockedAuthApi.register.mockRejectedValueOnce({
         response: { data: { error: 'Email taken' } },

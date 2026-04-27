@@ -134,6 +134,20 @@ describe('socket', () => {
       expect(mockEmit).toHaveBeenCalledWith('authenticate', { userId: 'user-123' });
     });
 
+    it('reads userId from localStorage if not provided directly', () => {
+      localStorage.setItem('user', JSON.stringify({ id: 'stored-user-id' }));
+
+      connectSocket('token');
+
+      const connectHandler = mockOn.mock.calls.find(
+        (call) => call[0] === 'connect'
+      )?.[1];
+
+      connectHandler();
+
+      expect(mockEmit).toHaveBeenCalledWith('authenticate', { userId: 'stored-user-id' });
+    });
+
     it('handles invalid JSON in localStorage gracefully', () => {
       localStorage.setItem('user', 'not-json');
 

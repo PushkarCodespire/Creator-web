@@ -1,21 +1,46 @@
 import { renderWithProviders } from '../../../__tests__/helpers/renderWithProviders';
+import { screen, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
+
+const mockGetById = vi.fn().mockResolvedValue({
+  data: {
+    data: {
+      id: 'c1',
+      displayName: 'Test Creator',
+      tagline: 'Fitness Coach',
+      about: 'Expert in fitness',
+      category: 'Fitness',
+      isVerified: true,
+      profileImage: '/img.png',
+      rating: 4.5,
+      totalChats: 100,
+      faqs: [{ question: 'Q1', answer: 'A1' }],
+    },
+  },
+});
 
 vi.mock('../../../services/api', () => ({
-  default: { get: vi.fn().mockResolvedValue({ data: {} }), post: vi.fn().mockResolvedValue({ data: {} }) },
-  creatorApi: { getCreatorProfile: vi.fn().mockResolvedValue({ data: { data: null } }) },
-  reviewApi: { getCreatorReviews: vi.fn().mockResolvedValue({ data: { data: [] } }) },
-  programApi: { getCreatorPrograms: vi.fn().mockResolvedValue({ data: { data: [] } }) },
-  bookingApi: { getCreatorAvailability: vi.fn().mockResolvedValue({ data: { data: [] } }) },
-  followApi: { getFollowStatus: vi.fn().mockResolvedValue({ data: { data: { isFollowing: false } } }) },
-  getImageUrl: vi.fn((p: string) => p || ''),
+  default: { get: vi.fn().mockResolvedValue({ data: {} }) },
+  creatorApi: { getById: mockGetById },
+  reviewApi: {
+    getByCreator: vi.fn().mockResolvedValue({ data: { data: { reviews: [] } } }),
+    create: vi.fn().mockResolvedValue({ data: {} }),
+  },
+  programApi: {
+    getByCreator: vi.fn().mockResolvedValue({ data: { data: [] } }),
+  },
+  bookingApi: {
+    getPublicSlots: vi.fn().mockResolvedValue({ data: { data: [] } }),
+    requestBooking: vi.fn().mockResolvedValue({ data: {} }),
+  },
+  getImageUrl: vi.fn((p: string) => p),
 }));
 
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom');
   return {
     ...actual,
-    useParams: () => ({ slug: 'test-creator' }),
-    useSearchParams: () => [new URLSearchParams(), vi.fn()],
+    useParams: vi.fn(() => ({ creatorId: 'c1' })),
   };
 });
 
@@ -23,12 +48,20 @@ import WebsiteProfile from '../WebsiteProfile';
 
 describe('WebsiteProfile', () => {
   it('renders without crashing', () => {
-    const { container } = renderWithProviders(<WebsiteProfile />);
-    expect(container.firstChild).toBeTruthy();
+    renderWithProviders(<WebsiteProfile />);
+    // Loading state initially
+    expect(document.querySelector('[class]')).toBeTruthy();
   });
 
-  it('renders loading or content state', () => {
-    const { container } = renderWithProviders(<WebsiteProfile />);
-    expect(container).toBeTruthy();
+  it('renders creator profile after load', async () => {
+    renderWithProviders(<WebsiteProfile />);
+    await waitFor(() => {
+      expect(screen.getByText('Test Creator')).toBeInTheDocument();
+    });
+  });
+
+  it('calls getById API with correct id', () => {
+    renderWithProviders(<WebsiteProfile />);
+    expect(mockGetById).toHaveBeenCalledWith('c1');
   });
 });

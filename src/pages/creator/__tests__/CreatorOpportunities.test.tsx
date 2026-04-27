@@ -1,24 +1,53 @@
 import { renderWithProviders } from '../../../__tests__/helpers/renderWithProviders';
-
-vi.mock('../../../services/api', () => ({
-  opportunityApi: {
-    getAll: vi.fn().mockResolvedValue({ data: { data: { opportunities: [], pagination: { total: 0, totalPages: 1, page: 1, limit: 10 } } } }),
-    apply: vi.fn().mockResolvedValue({ data: {} }),
-  },
-  creatorApi: {
-    getProfile: vi.fn().mockResolvedValue({ data: { data: null } }),
-  },
-}));
+import { screen, waitFor } from '@testing-library/react';
+import { vi } from 'vitest';
 
 vi.mock('../../../utils/logger', () => ({
   logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
 
+vi.mock('../../../services/api', () => ({
+  opportunityApi: {
+    getAll: vi.fn().mockResolvedValue({
+      data: {
+        data: {
+          opportunities: [
+            {
+              id: 'o1',
+              title: 'Fitness Brand Collab',
+              type: 'SPONSORED_POST',
+              budget: 5000,
+              status: 'OPEN',
+              company: { name: 'FitCo' },
+              category: 'Fitness',
+            },
+          ],
+          pagination: { total: 1 },
+        },
+      },
+    }),
+    apply: vi.fn().mockResolvedValue({ data: { success: true } }),
+  },
+  creatorApi: {
+    getApplications: vi.fn().mockResolvedValue({
+      data: {
+        data: {
+          applications: [],
+          pagination: { total: 0 },
+        },
+      },
+    }),
+  },
+}));
+
 import CreatorOpportunities from '../CreatorOpportunities';
 
 describe('CreatorOpportunities', () => {
-  it('renders without crashing', () => {
-    const { container } = renderWithProviders(<CreatorOpportunities />);
-    expect(container.firstChild).toBeTruthy();
+  it('renders the opportunities page', async () => {
+    renderWithProviders(<CreatorOpportunities />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Fitness Brand Collab')).toBeInTheDocument();
+    });
   });
 });

@@ -49,6 +49,13 @@ describe('RevenueChart', () => {
     expect(screen.getByText('No revenue data analyzed yet.')).toBeInTheDocument();
   });
 
+  it('renders chart title and trend info', () => {
+    renderWithProviders(<RevenueChart data={mockData} />);
+    expect(screen.getByText('Revenue Projection')).toBeInTheDocument();
+    expect(screen.getByText('INCREASING')).toBeInTheDocument();
+    expect(screen.getByText(/15%/)).toBeInTheDocument();
+  });
+
   it('renders the chart container', () => {
     renderWithProviders(<RevenueChart data={mockData} />);
     expect(screen.getByTestId('responsive-container')).toBeInTheDocument();
