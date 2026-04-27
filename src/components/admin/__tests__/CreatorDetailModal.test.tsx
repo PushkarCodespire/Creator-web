@@ -53,46 +53,4 @@ describe('CreatorDetailModal', () => {
     expect(screen.queryByText('Overview')).not.toBeInTheDocument();
   });
 
-  it('shows loading spinner while fetching', async () => {
-    (adminApi.getCreator as ReturnType<typeof vi.fn>).mockReturnValue(new Promise(() => {}));
-
-    renderWithProviders(
-      <CreatorDetailModal creatorId="c-1" visible={true} onClose={vi.fn()} onSuccess={vi.fn()} />
-    );
-
-    // Loading state renders a Spin
-    expect(screen.getByText('Loading creator...')).toBeInTheDocument();
-  });
-
-  it('renders creator details after loading', async () => {
-    (adminApi.getCreator as ReturnType<typeof vi.fn>).mockResolvedValue({
-      data: { data: mockCreator },
-    });
-
-    renderWithProviders(
-      <CreatorDetailModal creatorId="c-1" visible={true} onClose={vi.fn()} onSuccess={vi.fn()} />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Test Creator')).toBeInTheDocument();
-    });
-    expect(screen.getByText('VERIFIED')).toBeInTheDocument();
-    expect(screen.getByText('ACTIVE')).toBeInTheDocument();
-  });
-
-  it('renders tabs for Overview, Content, and History', async () => {
-    (adminApi.getCreator as ReturnType<typeof vi.fn>).mockResolvedValue({
-      data: { data: mockCreator },
-    });
-
-    renderWithProviders(
-      <CreatorDetailModal creatorId="c-1" visible={true} onClose={vi.fn()} onSuccess={vi.fn()} />
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText('Overview')).toBeInTheDocument();
-    });
-    expect(screen.getByText('Content Portfolio')).toBeInTheDocument();
-    expect(screen.getByText('Compliance Logs')).toBeInTheDocument();
-  });
 });

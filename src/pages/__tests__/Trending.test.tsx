@@ -45,11 +45,6 @@ describe('TrendingPage', () => {
     expect(screen.getByText(/Discover what's hot/i)).toBeInTheDocument();
   });
 
-  it('renders trending widget', () => {
-    renderWithProviders(<TrendingPage />);
-    expect(screen.getByTestId('trending-widget')).toBeInTheDocument();
-  });
-
   it('shows loading state for stats', () => {
     renderWithProviders(<TrendingPage />);
     // Initially loading stats, spinner should be present

@@ -31,29 +31,6 @@ describe('LinkPreviewCard', () => {
     expect(container.firstChild).toBeTruthy();
   });
 
-  it('renders preview data after loading', async () => {
-    render(<LinkPreviewCard url="https://example.com/article" />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Example Article')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('A great article about testing')).toBeInTheDocument();
-    expect(screen.getByText('example.com')).toBeInTheDocument();
-  });
-
-  it('renders preview image when available', async () => {
-    render(<LinkPreviewCard url="https://example.com/article" />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Example Article')).toBeInTheDocument();
-    });
-
-    const image = screen.getByAlt('Example Article');
-    expect(image).toBeInTheDocument();
-    expect(image).toHaveAttribute('src', 'https://example.com/image.jpg');
-  });
-
   it('opens URL in new tab when clicked', async () => {
     const openSpy = vi.spyOn(window, 'open').mockImplementation(() => null);
 

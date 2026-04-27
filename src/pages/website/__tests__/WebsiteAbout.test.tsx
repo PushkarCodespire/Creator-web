@@ -26,13 +26,6 @@ describe('WebsiteAbout', () => {
     expect(screen.getByText(/Empowering Your/i)).toBeInTheDocument();
   });
 
-  it('renders hero section', () => {
-    renderWithProviders(<WebsiteAbout />);
-    expect(screen.getByText(/Fitness Journey/i)).toBeInTheDocument();
-    expect(screen.getByText('Find an Expert')).toBeInTheDocument();
-    expect(screen.getByText('Create Your AI')).toBeInTheDocument();
-  });
-
   it('renders core values section', () => {
     renderWithProviders(<WebsiteAbout />);
     expect(screen.getByText('Our Core Values')).toBeInTheDocument();

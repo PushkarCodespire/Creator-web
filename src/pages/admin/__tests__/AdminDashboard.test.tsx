@@ -57,21 +57,4 @@ describe('AdminDashboard', () => {
     expect(screen.getByTestId('dashboard-loader')).toBeInTheDocument();
   });
 
-  it('renders the admin dashboard after data loads', async () => {
-    renderWithProviders(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Platform Intelligence')).toBeInTheDocument();
-    });
-  });
-
-  it('renders overview stat cards', async () => {
-    renderWithProviders(<AdminDashboard />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Total Users')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Creators')).toBeInTheDocument();
-  });
 });

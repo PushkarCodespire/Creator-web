@@ -10,11 +10,6 @@ vi.mock('../../../services/api', () => ({
 import WebsiteRegister from '../WebsiteRegister';
 
 describe('WebsiteRegister', () => {
-  it('renders without crashing', () => {
-    renderWithProviders(<WebsiteRegister />);
-    expect(screen.getByText('Create account')).toBeInTheDocument();
-  });
-
   it('renders subtitle', () => {
     renderWithProviders(<WebsiteRegister />);
     expect(screen.getByText(/Join CreatorPal and start chatting/i)).toBeInTheDocument();

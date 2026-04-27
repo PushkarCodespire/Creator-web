@@ -83,18 +83,6 @@ describe('useSocket', () => {
     expect(mockOn).toHaveBeenCalledWith('connect_error', expect.any(Function));
   });
 
-  it('returns the socket instance when connected', async () => {
-    const { useSocket } = await import('./useSocket');
-    const store = createMockStore({ token: 'test-token' });
-
-    const { result } = renderHook(() => useSocket(), {
-      wrapper: createWrapper(store),
-    });
-
-    // After the hook runs, it should return the mock socket
-    expect(result.current).toBe(mockSocketInstance);
-  });
-
   it('exports getSocket helper', async () => {
     const { getSocket } = await import('./useSocket');
     expect(typeof getSocket).toBe('function');

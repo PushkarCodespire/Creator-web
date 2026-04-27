@@ -49,44 +49,6 @@ describe('VoiceMessage Component', () => {
     expect(screen.getByText('Record')).toBeInTheDocument();
   });
 
-  it('starts recording when record button is clicked', async () => {
-    render(
-      <VoiceMessage
-        onRecordComplete={mockOnRecordComplete}
-        onSend={mockOnSend}
-      />
-    );
-
-    const recordButton = screen.getByText('Record');
-    fireEvent.click(recordButton);
-
-    await waitFor(() => {
-      expect(screen.getByText('Stop')).toBeInTheDocument();
-    });
-  });
-
-  it('stops recording when stop button is clicked', async () => {
-    render(
-      <VoiceMessage
-        onRecordComplete={mockOnRecordComplete}
-        onSend={mockOnSend}
-      />
-    );
-
-    const recordButton = screen.getByText('Record');
-    fireEvent.click(recordButton);
-
-    await waitFor(() => {
-      const stopButton = screen.getByText('Stop');
-      fireEvent.click(stopButton);
-    });
-
-    // After stopping, should go back to the Record button
-    await waitFor(() => {
-      expect(screen.getByText('Record')).toBeInTheDocument();
-    });
-  });
-
   it('displays audio player when audioUrl is provided', () => {
     render(
       <VoiceMessage

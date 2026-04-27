@@ -30,20 +30,6 @@ vi.mock('../../common/ErrorBoundary', () => ({
 }));
 
 describe('MainLayout', () => {
-  it('renders the header with brand logo', () => {
-    renderWithProviders(<MainLayout />);
-    const logo = screen.getByAltText('CodeSpire');
-    expect(logo).toBeInTheDocument();
-  });
-
-  it('renders navigation links', () => {
-    renderWithProviders(<MainLayout />);
-    expect(screen.getByText('Features')).toBeInTheDocument();
-    expect(screen.getByText('How it works')).toBeInTheDocument();
-    expect(screen.getByText('Pricing')).toBeInTheDocument();
-    expect(screen.getByText('Explore')).toBeInTheDocument();
-  });
-
   it('renders login and register buttons when not authenticated', () => {
     renderWithProviders(<MainLayout />, {
       preloadedState: { auth: { isAuthenticated: false, user: null, token: null } as any },

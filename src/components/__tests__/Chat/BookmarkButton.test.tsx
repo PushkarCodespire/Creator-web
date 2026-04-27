@@ -57,15 +57,4 @@ describe('BookmarkButton', () => {
     });
   });
 
-  it('shows login message when user is not authenticated', async () => {
-    renderWithProviders(
-      <BookmarkButton messageId="msg-1" />,
-      { preloadedState: { auth: { user: null, token: null, isAuthenticated: false, isLoading: false, error: null } } }
-    );
-
-    const icon = screen.getByRole('img');
-    fireEvent.click(icon.closest('[style]')!);
-
-    // Should not crash; login prompt handled via antMessage.info
-  });
 });

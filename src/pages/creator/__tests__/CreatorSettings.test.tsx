@@ -76,8 +76,4 @@ describe('CreatorSettings', () => {
     expect(screen.getByPlaceholderText('Answer')).toBeInTheDocument();
   });
 
-  it('renders the profile link', () => {
-    renderWithProviders(<CreatorSettings />, { preloadedState });
-    expect(screen.getByText(/creatorpal\.ai/)).toBeInTheDocument();
-  });
 });

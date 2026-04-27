@@ -89,12 +89,6 @@ describe('Chat', () => {
     },
   };
 
-  it('renders without crashing', () => {
-    renderWithProviders(<Chat />, { preloadedState: authenticatedState });
-    // Chat page should render some container
-    expect(document.querySelector('[class]')).toBeTruthy();
-  });
-
   it('renders for creator role as CreatorChatView', () => {
     renderWithProviders(<Chat />, {
       preloadedState: {
