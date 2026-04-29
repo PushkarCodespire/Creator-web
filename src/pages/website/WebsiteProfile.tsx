@@ -132,6 +132,11 @@ export default function WebsiteProfile() {
   const [editText, setEditText] = useState('');
   const [editSubmitting, setEditSubmitting] = useState(false);
   const [deletingReviewId, setDeletingReviewId] = useState<string | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [reviewData, setReviewData] = useState<{ reviews: any[]; summary: { averageRating: number; totalReviews: number; breakdown: Record<string, number> } }>({
+    reviews: [],
+    summary: { averageRating: 0, totalReviews: 0, breakdown: {} }
+  });
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const [isFollowing, setIsFollowing] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
@@ -140,6 +145,20 @@ export default function WebsiteProfile() {
   useEffect(() => {
     window.scrollTo(0, 0);
   }, []);
+
+  const fetchReviews = async () => {
+    if (!creatorId) return;
+    try {
+      const res = await reviewApi.getReviews(creatorId, { page: 1, limit: 50, sort: 'newest' });
+      const payload = res?.data?.data || {};
+      setReviewData({
+        reviews: payload.reviews || [],
+        summary: payload.summary || { averageRating: 0, totalReviews: 0, breakdown: {} }
+      });
+    } catch {
+      // keep existing review data on error
+    }
+  };
 
   const fetchProfileData = async () => {
     if (!creatorId) return;
@@ -159,6 +178,7 @@ export default function WebsiteProfile() {
     } finally {
       setLoading(false);
     }
+    fetchReviews();
   };
 
   useEffect(() => {
@@ -209,8 +229,7 @@ export default function WebsiteProfile() {
       setReviewMsg('Review submitted!');
       setReviewRating(0);
       setReviewText('');
-      const res = await creatorApi.getById(creatorId);
-      setCreator(res.data.data);
+      await fetchReviews();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
       setReviewMsg(e?.response?.data?.error?.message || e?.response?.data?.message || 'Failed to submit review');
@@ -240,8 +259,7 @@ export default function WebsiteProfile() {
       setEditingReviewId(null);
       setEditRating(0);
       setEditText('');
-      const res = await creatorApi.getById(creatorId);
-      setCreator(res.data.data);
+      await fetchReviews();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: { message?: string }; message?: string } } };
       setReviewMsg(e?.response?.data?.error?.message || e?.response?.data?.message || 'Failed to update review');
@@ -255,8 +273,7 @@ export default function WebsiteProfile() {
     setDeletingReviewId(reviewId);
     try {
       await reviewApi.delete(creatorId, reviewId);
-      const res = await creatorApi.getById(creatorId);
-      setCreator(res.data.data);
+      await fetchReviews();
     } catch {
       setReviewMsg('Failed to delete review');
     } finally {
@@ -293,9 +310,8 @@ export default function WebsiteProfile() {
   );
 
   const faqs = creator.faqs || [];
-  const reviews = creator.reviews || {};
-  const reviewList = reviews.reviews || [];
-  const reviewSummary = reviews.summary || { averageRating: 0, totalReviews: 0, breakdown: {} };
+  const reviewList = reviewData.reviews;
+  const reviewSummary = reviewData.summary;
   const topics = creator.topicExpertise || [];
   const perf = creator.performance || {};
   const content = creator.content || [];
