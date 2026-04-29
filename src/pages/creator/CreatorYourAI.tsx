@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
+import { message as antMessage } from 'antd';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
 import { creatorApi, contentApi } from '../../services/api';
@@ -237,8 +238,12 @@ const CreatorYourAI = () => {
       setYtUrl(''); setYtPreview(''); setShowAddYoutube(false);
       await fetchContents();
     } catch (e: unknown) {
-      const err = e as { response?: { data?: { error?: string } } };
-      showMsg(err?.response?.data?.error || 'Failed to add');
+      const err = e as { response?: { data?: { error?: string }; status?: number }; message?: string };
+      if (err?.response?.status === 429) {
+        antMessage.warning("You've reached the daily limit of 5 YouTube videos. Try again tomorrow.", 5);
+      } else {
+        showMsg(err?.response?.data?.error || err?.message || 'Failed to add');
+      }
     } finally { setSaving(false); }
   };
 

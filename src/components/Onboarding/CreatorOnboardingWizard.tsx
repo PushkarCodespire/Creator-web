@@ -177,14 +177,19 @@ export const CreatorOnboardingWizard: React.FC = () => {
       } else if (activeTab === 'knowledge') {
         const validYoutube = youtubeUrls.filter(url => url.trim() !== '');
         let youtubeErrors = 0;
+        let rateLimited = false;
         for (const url of validYoutube) {
           try {
             await contentApi.addYouTube(url);
-          } catch {
+          } catch (e: unknown) {
+            const err = e as { response?: { status?: number } };
+            if (err?.response?.status === 429) { rateLimited = true; break; }
             youtubeErrors++;
           }
         }
-        if (youtubeErrors > 0) {
+        if (rateLimited) {
+          antMessage.warning("You've reached the daily limit of 5 YouTube videos. Remaining URLs were skipped.", 5);
+        } else if (youtubeErrors > 0) {
           antMessage.warning(`${youtubeErrors} YouTube video(s) couldn't be processed. You can add content manually instead.`);
         }
         for (const mt of manualTexts) {
