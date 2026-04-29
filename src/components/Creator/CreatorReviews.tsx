@@ -131,17 +131,18 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
         payload.items ||
         payload.data ||
         [];
-      const statsData = payload.stats || payload.data?.stats || null;
+      const statsData = payload.summary || payload.stats || payload.data?.stats || null;
       const paginationData = payload.pagination || payload.data?.pagination || null;
+      const totalReviews = statsData?.totalReviews ?? paginationData?.total ?? (Array.isArray(reviewsData) ? reviewsData.length : 0);
 
       setReviews(Array.isArray(reviewsData) ? reviewsData : []);
       setStats(statsData);
       setPagination((prev) => ({
         ...prev,
-        total: paginationData?.total ?? (Array.isArray(reviewsData) ? reviewsData.length : 0),
+        total: totalReviews,
         totalPages:
           paginationData?.totalPages ??
-          Math.max(1, Math.ceil((paginationData?.total ?? (Array.isArray(reviewsData) ? reviewsData.length : 0)) / prev.limit))
+          Math.max(1, Math.ceil(totalReviews / prev.limit))
       }));
     } catch (error: unknown) {
       logger.error('Failed to fetch reviews:', error);
@@ -353,7 +354,7 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
         ) : (
           <div>
             {reviews.map((review) => {
-              const isMine = review.userId === user?.id;
+              const isMine = review.user?.id === user?.id || review.userId === user?.id;
               return (
                 <div
                   key={review.id}
@@ -380,7 +381,7 @@ const CreatorReviews = ({ creatorId, creatorName }: CreatorReviewsProps) => {
                       </div>
                       <Rate allowHalf disabled value={review.rating || 0} style={{ fontSize: 16 }} />
                       <div style={{ marginTop: spacing[2], color: colors.gray[700] }}>
-                        {review.review && review.review.trim().length > 0 ? review.review : 'No written feedback.'}
+                        {(review.comment || review.review)?.trim() || 'No written feedback.'}
                       </div>
                     </div>
                   </div>

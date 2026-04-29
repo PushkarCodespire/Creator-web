@@ -224,6 +224,7 @@ export interface Review {
   creatorId: string;
   userId: string;
   rating: number;
+  comment?: string | null;
   review?: string | null;
   createdAt: string;
   updatedAt?: string;
