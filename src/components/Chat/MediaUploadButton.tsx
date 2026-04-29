@@ -148,6 +148,7 @@ export const MediaUploadButton: React.FC<MediaUploadButtonProps> = ({ onMediaUpl
         open={previewVisible}
         title={`Selected Files (${selectedFiles.length}/5)`}
         onCancel={handleCancel}
+        destroyOnHidden
         footer={[
           <CustomButton key="cancel" onClick={handleCancel} disabled={uploading}>
             Cancel

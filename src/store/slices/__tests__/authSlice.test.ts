@@ -267,7 +267,8 @@ describe('authSlice', () => {
       mockedAuthApi.register.mockResolvedValueOnce({
         data: {
           success: false,
-          data: { user: mockUser, token: 'reg-tok-2' },
+          user: mockUser,
+          token: 'reg-tok-2',
         },
       });
 

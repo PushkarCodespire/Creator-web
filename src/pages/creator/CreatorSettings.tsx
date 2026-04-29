@@ -55,10 +55,10 @@ const CreatorSettings = () => {
         const faqContent = contents.filter((c: { type: string }) => c.type === 'FAQ');
         if (faqContent.length > 0) {
           // Try to extract FAQ items from content
-          const items = faqContent.map((c: { title?: string; rawText?: string; _count?: { chunks?: number }; id: string }) => ({
+          const items = faqContent.map((c: { title?: string; rawText?: string; _count?: { chunks?: number; views?: number }; id: string }) => ({
             q: c.title || 'Question',
             a: c.rawText || '',
-            views: c._count?.chunks || 0,
+            views: c._count?.views || 0,
             id: c.id,
           }));
           setFaqs(items);

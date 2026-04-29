@@ -47,12 +47,73 @@ describe('TrendingPage', () => {
 
   it('renders trending widget', () => {
     renderWithProviders(<TrendingPage />);
-    expect(screen.getByTestId('trending-widget')).toBeInTheDocument();
+    expect(screen.getAllByTestId('trending-widget')[0]).toBeInTheDocument();
   });
 
   it('shows loading state for stats', () => {
     renderWithProviders(<TrendingPage />);
     // Initially loading stats, spinner should be present
     expect(document.querySelector('.ant-spin')).toBeTruthy();
+  });
+
+  it('renders the TrendingWidget component', () => {
+    renderWithProviders(<TrendingPage />);
+    expect(screen.getAllByTestId('trending-widget')[0]).toBeInTheDocument();
+  });
+
+  it('shows stat cards after data loads', async () => {
+    renderWithProviders(<TrendingPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Posts Today')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Posts This Week stat card after data loads', async () => {
+    renderWithProviders(<TrendingPage />);
+    await waitFor(() => {
+      expect(screen.getByText('Posts This Week')).toBeInTheDocument();
+    });
+  });
+
+  it('renders New Creators Today stat card after data loads', async () => {
+    renderWithProviders(<TrendingPage />);
+    await waitFor(() => {
+      expect(screen.getByText('New Creators Today')).toBeInTheDocument();
+    });
+  });
+
+  it('renders New Creators Week stat card after data loads', async () => {
+    renderWithProviders(<TrendingPage />);
+    await waitFor(() => {
+      expect(screen.getByText('New Creators Week')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Trending Posts tab label', () => {
+    renderWithProviders(<TrendingPage />);
+    expect(screen.getByText('Trending Posts')).toBeInTheDocument();
+  });
+
+  it('renders Trending Creators tab label', () => {
+    renderWithProviders(<TrendingPage />);
+    expect(screen.getByText('Trending Creators')).toBeInTheDocument();
+  });
+
+  it('renders Trending by Category section heading', () => {
+    renderWithProviders(<TrendingPage />);
+    expect(screen.getByText('Trending by Category')).toBeInTheDocument();
+  });
+
+  it('renders multiple trending widget instances for category sections', () => {
+    renderWithProviders(<TrendingPage />);
+    const widgets = screen.getAllByTestId('trending-widget');
+    expect(widgets.length).toBeGreaterThan(1);
+  });
+
+  it('hides spinner after stats load', async () => {
+    renderWithProviders(<TrendingPage />);
+    await waitFor(() => {
+      expect(document.querySelector('.ant-spin')).toBeFalsy();
+    });
   });
 });

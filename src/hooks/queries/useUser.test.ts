@@ -20,7 +20,7 @@ vi.mock('antd', () => ({
 }));
 
 import api from '../../services/api';
-import { useUserProfile, useUserFollowers, useUserFollowing, useUserInterests } from './useUser';
+import { useUserProfile, useUserFollowers, useUserFollowing, useUserInterests, useUpdateInterests } from './useUser';
 
 describe('useUser hooks', () => {
   let queryClient: QueryClient;
@@ -136,6 +136,18 @@ describe('useUser hooks', () => {
       });
 
       expect(result.current.fetchStatus).toBe('idle');
+    });
+  });
+
+  describe('useUpdateInterests', () => {
+    it('calls update interests endpoint when mutated', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useUpdateInterests(), { wrapper: createWrapper() });
+      result.current.mutate({ userId: 'u1', interests: ['fitness', 'tech'] });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.post).toHaveBeenCalledWith('/api/users/interests', { interests: ['fitness', 'tech'] });
     });
   });
 });

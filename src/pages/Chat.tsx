@@ -650,9 +650,15 @@ const FanChatView = () => {
       }
     } else {
       // Start recording
+      let stream: MediaStream | null = null;
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+        const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+          .find(t => MediaRecorder.isTypeSupported(t)) ?? '';
+        const ext = mimeType.includes('mp4') ? 'mp4' : mimeType.includes('ogg') ? 'ogg' : 'webm';
+
+        const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
         mediaRecorderRef.current = mediaRecorder;
         audioChunksRef.current = [];
 
@@ -663,20 +669,31 @@ const FanChatView = () => {
         };
 
         mediaRecorder.onstop = () => {
-          const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/wav' });
-          const audioFile = new File([audioBlob], `voice_message_${Date.now()}.wav`, { type: 'audio/wav' });
+          const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
+          const audioFile = new File([audioBlob], `voice_message_${Date.now()}.${ext}`, { type: mimeType || 'audio/webm' });
           setSelectedFiles(prev => [...prev, audioFile]);
-
-          // Stop all tracks to release the microphone
-          stream.getTracks().forEach(track => track.stop());
+          stream?.getTracks().forEach(track => track.stop());
         };
 
         mediaRecorder.start();
         setIsRecording(true);
         antMessage.info('Recording started');
       } catch (micError: unknown) {
+        stream?.getTracks().forEach(track => track.stop());
         logger.error('Error accessing microphone:', micError);
-        antMessage.error('Could not access microphone');
+        if (micError instanceof DOMException) {
+          if (micError.name === 'NotAllowedError' || micError.name === 'PermissionDeniedError') {
+            antMessage.error('Microphone access was denied. Allow microphone permission in your browser settings and try again.');
+          } else if (micError.name === 'NotFoundError' || micError.name === 'DevicesNotFoundError') {
+            antMessage.error('No microphone found. Please connect a microphone and try again.');
+          } else if (micError.name === 'NotReadableError') {
+            antMessage.error('Microphone is in use by another application. Please close it and try again.');
+          } else {
+            antMessage.error(`Microphone error: ${micError.message}`);
+          }
+        } else {
+          antMessage.error('Could not access microphone. Please check your browser permissions.');
+        }
       }
     }
   };

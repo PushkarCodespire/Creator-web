@@ -64,4 +64,63 @@ describe('WebsiteHome', () => {
     renderWithProviders(<WebsiteHome />);
     expect(screen.getByTestId('creators-grid')).toBeInTheDocument();
   });
+
+  it('renders all five category chips', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('PCOS')).toBeInTheDocument();
+    expect(screen.getByText('Gut health')).toBeInTheDocument();
+    expect(screen.getByText('More')).toBeInTheDocument();
+  });
+
+  it('renders Expert guidance for following section heading', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('Expert guidance for following')).toBeInTheDocument();
+  });
+
+  it('renders Interact section heading', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText("Interact, don't just consume.")).toBeInTheDocument();
+  });
+
+  it('renders interact bullet points', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('Secrets from real creator experience revealed')).toBeInTheDocument();
+    expect(screen.getByText('Personalized advice for your body, goals & lifestyle')).toBeInTheDocument();
+  });
+
+  it('renders newsletter section subtitle', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('Get free creator insights and deals')).toBeInTheDocument();
+  });
+
+  it('renders newsletter main heading', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText(/Top creator insights/i)).toBeInTheDocument();
+  });
+
+  it('renders testimonials real outcomes heading', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('Real outcomes from creator guidance')).toBeInTheDocument();
+  });
+
+  it('renders Robert Fox role label Manager', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('Manager')).toBeInTheDocument();
+  });
+
+  it('renders bottom CTA link pointing to /pricing', () => {
+    renderWithProviders(<WebsiteHome />);
+    const link = screen.getByText(/Claim your free chat/i).closest('a');
+    expect(link).toHaveAttribute('href', '/pricing');
+  });
+
+  it('renders Expires soon text', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText(/Expires soon/i)).toBeInTheDocument();
+  });
+
+  it('renders CountdownTimer component', () => {
+    renderWithProviders(<WebsiteHome />);
+    expect(screen.getByText('00:00')).toBeInTheDocument();
+  });
 });

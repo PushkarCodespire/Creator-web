@@ -97,4 +97,104 @@ describe('UserDashboard', () => {
       expect(screen.queryByTestId('dashboard-loader')).not.toBeInTheDocument();
     });
   });
+
+  it('renders Overview heading after data loads', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Overview')).toBeInTheDocument();
+    });
+  });
+
+  it('renders welcome message with user name', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText(/Welcome back, Test User/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders Total Chats stat card', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Total Chats')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Following stat card', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Following')).toBeInTheDocument();
+    });
+  });
+
+  it('renders recent conversation with creator name', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Fitness Pro')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Messages Used stat card', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Messages Used')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Unread Alerts stat card', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Unread Alerts')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Recent Conversations section heading', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText(/Recent Conversations/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders Activity Feed section heading', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText(/Activity Feed/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders Premium Tip quick action card', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('Premium Tip')).toBeInTheDocument();
+    });
+  });
+
+  it('renders empty activity feed message when no activities', async () => {
+    renderWithProviders(<UserDashboard />, { preloadedState });
+    await waitFor(() => {
+      expect(screen.getByText('No recent activity to show.')).toBeInTheDocument();
+    });
+  });
+
+  it('renders suspension alert for suspended user', async () => {
+    const suspendedState = {
+      auth: {
+        user: {
+          id: 'u2',
+          name: 'Suspended User',
+          email: 'sus@test.com',
+          isSuspended: true,
+          suspendedUntil: '2026-05-01T00:00:00Z',
+          suspensionReason: 'Policy violation',
+        } as any,
+        token: 'tok',
+        isAuthenticated: true,
+        isLoading: false,
+        error: null,
+      },
+    };
+    renderWithProviders(<UserDashboard />, { preloadedState: suspendedState });
+    await waitFor(() => {
+      expect(screen.getByText('Account Suspended')).toBeInTheDocument();
+    });
+  });
 });

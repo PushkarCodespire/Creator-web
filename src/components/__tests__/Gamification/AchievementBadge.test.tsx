@@ -130,4 +130,185 @@ describe('AchievementBadge Component', () => {
       unmount();
     });
   });
+
+  it('renders tooltip with name and description when unlocked', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="First Chat"
+        description="Send your first message"
+        rarity="common"
+        unlocked={true}
+      />
+    );
+
+    // Ant Design Tooltip sets the title on the wrapper div via data attribute or aria
+    // The tooltip content is set as a prop; check the container renders with the element
+    expect(container.firstChild).toBeTruthy();
+  });
+
+  it('renders with progress=0 and does not render progress bar', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Chat Master"
+        description="Send 100 messages"
+        rarity="rare"
+        unlocked={false}
+        progress={0}
+      />
+    );
+
+    // progress bar is only rendered when !unlocked && progress > 0
+    const progressBar = container.querySelector('[style*="bottom: -4px"]');
+    expect(progressBar).toBeNull();
+  });
+
+  it('defaults to medium size when no size prop is given', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Default Size"
+        description="Test"
+        rarity="common"
+        unlocked={true}
+      />
+    );
+
+    const badge = container.querySelector('[style*="width: 60px"]');
+    expect(badge).toBeTruthy();
+  });
+
+  it('defaults to unlocked=false when unlocked prop is not provided', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="No Unlock Prop"
+        description="Test"
+        rarity="common"
+      />
+    );
+
+    // Locked badges have opacity: 0.6 in their inline style
+    const badge = container.querySelector('[style*="opacity: 0.6"]');
+    expect(badge).toBeTruthy();
+  });
+
+  it('renders default rarity (common) when rarity prop is not provided', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="No Rarity"
+        description="Test"
+        unlocked={true}
+      />
+    );
+
+    expect(container.firstChild).toBeTruthy();
+  });
+
+  it('renders progress bar at 100% width when progress is 100 and not unlocked', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Almost There"
+        description="Nearly done"
+        rarity="epic"
+        unlocked={false}
+        progress={100}
+      />
+    );
+
+    const progressFill = container.querySelector('[style*="width: 100%"][style*="height: 100%"]');
+    expect(progressFill).toBeTruthy();
+  });
+
+  it('renders the TrophyOutlined icon for common rarity when no custom icon is given', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Common Badge"
+        description="Common"
+        rarity="common"
+        unlocked={true}
+      />
+    );
+
+    // Ant Design renders role="img" for icon SVGs
+    const icons = container.querySelectorAll('[role="img"]');
+    expect(icons.length).toBeGreaterThan(0);
+  });
+
+  it('renders custom icon instead of default rarity icon when icon prop is provided', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Custom Icon"
+        description="Has custom icon"
+        icon="⭐"
+        rarity="legendary"
+        unlocked={true}
+      />
+    );
+
+    expect(screen.getByText('⭐')).toBeInTheDocument();
+    // The rarity-based icon should NOT be rendered alongside a custom icon
+    const icons = container.querySelectorAll('[role="img"]');
+    // Only the Tooltip trigger icon from ant design — no rarity SVG icon
+    // The custom emoji span is rendered, not an ant-design icon
+    expect(screen.getByText('⭐').tagName.toLowerCase()).toBe('span');
+  });
+
+  it('renders the small size badge with correct dimensions', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Small"
+        description="Small badge"
+        rarity="common"
+        unlocked={true}
+        size="small"
+      />
+    );
+
+    const badge = container.querySelector('[style*="width: 40px"]');
+    expect(badge).toBeTruthy();
+  });
+
+  it('renders the large size badge with correct dimensions', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Large"
+        description="Large badge"
+        rarity="common"
+        unlocked={true}
+        size="large"
+      />
+    );
+
+    const badge = container.querySelector('[style*="width: 80px"]');
+    expect(badge).toBeTruthy();
+  });
+
+  it('unlocked badge does not have opacity 0.6', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="Unlocked"
+        description="Unlocked badge"
+        rarity="rare"
+        unlocked={true}
+      />
+    );
+
+    const lockedStyle = container.querySelector('[style*="opacity: 0.6"]');
+    expect(lockedStyle).toBeNull();
+  });
+
+  it('renders progress bar container positioned at bottom when progress > 0 and locked', () => {
+    const { container } = render(
+      <AchievementBadge
+        name="In Progress"
+        description="Halfway there"
+        rarity="rare"
+        unlocked={false}
+        progress={75}
+      />
+    );
+
+    const progressContainer = container.querySelector('[style*="bottom: -4px"]');
+    expect(progressContainer).toBeTruthy();
+    const fill = progressContainer?.querySelector('[style*="width: 75%"]');
+    expect(fill).toBeTruthy();
+  });
 });

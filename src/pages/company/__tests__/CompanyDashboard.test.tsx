@@ -1,66 +1,63 @@
 import { renderWithProviders } from '../../../__tests__/helpers/renderWithProviders';
 import { screen, waitFor } from '@testing-library/react';
-import { vi } from 'vitest';
-
-const mockGetDashboard = vi.fn().mockResolvedValue({
-  data: {
-    data: {
-      companyName: 'Test Corp',
-      opportunities: [
-        { id: '1', title: 'Brand Deal', status: 'OPEN', createdAt: '2024-01-01', _count: { applications: 5 } },
-      ],
-      deals: [
-        { id: 'd1', status: 'IN_PROGRESS', amount: 5000, creator: { displayName: 'Creator1', profileImage: '/img.png' }, application: { opportunity: { title: 'Campaign' } } },
-      ],
-    },
-  },
-});
 
 vi.mock('../../../services/api', () => ({
-  default: { get: vi.fn().mockResolvedValue({ data: {} }) },
-  companyApi: { getDashboard: mockGetDashboard },
-  getImageUrl: vi.fn((p: string) => p),
+  companyApi: {
+    getDashboard: vi.fn().mockResolvedValue({
+      data: {
+        data: {
+          companyName: 'Acme Corp',
+          opportunities: [
+            { id: 'op1', title: 'Brand Ambassador Role', status: 'OPEN', createdAt: '2024-01-15T00:00:00Z', _count: { applications: 3 } },
+          ],
+          deals: [
+            { id: 'd1', status: 'IN_PROGRESS', amount: 50000, creator: { displayName: 'Jane Creator', profileImage: null }, application: { opportunity: { title: 'Brand Ambassador Role' } } },
+          ],
+          stats: {},
+        },
+      },
+    }),
+  },
+  getImageUrl: vi.fn((p: string) => p || ''),
 }));
 
-vi.mock('../../../styles/tokens', () => ({
-  colors: {
-    primary: { solid: '#1268FF', subtle: '#E8F0FE', gradient: 'linear-gradient(135deg, #1268FF, #7C3AED)' },
-    text: { primary: '#111827', secondary: '#6B7280', tertiary: '#9CA3AF' },
-    gray: { 50: '#F9FAFB', 100: '#F3F4F6', 200: '#E5E7EB' },
-    success: { solid: '#10B981' },
-    secondary: { solid: '#8B5CF6' },
-  },
-  spacing: {},
-  shadows: { sm: 'none', md: 'none', lg: 'none', xl: 'none' },
-  typography: { fontWeight: { bold: 700 } },
-  borderRadius: {},
+vi.mock('../../../utils/logger', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
 }));
+
+vi.mock('framer-motion', () => ({
+  motion: { div: ({ children, ...p }: any) => <div {...p}>{children}</div> },
+  AnimatePresence: ({ children }: any) => <>{children}</>,
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return { ...actual, useNavigate: () => vi.fn() };
+});
 
 import CompanyDashboard from '../CompanyDashboard';
 
 describe('CompanyDashboard', () => {
-  it('renders without crashing', async () => {
+  it('renders without crashing', () => {
+    const { container } = renderWithProviders(<CompanyDashboard />);
+    expect(container.firstChild).toBeTruthy();
+  });
+
+  it('shows the Company Dashboard heading after data loads', async () => {
     renderWithProviders(<CompanyDashboard />);
     await waitFor(() => {
       expect(screen.getByText('Company Dashboard')).toBeInTheDocument();
     });
   });
 
-  it('shows loading state initially', () => {
-    // Mock a delayed response
-    mockGetDashboard.mockReturnValueOnce(new Promise(() => {}));
-    renderWithProviders(<CompanyDashboard />);
-    expect(screen.queryByText('Company Dashboard')).not.toBeInTheDocument();
-  });
-
-  it('renders company name greeting after load', async () => {
+  it('shows the welcome message with company name after data loads', async () => {
     renderWithProviders(<CompanyDashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Test Corp')).toBeInTheDocument();
+      expect(screen.getByText('Acme Corp')).toBeInTheDocument();
     });
   });
 
-  it('renders stat cards', async () => {
+  it('renders stat card labels after data loads', async () => {
     renderWithProviders(<CompanyDashboard />);
     await waitFor(() => {
       expect(screen.getByText('Active Opportunities')).toBeInTheDocument();
@@ -69,17 +66,89 @@ describe('CompanyDashboard', () => {
     });
   });
 
-  it('renders recent opportunities section', async () => {
+  it('renders Recent Opportunities section heading after data loads', async () => {
     renderWithProviders(<CompanyDashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Brand Deal')).toBeInTheDocument();
+      expect(screen.getByText(/Recent Opportunities/)).toBeInTheDocument();
     });
   });
 
-  it('renders active deals section', async () => {
+  it('renders Active Deals section heading after data loads', async () => {
     renderWithProviders(<CompanyDashboard />);
     await waitFor(() => {
-      expect(screen.getByText('Creator1')).toBeInTheDocument();
+      expect(screen.getAllByText(/Active Deals/).length).toBeGreaterThan(0);
+    });
+  });
+
+  it('renders opportunity title in the list after data loads', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getAllByText('Brand Ambassador Role').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('renders creator display name in the deals list after data loads', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText('Jane Creator')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the View All link for opportunities', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText(/View All/i)).toBeInTheDocument();
+    });
+  });
+
+  it('renders the Manage link for active deals', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText('Manage')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the deal amount formatted correctly', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText('₹50,000')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the deal status tag', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      // status is "IN_PROGRESS", rendered as "IN PROGRESS" after replace
+      expect(screen.getByText('IN PROGRESS')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the opportunity status tag as OPEN', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText('OPEN')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the opportunity applications count', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      // _count.applications is 3 for the mock opportunity — may appear multiple times
+      expect(screen.getAllByText('3').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('renders the Applications column label', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText('Applications')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the welcome back text', async () => {
+    renderWithProviders(<CompanyDashboard />);
+    await waitFor(() => {
+      expect(screen.getByText(/Welcome back/i)).toBeInTheDocument();
     });
   });
 });

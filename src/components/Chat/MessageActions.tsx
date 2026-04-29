@@ -41,6 +41,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
 }) => {
   const { user, isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [editModalVisible, setEditModalVisible] = useState(false);
+  const [deleteModalVisible, setDeleteModalVisible] = useState(false);
   const [editContent, setEditContent] = useState(content);
   const [deleting, setDeleting] = useState(false);
 
@@ -140,14 +141,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
             icon: <DeleteOutlined />,
             danger: true,
             onClick: () => {
-              Modal.confirm({
-                title: 'Delete this message?',
-                content: 'This action cannot be undone.',
-                okText: 'Delete',
-                cancelText: 'Cancel',
-                okButtonProps: { danger: true, loading: deleting },
-                onOk: handleDelete,
-              });
+              setDeleteModalVisible(true);
             },
           },
         ]
@@ -219,6 +213,7 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
         }}
         okText="Save"
         cancelText="Cancel"
+        destroyOnHidden
       >
         <TextArea
           value={editContent}
@@ -227,6 +222,22 @@ export const MessageActions: React.FC<MessageActionsProps> = ({
           maxLength={2000}
           showCount
         />
+      </Modal>
+
+      <Modal
+        title="Delete this message?"
+        open={deleteModalVisible}
+        onOk={async () => {
+          await handleDelete();
+          setDeleteModalVisible(false);
+        }}
+        onCancel={() => setDeleteModalVisible(false)}
+        okText="Delete"
+        okButtonProps={{ danger: true, loading: deleting }}
+        cancelText="Cancel"
+        destroyOnHidden
+      >
+        <p>This action cannot be undone.</p>
       </Modal>
     </>
   );

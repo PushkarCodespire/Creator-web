@@ -78,4 +78,55 @@ describe('EmptyState', () => {
     render(<EmptyState />);
     expect(screen.queryByRole('button')).not.toBeInTheDocument();
   });
+
+  it('renders default description for error type', () => {
+    render(<EmptyState type="error" />);
+    expect(screen.getByText('We encountered an error. Please try again.')).toBeInTheDocument();
+  });
+
+  it('renders default description for no-posts type', () => {
+    render(<EmptyState type="no-posts" />);
+    expect(screen.getByText('Start creating your first post to engage with your audience.')).toBeInTheDocument();
+  });
+
+  it('renders default description for no-chats type', () => {
+    render(<EmptyState type="no-chats" />);
+    expect(screen.getByText('Start chatting with creators to see conversations here.')).toBeInTheDocument();
+  });
+
+  it('renders default description for no-notifications type', () => {
+    render(<EmptyState type="no-notifications" />);
+    expect(screen.getByText("We'll notify you when something new happens.")).toBeInTheDocument();
+  });
+
+  it('custom title overrides the type default title', () => {
+    render(<EmptyState type="no-posts" title="Override Title" />);
+    expect(screen.getByText('Override Title')).toBeInTheDocument();
+    expect(screen.queryByText('No Posts Yet')).not.toBeInTheDocument();
+  });
+
+  it('custom description overrides the type default description', () => {
+    render(<EmptyState type="no-data" description="Override description" />);
+    expect(screen.getByText('Override description')).toBeInTheDocument();
+    expect(screen.queryByText('There is no data to display at the moment.')).not.toBeInTheDocument();
+  });
+
+  it('action prop takes priority over flat actionText/onAction props', () => {
+    const actionClick = vi.fn();
+    const flatClick = vi.fn();
+    render(
+      <EmptyState
+        action={{ text: 'Action Button', onClick: actionClick }}
+        actionText="Flat Button"
+        onAction={flatClick}
+      />
+    );
+    expect(screen.getByText('Action Button')).toBeInTheDocument();
+    expect(screen.queryByText('Flat Button')).not.toBeInTheDocument();
+  });
+
+  it('does not render action button when only actionText is provided without onAction', () => {
+    render(<EmptyState actionText="Orphan Button" />);
+    expect(screen.queryByRole('button')).not.toBeInTheDocument();
+  });
 });

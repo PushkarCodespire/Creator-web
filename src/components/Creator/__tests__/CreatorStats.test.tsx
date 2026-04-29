@@ -62,4 +62,61 @@ describe('CreatorStats', () => {
     expect(screen.getByText('3s')).toBeInTheDocument();
     expect(screen.getByText('Avg Response Time')).toBeInTheDocument();
   });
+
+  it('defaults responseRate to 100% when not provided', () => {
+    renderWithProviders(
+      <CreatorStats totalChats={10} totalMessages={50} />
+    );
+    expect(screen.getByText('100%')).toBeInTheDocument();
+  });
+
+  it('defaults avgResponseTime to 0s when not provided', () => {
+    renderWithProviders(
+      <CreatorStats totalChats={10} totalMessages={50} />
+    );
+    expect(screen.getByText('0s')).toBeInTheDocument();
+  });
+
+  it('renders Topic Expertise heading when topicExpertise data is provided', () => {
+    renderWithProviders(
+      <CreatorStats
+        totalChats={100}
+        totalMessages={500}
+        topicExpertise={[{ topic: 'React', percentage: 60 }, { topic: 'Node', percentage: 40 }]}
+      />
+    );
+    expect(screen.getByText('Topic Expertise')).toBeInTheDocument();
+  });
+
+  it('does not render Topic Expertise section when topicExpertise is empty', () => {
+    renderWithProviders(
+      <CreatorStats totalChats={100} totalMessages={500} topicExpertise={[]} />
+    );
+    expect(screen.queryByText('Topic Expertise')).not.toBeInTheDocument();
+  });
+
+  it('renders User Satisfaction Trend heading when userSatisfaction data is provided', () => {
+    renderWithProviders(
+      <CreatorStats
+        totalChats={100}
+        totalMessages={500}
+        userSatisfaction={[{ month: 'Jan', satisfaction: 4 }]}
+      />
+    );
+    expect(screen.getByText('User Satisfaction Trend')).toBeInTheDocument();
+  });
+
+  it('does not render User Satisfaction Trend section when userSatisfaction is empty', () => {
+    renderWithProviders(
+      <CreatorStats totalChats={100} totalMessages={500} userSatisfaction={[]} />
+    );
+    expect(screen.queryByText('User Satisfaction Trend')).not.toBeInTheDocument();
+  });
+
+  it('displays rating formatted to one decimal place', () => {
+    renderWithProviders(
+      <CreatorStats totalChats={100} totalMessages={500} rating={4} />
+    );
+    expect(screen.getByText('4.0')).toBeInTheDocument();
+  });
 });

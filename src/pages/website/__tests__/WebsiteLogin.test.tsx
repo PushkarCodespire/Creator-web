@@ -65,4 +65,57 @@ describe('WebsiteLogin', () => {
     });
     expect(screen.getByText('Invalid credentials')).toBeInTheDocument();
   });
+
+  it('renders email field label', () => {
+    renderWithProviders(<WebsiteLogin />);
+    expect(screen.getByText('Email')).toBeInTheDocument();
+  });
+
+  it('renders password field label', () => {
+    renderWithProviders(<WebsiteLogin />);
+    expect(screen.getByText('Password')).toBeInTheDocument();
+  });
+
+  it('renders "Don\'t have an account?" footer text', () => {
+    renderWithProviders(<WebsiteLogin />);
+    expect(screen.getByText(/Don't have an account\?/i)).toBeInTheDocument();
+  });
+
+  it('sign up link navigates to /register', () => {
+    renderWithProviders(<WebsiteLogin />);
+    const signUpLink = screen.getByRole('link', { name: 'Sign up' });
+    expect(signUpLink).toHaveAttribute('href', '/register');
+  });
+
+  it('email input has type email', () => {
+    renderWithProviders(<WebsiteLogin />);
+    const emailInput = screen.getByPlaceholderText('you@example.com');
+    expect(emailInput).toHaveAttribute('type', 'email');
+  });
+
+  it('password input has type password', () => {
+    renderWithProviders(<WebsiteLogin />);
+    const passwordInput = screen.getByPlaceholderText('Enter your password');
+    expect(passwordInput).toHaveAttribute('type', 'password');
+  });
+
+  it('sign in button is disabled when auth is loading', () => {
+    renderWithProviders(<WebsiteLogin />, {
+      preloadedState: {
+        auth: {
+          user: null,
+          token: null,
+          isAuthenticated: false,
+          isLoading: true,
+          error: null,
+        },
+      },
+    });
+    expect(screen.getByRole('button', { name: 'Signing in...' })).toBeDisabled();
+  });
+
+  it('sign in button is enabled when not loading', () => {
+    renderWithProviders(<WebsiteLogin />);
+    expect(screen.getByRole('button', { name: 'Sign in' })).not.toBeDisabled();
+  });
 });

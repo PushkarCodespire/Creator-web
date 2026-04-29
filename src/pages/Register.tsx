@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
@@ -31,7 +31,13 @@ const TESTIMONIALS = [
 
 const Register = () => {
   const navigate = useNavigate();
+  const routerLocation = useLocation();
+  const [searchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
+  const intendedDestination =
+    searchParams.get('redirect') ||
+    (routerLocation.state as { from?: string } | null)?.from ||
+    '';
   const { isAuthenticated, isLoading: authLoading, error, isProfileComplete } = useSelector((state: RootState) => state.auth);
 
   const [role, setRole] = useState<'USER' | 'CREATOR'>('USER');
@@ -107,8 +113,14 @@ const Register = () => {
         role,
         dateOfBirth: dateOfBirth || undefined,
         location: location.trim() || undefined,
+        redirectAfterVerification: intendedDestination || undefined,
       })).unwrap();
       message.success('Account created! Please check your email to verify.');
+      if (intendedDestination) {
+        localStorage.setItem('postVerifyRedirect', intendedDestination);
+      } else {
+        localStorage.removeItem('postVerifyRedirect');
+      }
       navigate('/verify-email');
     } catch (err: unknown) {
       if (typeof err === 'string' && err.includes('already exists')) {

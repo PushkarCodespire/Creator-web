@@ -28,7 +28,7 @@ describe('WebsiteAbout', () => {
 
   it('renders hero section', () => {
     renderWithProviders(<WebsiteAbout />);
-    expect(screen.getByText(/Fitness Journey/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Fitness Journey/i)[0]).toBeInTheDocument();
     expect(screen.getByText('Find an Expert')).toBeInTheDocument();
     expect(screen.getByText('Create Your AI')).toBeInTheDocument();
   });
@@ -70,5 +70,74 @@ describe('WebsiteAbout', () => {
     expect(screen.getByText(/Ready to Transform Your Life/i)).toBeInTheDocument();
     expect(screen.getByText('Get Started')).toBeInTheDocument();
     expect(screen.getByText('View Pricing')).toBeInTheDocument();
+  });
+
+  it('renders all four core value icons', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByTestId('icon-target')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-heart')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-award')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-zap')).toBeInTheDocument();
+  });
+
+  it('renders core values descriptions', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText(/committed to transforming lives/i)).toBeInTheDocument();
+    expect(screen.getByText(/Every member is unique/i)).toBeInTheDocument();
+  });
+
+  it('renders impact stat labels', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText('Active Members')).toBeInTheDocument();
+    expect(screen.getByText('Questions Answered')).toBeInTheDocument();
+    expect(screen.getByText('Expert Creators')).toBeInTheDocument();
+    expect(screen.getByText('Satisfaction Rate')).toBeInTheDocument();
+  });
+
+  it('renders impact stat icons', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByTestId('icon-users')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-trending')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-star')).toBeInTheDocument();
+    expect(screen.getByTestId('icon-globe')).toBeInTheDocument();
+  });
+
+  it('renders all team members', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText('Emily Rodriguez')).toBeInTheDocument();
+    expect(screen.getByText('David Kim')).toBeInTheDocument();
+  });
+
+  it('renders team member roles', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText('Founder & Head Coach')).toBeInTheDocument();
+    expect(screen.getByText('Nutrition Director')).toBeInTheDocument();
+    expect(screen.getByText('Community Manager')).toBeInTheDocument();
+    expect(screen.getByText('Performance Coach')).toBeInTheDocument();
+  });
+
+  it('renders all timeline milestones', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText('2019')).toBeInTheDocument();
+    expect(screen.getByText('1,000 Members')).toBeInTheDocument();
+    expect(screen.getByText('2021')).toBeInTheDocument();
+    expect(screen.getByText('App Launch')).toBeInTheDocument();
+    expect(screen.getByText('2023')).toBeInTheDocument();
+    expect(screen.getByText('Global Expansion')).toBeInTheDocument();
+    expect(screen.getByText('2026')).toBeInTheDocument();
+    expect(screen.getByText('50K+ Community')).toBeInTheDocument();
+  });
+
+  it('renders hero paragraph text', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText(/everyone deserves access to world-class fitness/i)).toBeInTheDocument();
+  });
+
+  it('renders section subtitles', () => {
+    renderWithProviders(<WebsiteAbout />);
+    expect(screen.getByText('The principles that guide everything we do')).toBeInTheDocument();
+    expect(screen.getByText('Numbers that reflect our commitment to your success')).toBeInTheDocument();
+    expect(screen.getByText('The experts dedicated to your success')).toBeInTheDocument();
+    expect(screen.getByText('Key milestones in our growth story')).toBeInTheDocument();
   });
 });

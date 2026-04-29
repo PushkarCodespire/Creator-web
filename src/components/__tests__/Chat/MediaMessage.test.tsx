@@ -14,7 +14,7 @@ describe('MediaMessage', () => {
 
     render(<MediaMessage media={media} />);
 
-    const img = screen.getByAlt('photo.jpg');
+    const img = screen.getByAltText('photo.jpg');
     expect(img).toBeInTheDocument();
     expect(img).toHaveAttribute('src', 'https://example.com/photo.jpg');
   });
@@ -28,9 +28,9 @@ describe('MediaMessage', () => {
 
     render(<MediaMessage media={media} />);
 
-    expect(screen.getByAlt('img-1')).toBeInTheDocument();
-    expect(screen.getByAlt('img-2')).toBeInTheDocument();
-    expect(screen.getByAlt('img-3')).toBeInTheDocument();
+    expect(screen.getByAltText('img-1')).toBeInTheDocument();
+    expect(screen.getByAltText('img-2')).toBeInTheDocument();
+    expect(screen.getByAltText('img-3')).toBeInTheDocument();
   });
 
   it('renders video media with controls', () => {
@@ -79,7 +79,7 @@ describe('MediaMessage', () => {
 
     const { container } = render(<MediaMessage media={media} />);
 
-    expect(screen.getByAlt('photo')).toBeInTheDocument();
+    expect(screen.getByAltText('photo')).toBeInTheDocument();
     expect(container.querySelector('video')).toBeTruthy();
     expect(screen.getByText('doc.pdf')).toBeInTheDocument();
   });

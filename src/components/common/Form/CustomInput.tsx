@@ -16,8 +16,12 @@ const CustomInput: React.FC<CustomInputProps> = ({
     label,
     helperText,
     style,
+    onChange,
+    disabled,
     ...props
 }) => {
+    const handleChange = disabled ? undefined : onChange;
+
     return (
         <div style={{ marginBottom: spacing[4], width: '100%' }}>
             {label && (
@@ -37,6 +41,8 @@ const CustomInput: React.FC<CustomInputProps> = ({
             )}
             <Input
                 {...props}
+                disabled={disabled}
+                onChange={handleChange}
                 style={{
                     height: '44px',
                     borderRadius: '8px',

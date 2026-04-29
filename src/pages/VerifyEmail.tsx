@@ -2,7 +2,7 @@
 // VERIFY EMAIL PAGE
 // ===========================================
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -40,6 +40,7 @@ const VerifyEmail = () => {
   const isAuthenticated = useSelector((state: RootState) => state.auth.isAuthenticated);
   const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const redirectParam = searchParams.get('redirect');
 
   const [isLoading, setIsLoading] = useState(!!token);
   const [isPending, setIsPending] = useState(!token);
@@ -49,6 +50,7 @@ const VerifyEmail = () => {
   const [resendStatus, setResendStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [resendMessage, setResendMessage] = useState<string | null>(null);
   const [activeTestimonial, setActiveTestimonial] = useState(0);
+  const [countdown, setCountdown] = useState(0);
 
   // Rotate Testimonials
   useEffect(() => {
@@ -57,6 +59,38 @@ const VerifyEmail = () => {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Redirect destination priority: URL param (cross-device) > localStorage (same-device) > role default
+  const navigateAfterVerification = useCallback(() => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u?.role === 'CREATOR') { navigate('/onboarding/creator'); return; }
+      if (u?.role === 'COMPANY') { navigate('/company-dashboard'); return; }
+      if (u?.role === 'ADMIN') { navigate('/admin'); return; }
+      const savedRedirect = localStorage.getItem('postVerifyRedirect') || '/';
+      localStorage.removeItem('postVerifyRedirect');
+      navigate(redirectParam || savedRedirect);
+    } catch {
+      navigate('/login');
+    }
+  }, [navigate, redirectParam]);
+
+  // Auto-redirect with countdown after successful verification
+  useEffect(() => {
+    if (!isSuccess) return;
+    setCountdown(3);
+    const id = setInterval(() => {
+      setCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(id);
+          navigateAfterVerification();
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(id);
+  }, [isSuccess, navigateAfterVerification]);
 
   useEffect(() => {
     const verifyEmail = async () => {
@@ -271,22 +305,16 @@ const VerifyEmail = () => {
               <button
                 type="button"
                 className="submit-btn"
-                onClick={() => {
-                  try {
-                    const u = JSON.parse(localStorage.getItem('user') || '{}');
-                    if (u?.role === 'CREATOR') navigate('/onboarding/creator');
-                    else if (u?.role === 'COMPANY') navigate('/company-dashboard');
-                    else if (u?.role === 'ADMIN') navigate('/admin');
-                    else if (u?.role === 'USER') navigate('/');
-                    else navigate('/login');
-                  } catch {
-                    navigate('/login');
-                  }
-                }}
+                onClick={navigateAfterVerification}
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', background: '#ff3e48', borderRadius: 10 }}
               >
                 Let's Get Started <ArrowRightOutlined />
               </button>
+              {countdown > 0 && (
+                <p style={{ margin: '12px 0 0', fontSize: '0.85rem', color: '#6B7280' }}>
+                  Redirecting in {countdown}s…
+                </p>
+              )}
             </>
           ) : (
             <>

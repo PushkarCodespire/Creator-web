@@ -57,6 +57,8 @@ class SocketManager {
       this.socket.disconnect();
       this.socket = null;
     }
+    this.userId = null;
+    this.token = null;
   }
 
   /**

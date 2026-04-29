@@ -169,6 +169,7 @@ const UserBookmarks = () => {
                     {showFilters && (
                         <>
                             <Col xs={24} sm={8}>
+                                <div title="Filter by Creator">
                                 <Select
                                     placeholder="Filter by Creator"
                                     allowClear
@@ -183,8 +184,10 @@ const UserBookmarks = () => {
                                         </Option>
                                     ))}
                                 </Select>
+                                </div>
                             </Col>
                             <Col xs={24} sm={8}>
+                                <div title="Filter by Conversation">
                                 <Select
                                     placeholder="Filter by Conversation"
                                     allowClear
@@ -199,6 +202,7 @@ const UserBookmarks = () => {
                                         </Option>
                                     ))}
                                 </Select>
+                                </div>
                             </Col>
                             <Col xs={24} sm={8}>
                                 <RangePicker
@@ -362,7 +366,7 @@ const UserBookmarks = () => {
 
                             <div style={{ marginTop: '16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <Text style={{ color: colors.text.tertiary, fontSize: '11px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                    Saved {new Date(bookmark.createdAt).toLocaleDateString()}
+                                    {new Date(bookmark.createdAt).toLocaleDateString()}
                                 </Text>
                             </div>
                         </Card>

@@ -52,9 +52,15 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       return;
     }
 
+    let stream: MediaStream | null = null;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Pick a MIME type the browser actually supports
+      const mimeType = ['audio/webm;codecs=opus', 'audio/webm', 'audio/ogg;codecs=opus', 'audio/mp4']
+        .find(t => MediaRecorder.isTypeSupported(t)) ?? '';
+
+      const mediaRecorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       mediaRecorderRef.current = mediaRecorder;
       audioChunksRef.current = [];
 
@@ -65,18 +71,17 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
       };
 
       mediaRecorder.onstop = () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType || 'audio/webm' });
         if (onRecordComplete) {
           onRecordComplete(audioBlob);
         }
-        stream.getTracks().forEach(track => track.stop());
+        stream?.getTracks().forEach(track => track.stop());
       };
 
       mediaRecorder.start();
       setIsRecording(true);
       setRecordingTime(0);
 
-      // Start timer
       timerRef.current = setInterval(() => {
         setRecordingTime((prev) => {
           if (prev >= 60) {
@@ -87,8 +92,23 @@ export const VoiceMessage: React.FC<VoiceMessageProps> = ({
         });
       }, 1000);
     } catch (error) {
+      stream?.getTracks().forEach(track => track.stop());
       logger.error('Error starting recording:', error);
-      antMessage.error('Failed to start recording. Please check microphone permissions.');
+      if (error instanceof DOMException) {
+        if (error.name === 'NotAllowedError' || error.name === 'PermissionDeniedError') {
+          antMessage.error('Microphone access was denied. Please allow microphone permission in your browser settings and try again.');
+        } else if (error.name === 'NotFoundError' || error.name === 'DevicesNotFoundError') {
+          antMessage.error('No microphone found. Please connect a microphone and try again.');
+        } else if (error.name === 'NotReadableError' || error.name === 'TrackStartError') {
+          antMessage.error('Microphone is in use by another application. Please close it and try again.');
+        } else if (error.name === 'SecurityError') {
+          antMessage.error('Microphone access requires a secure (HTTPS) connection.');
+        } else {
+          antMessage.error(`Microphone error: ${error.message}`);
+        }
+      } else {
+        antMessage.error('Failed to start recording. Please check microphone permissions.');
+      }
     }
   };
 

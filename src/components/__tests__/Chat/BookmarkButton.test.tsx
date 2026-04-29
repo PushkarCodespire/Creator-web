@@ -63,8 +63,8 @@ describe('BookmarkButton', () => {
       { preloadedState: { auth: { user: null, token: null, isAuthenticated: false, isLoading: false, error: null } } }
     );
 
-    const icon = screen.getByRole('img');
-    fireEvent.click(icon.closest('[style]')!);
+    const icons = screen.getAllByRole('img');
+    fireEvent.click(icons[0].closest('[style]')!);
 
     // Should not crash; login prompt handled via antMessage.info
   });

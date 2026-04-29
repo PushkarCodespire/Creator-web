@@ -72,4 +72,160 @@ describe('CreatorRevenue', () => {
       expect(screen.getByText('Revenue Overview')).toBeInTheDocument();
     });
   });
+
+  it('renders Total Revenue stat card label', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Total Revenue')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Available Balance stat card label', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Available Balance')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Lifetime earnings label', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Lifetime earnings')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Ready to withdraw label', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Ready to withdraw')).toBeInTheDocument();
+    });
+  });
+
+  it('renders Recent Transactions section heading', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Recent Transactions')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the ledger entry description from mock data', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Subscription earning')).toBeInTheDocument();
+    });
+  });
+
+  it('renders formatted total revenue from mock data', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      // lifetimeEarnings = 25000, formatted as ₹25,000.00
+      expect(screen.getByText('₹25,000.00')).toBeInTheDocument();
+    });
+  });
+
+  it('renders track earnings subtitle', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Track your earnings and transaction history')).toBeInTheDocument();
+    });
+  });
+
+  it('switches to YEARLY period when clicked', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('YEARLY')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByText('YEARLY'));
+    await waitFor(() => {
+      expect(screen.getByText('Revenue Overview')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the available balance value from mock data', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      // availableBalance = 8000, formatted ₹8,000.00
+      expect(screen.getByText('₹8,000.00')).toBeInTheDocument();
+    });
+  });
+
+  it('renders transaction type "Earning" from the ledger entry', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText(/Earning/)).toBeInTheDocument();
+    });
+  });
+
+  it('renders "COMPLETED" status badge on the ledger transaction', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('COMPLETED')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the formatted credit amount "+₹500.00" for the CREDIT ledger entry', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('+₹500.00')).toBeInTheDocument();
+    });
+  });
+
+  it('renders "1 transactions" count label in the transactions header', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('1 transactions')).toBeInTheDocument();
+    });
+  });
+
+  it('renders "No transactions yet" when ledger is empty', async () => {
+    const { payoutApi } = await import('../../../services/api');
+    (payoutApi.getLedger as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+      data: { data: { entries: [] } },
+    });
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('No transactions yet')).toBeInTheDocument();
+    });
+  });
+
+  it('switches back to MONTHLY after clicking MONTHLY again', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => expect(screen.getByText('WEEKLY')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('WEEKLY'));
+    fireEvent.click(screen.getByText('MONTHLY'));
+    await waitFor(() => {
+      expect(screen.getByText('Revenue Overview')).toBeInTheDocument();
+    });
+  });
+
+  it('does not show loading state after data loads', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.queryByText(/loading revenue/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('renders a TrendingUp icon area (via "Lifetime earnings" label) on total revenue card', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Lifetime earnings')).toBeInTheDocument();
+    });
+  });
+
+  it('renders a TrendingUp icon area (via "Ready to withdraw" label) on available balance card', async () => {
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => {
+      expect(screen.getByText('Ready to withdraw')).toBeInTheDocument();
+    });
+  });
+
+  it('calls getLedger with correct limit when WEEKLY is selected', async () => {
+    const { payoutApi } = await import('../../../services/api');
+    renderWithProviders(<CreatorRevenue />);
+    await waitFor(() => expect(screen.getByText('WEEKLY')).toBeInTheDocument());
+    fireEvent.click(screen.getByText('WEEKLY'));
+    await waitFor(() => {
+      expect(payoutApi.getLedger).toHaveBeenCalledWith({ limit: 7 });
+    });
+  });
 });

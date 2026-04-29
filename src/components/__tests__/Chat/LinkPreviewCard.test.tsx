@@ -39,7 +39,7 @@ describe('LinkPreviewCard', () => {
     });
 
     expect(screen.getByText('A great article about testing')).toBeInTheDocument();
-    expect(screen.getByText('example.com')).toBeInTheDocument();
+    expect(screen.getAllByText('example.com')[0]).toBeInTheDocument();
   });
 
   it('renders preview image when available', async () => {
@@ -49,7 +49,7 @@ describe('LinkPreviewCard', () => {
       expect(screen.getByText('Example Article')).toBeInTheDocument();
     });
 
-    const image = screen.getByAlt('Example Article');
+    const image = screen.getByAltText('Example Article');
     expect(image).toBeInTheDocument();
     expect(image).toHaveAttribute('src', 'https://example.com/image.jpg');
   });

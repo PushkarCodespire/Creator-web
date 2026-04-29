@@ -84,15 +84,16 @@ describe('useSocket', () => {
   });
 
   it('returns the socket instance when connected', async () => {
-    const { useSocket } = await import('./useSocket');
+    const { useSocket, getSocket } = await import('./useSocket');
     const store = createMockStore({ token: 'test-token' });
 
-    const { result } = renderHook(() => useSocket(), {
+    renderHook(() => useSocket(), {
       wrapper: createWrapper(store),
     });
 
-    // After the hook runs, it should return the mock socket
-    expect(result.current).toBe(mockSocketInstance);
+    // The effect sets the module-level socket variable; read it via getSocket()
+    // since no mock 'connect' event fires to trigger a re-render of the hook
+    expect(getSocket()).toBe(mockSocketInstance);
   });
 
   it('exports getSocket helper', async () => {

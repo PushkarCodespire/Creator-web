@@ -188,6 +188,7 @@ export const ExportButton: React.FC<ExportButtonProps> = ({
         open={isModalVisible}
         onOk={handleExport}
         onCancel={() => setIsModalVisible(false)}
+        destroyOnHidden
         confirmLoading={loading}
         okText="Transmit Data"
         width={540}

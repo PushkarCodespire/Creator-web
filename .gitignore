@@ -43,3 +43,6 @@ desktop.ini
 
 # Vite
 .vite/
+
+# Test coverage reports
+coverage/

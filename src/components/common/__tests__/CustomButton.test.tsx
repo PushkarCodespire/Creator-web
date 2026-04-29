@@ -46,4 +46,41 @@ describe('CustomButton', () => {
     render(<CustomButton block>Block</CustomButton>);
     expect(screen.getByText('Block')).toBeInTheDocument();
   });
+
+  it('does not call onClick when disabled', () => {
+    const handleClick = vi.fn();
+    render(<CustomButton disabled onClick={handleClick}>Disabled</CustomButton>);
+    fireEvent.click(screen.getByRole('button'));
+    expect(handleClick).not.toHaveBeenCalled();
+  });
+
+  it('renders with size large without crashing', () => {
+    render(<CustomButton size="large">Large</CustomButton>);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('renders with size small without crashing', () => {
+    render(<CustomButton size="small">Small</CustomButton>);
+    expect(screen.getByRole('button')).toBeInTheDocument();
+  });
+
+  it('renders secondary variant without crashing', () => {
+    render(<CustomButton variant="secondary">Secondary</CustomButton>);
+    expect(screen.getByText('Secondary')).toBeInTheDocument();
+  });
+
+  it('renders danger variant without crashing', () => {
+    render(<CustomButton variant="danger">Delete</CustomButton>);
+    expect(screen.getByText('Delete')).toBeInTheDocument();
+  });
+
+  it('renders success variant without crashing', () => {
+    render(<CustomButton variant="success">Confirm</CustomButton>);
+    expect(screen.getByText('Confirm')).toBeInTheDocument();
+  });
+
+  it('renders ghost variant without crashing', () => {
+    render(<CustomButton variant="ghost">Ghost</CustomButton>);
+    expect(screen.getByText('Ghost')).toBeInTheDocument();
+  });
 });

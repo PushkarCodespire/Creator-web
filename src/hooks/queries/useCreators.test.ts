@@ -21,7 +21,7 @@ vi.mock('antd', () => ({
 }));
 
 import api from '../../services/api';
-import { useCreators, useCreator, useRecommendedCreators, useSimilarCreators } from './useCreators';
+import { useCreators, useCreator, useRecommendedCreators, useSimilarCreators, useFollowCreator, useUnfollowCreator } from './useCreators';
 
 describe('useCreators hooks', () => {
   let queryClient: QueryClient;
@@ -151,6 +151,30 @@ describe('useCreators hooks', () => {
       });
 
       expect(result.current.fetchStatus).toBe('idle');
+    });
+  });
+
+  describe('useFollowCreator', () => {
+    it('calls follow endpoint when mutated', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useFollowCreator(), { wrapper: createWrapper() });
+      result.current.mutate('c1');
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.post).toHaveBeenCalledWith('/api/follow/c1');
+    });
+  });
+
+  describe('useUnfollowCreator', () => {
+    it('calls unfollow endpoint when mutated', async () => {
+      vi.mocked(api.delete).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useUnfollowCreator(), { wrapper: createWrapper() });
+      result.current.mutate('c1');
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.delete).toHaveBeenCalledWith('/api/follow/c1');
     });
   });
 });

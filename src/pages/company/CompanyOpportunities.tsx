@@ -133,18 +133,46 @@ const CompanyOpportunities = () => {
       title: 'Title',
       dataIndex: 'title',
       key: 'title',
-      render: (text: string) => <Text style={{ fontWeight: 700, color: colors.text.primary, fontSize: '15px' }}>{text}</Text>
+      render: (text: string, record: OpportunityItem) => (
+        <div>
+          <Text style={{ fontWeight: 700, color: colors.text.primary, fontSize: '15px' }}>{text}</Text>
+          {record.description && (
+            <Text style={{ display: 'block', color: colors.text.tertiary, fontSize: '12px', fontWeight: 400, marginTop: '2px' }}>
+              {record.description}
+            </Text>
+          )}
+        </div>
+      )
+    },
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type',
+      render: (t: string) => t ? <Tag style={{ borderRadius: '6px', fontWeight: 600 }}>{t}</Tag> : <Text style={{ color: colors.text.tertiary }}>—</Text>
+    },
+    {
+      title: 'Category',
+      dataIndex: 'category',
+      key: 'category',
+      render: (c: string) => c ? <Text style={{ fontWeight: 500 }}>{c}</Text> : <Text style={{ color: colors.text.tertiary }}>—</Text>
     },
     {
       title: 'Budget',
       dataIndex: 'budget',
       key: 'budget',
-      render: (b: number | null | undefined) => {
+      render: (b: number | null | undefined, record: OpportunityItem) => {
         // Prisma Decimal serializes as a string; coerce before formatting.
         const n = b !== null ? Number(b) : null;
-        return n && !Number.isNaN(n)
-          ? <Text style={{ fontWeight: 700, color: colors.primary.solid, fontSize: '15px' }}>₹{n.toLocaleString('en-IN')}</Text>
-          : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>Negotiable</Text>;
+        return (
+          <div>
+            {n && !Number.isNaN(n)
+              ? <Text style={{ fontWeight: 700, color: colors.primary.solid, fontSize: '15px' }}>₹{n.toLocaleString('en-IN')}</Text>
+              : <Text style={{ color: colors.text.tertiary, fontWeight: 500 }}>Negotiable</Text>}
+            {record.budgetType && (
+              <Tag style={{ display: 'block', marginTop: '2px', width: 'fit-content', borderRadius: '4px', fontSize: '11px' }}>{record.budgetType}</Tag>
+            )}
+          </div>
+        );
       }
     },
     {
@@ -390,6 +418,7 @@ const CompanyOpportunities = () => {
         footer={null}
         width={600}
         centered
+        destroyOnClose
       >
         <div style={{ padding: '0 32px 32px 32px' }}>
           <Text style={{ display: 'block', color: colors.text.tertiary, marginBottom: modalMode === 'edit' && (editingOpportunity?._count?.applications || 0) > 0 ? '16px' : '32px', fontSize: '15px', fontWeight: 500 }}>
@@ -483,25 +512,38 @@ const CompanyOpportunities = () => {
               />
             </Form.Item>
 
-            <Button
-              type="primary"
-              htmlType="submit"
-              loading={submitting}
-              block
-              size="large"
-              style={{
-                borderRadius: '14px',
-                fontWeight: 800,
-                height: '56px',
-                marginTop: '24px',
-                background: colors.primary.gradient,
-                border: 'none',
-                fontSize: '16px',
-                boxShadow: '0 8px 24px rgba(18, 104, 255, 0.25)'
-              }}
-            >
-              {modalMode === 'edit' ? 'Save Changes' : 'Post Opportunity'}
-            </Button>
+            <Row gutter={12} style={{ marginTop: '24px' }}>
+              <Col span={8}>
+                <Button
+                  block
+                  size="large"
+                  onClick={closeModal}
+                  style={{ borderRadius: '14px', fontWeight: 700, height: '56px' }}
+                >
+                  Cancel
+                </Button>
+              </Col>
+              <Col span={16}>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={submitting}
+                  block
+                  size="large"
+                  style={{
+                    borderRadius: '14px',
+                    fontWeight: 800,
+                    height: '56px',
+                    background: colors.primary.gradient,
+                    border: 'none',
+                    fontSize: '16px',
+                    boxShadow: '0 8px 24px rgba(18, 104, 255, 0.25)'
+                  }}
+                >
+                  {modalMode === 'edit' ? 'Save Changes' : 'Post Opportunity'}
+                </Button>
+              </Col>
+            </Row>
           </Form>
         </div>
       </Modal>

@@ -191,10 +191,20 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     recognition.onerror = (event: { error: string }) => {
       if (event.error === 'no-speech') {
         setState('idle');
-      } else if (event.error !== 'aborted') {
-        setError(`Mic error: ${event.error}`);
-        setState('error');
+        return;
       }
+      if (event.error === 'aborted') return;
+
+      const micErrorMessages: Record<string, string> = {
+        'not-allowed': 'Microphone access was denied. Click the mic icon in your browser address bar and allow microphone access, then try again.',
+        'service-not-allowed': 'Speech recognition is blocked on this page. Make sure the site is loaded over HTTPS.',
+        'audio-capture': 'No microphone was found. Please connect a microphone and try again.',
+        'network': 'A network error occurred during speech recognition. Check your connection and try again.',
+        'bad-grammar': 'Speech recognition configuration error. Please try again.',
+        'language-not-supported': 'Your language is not supported. Try switching your browser language to English.',
+      };
+      setError(micErrorMessages[event.error] || `Speech recognition failed (${event.error}). Please try again.`);
+      setState('error');
     };
 
     recognition.start();

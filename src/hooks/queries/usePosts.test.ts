@@ -21,7 +21,7 @@ vi.mock('antd', () => ({
 }));
 
 import api from '../../services/api';
-import { useCreatorPosts, usePost, usePostComments } from './usePosts';
+import { useCreatorPosts, usePost, usePostComments, useLikePost, useUnlikePost, useAddComment, useDeleteComment, useCreatePost, useDeletePost } from './usePosts';
 
 describe('usePosts hooks', () => {
   let queryClient: QueryClient;
@@ -113,6 +113,81 @@ describe('usePosts hooks', () => {
       });
 
       expect(result.current.fetchStatus).toBe('idle');
+    });
+  });
+
+  describe('useLikePost', () => {
+    it('calls post like endpoint when mutated', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useLikePost(), { wrapper: createWrapper() });
+      result.current.mutate('p1');
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.post).toHaveBeenCalledWith('/api/posts/p1/like');
+    });
+  });
+
+  describe('useUnlikePost', () => {
+    it('calls delete like endpoint when mutated', async () => {
+      vi.mocked(api.delete).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useUnlikePost(), { wrapper: createWrapper() });
+      result.current.mutate('p1');
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.delete).toHaveBeenCalledWith('/api/posts/p1/like');
+    });
+  });
+
+  describe('useAddComment', () => {
+    it('calls post comments endpoint when mutated', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: { id: 'c1' } });
+
+      const { result } = renderHook(() => useAddComment(), { wrapper: createWrapper() });
+      result.current.mutate({ postId: 'p1', content: 'Great post!' });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.post).toHaveBeenCalledWith('/api/posts/p1/comments', { content: 'Great post!', parentId: undefined });
+    });
+  });
+
+  describe('useDeleteComment', () => {
+    it('calls delete comment endpoint when mutated', async () => {
+      vi.mocked(api.delete).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useDeleteComment(), { wrapper: createWrapper() });
+      result.current.mutate({ commentId: 'c1', postId: 'p1' });
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.delete).toHaveBeenCalledWith('/api/comments/c1');
+    });
+  });
+
+  describe('useCreatePost', () => {
+    it('calls create post endpoint when mutated', async () => {
+      vi.mocked(api.post).mockResolvedValueOnce({ data: { id: 'new-post' } });
+
+      const fd = new FormData();
+      fd.append('content', 'Hello world');
+
+      const { result } = renderHook(() => useCreatePost(), { wrapper: createWrapper() });
+      result.current.mutate(fd);
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.post).toHaveBeenCalledWith('/api/posts', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+    });
+  });
+
+  describe('useDeletePost', () => {
+    it('calls delete post endpoint when mutated', async () => {
+      vi.mocked(api.delete).mockResolvedValueOnce({ data: { success: true } });
+
+      const { result } = renderHook(() => useDeletePost(), { wrapper: createWrapper() });
+      result.current.mutate('p1');
+
+      await waitFor(() => expect(result.current.isSuccess).toBe(true));
+      expect(api.delete).toHaveBeenCalledWith('/api/posts/p1');
     });
   });
 });

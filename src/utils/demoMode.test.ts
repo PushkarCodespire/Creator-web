@@ -1,4 +1,15 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock logger so we can spy on logger.info without worrying about isDev flag
+vi.mock('./logger', () => ({
+  logger: {
+    info: vi.fn(),
+    warn: vi.fn(),
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
+}));
+
 import {
   isDemoMode,
   getDemoMessage,
@@ -8,39 +19,31 @@ import {
   resetDemoBanner,
   logDemoInfo,
 } from './demoMode';
+import { logger } from './logger';
 
 describe('demoMode', () => {
-  const originalEnv = { ...import.meta.env };
-
   beforeEach(() => {
     localStorage.clear();
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   afterEach(() => {
-    // Restore env
-    Object.defineProperty(import.meta, 'env', { value: originalEnv });
+    vi.unstubAllEnvs();
   });
 
   describe('isDemoMode', () => {
     it('returns true when VITE_DEMO_MODE is "true"', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'true' },
-      });
+      vi.stubEnv('VITE_DEMO_MODE', 'true');
       expect(isDemoMode()).toBe(true);
     });
 
     it('returns false when VITE_DEMO_MODE is not set', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: undefined },
-      });
+      vi.stubEnv('VITE_DEMO_MODE', '');
       expect(isDemoMode()).toBe(false);
     });
 
     it('returns false when VITE_DEMO_MODE is "false"', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'false' },
-      });
+      vi.stubEnv('VITE_DEMO_MODE', 'false');
       expect(isDemoMode()).toBe(false);
     });
   });
@@ -79,30 +82,21 @@ describe('demoMode', () => {
 
   describe('showDemoTooltip', () => {
     it('does nothing when not in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'false' },
-      });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.stubEnv('VITE_DEMO_MODE', 'false');
       showDemoTooltip('payment');
-      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(logger.info).not.toHaveBeenCalled();
     });
 
     it('logs message when in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'true' },
-      });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.stubEnv('VITE_DEMO_MODE', 'true');
       showDemoTooltip('payment');
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(logger.info).toHaveBeenCalledWith(
         expect.stringContaining('[DEMO MODE]')
       );
     });
 
     it('sets title on element when in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'true' },
-      });
-      vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.stubEnv('VITE_DEMO_MODE', 'true');
       const el = document.createElement('div');
       showDemoTooltip('payment', el);
       expect(el.title).toContain('DEMO MODE');
@@ -111,16 +105,12 @@ describe('demoMode', () => {
 
   describe('getDemoDataIndicator', () => {
     it('returns empty string when not in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'false' },
-      });
+      vi.stubEnv('VITE_DEMO_MODE', 'false');
       expect(getDemoDataIndicator()).toBe('');
     });
 
     it('returns "(Demo Data)" when in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'true' },
-      });
+      vi.stubEnv('VITE_DEMO_MODE', 'true');
       expect(getDemoDataIndicator()).toBe('(Demo Data)');
     });
   });
@@ -157,21 +147,15 @@ describe('demoMode', () => {
 
   describe('logDemoInfo', () => {
     it('does nothing when not in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'false' },
-      });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.stubEnv('VITE_DEMO_MODE', 'false');
       logDemoInfo();
-      expect(consoleSpy).not.toHaveBeenCalled();
+      expect(logger.info).not.toHaveBeenCalled();
     });
 
     it('logs demo info when in demo mode', () => {
-      Object.defineProperty(import.meta, 'env', {
-        value: { ...originalEnv, VITE_DEMO_MODE: 'true' },
-      });
-      const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+      vi.stubEnv('VITE_DEMO_MODE', 'true');
       logDemoInfo();
-      expect(consoleSpy).toHaveBeenCalled();
+      expect(logger.info).toHaveBeenCalled();
     });
   });
 });
