@@ -69,7 +69,10 @@ const CreatorProfile = () => {
   const [contentItems, setContentItems] = useState<any[]>([]);
   const [faqs, setFaqs] = useState<Array<{ question: string; answer: string }>>([]);
   const [loading, setLoading] = useState(true);
+  const [postsLoading, setPostsLoading] = useState(false);
+  const [contentLoading, setContentLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('about');
+  const loadedTabs = useRef<Set<TabKey>>(new Set());
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const [shareDialogVisible, setShareDialogVisible] = useState(false);
 
@@ -92,13 +95,25 @@ const CreatorProfile = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      await Promise.all([
-        fetchCreator(),
-        fetchCreatorPosts(),
-        fetchCreatorContent()
-      ]);
+      await fetchCreator();
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleTabChange = async (key: string) => {
+    const tab = key as TabKey;
+    setActiveTab(tab);
+    if (loadedTabs.current.has(tab)) return;
+    loadedTabs.current.add(tab);
+    if (tab === 'posts') {
+      setPostsLoading(true);
+      await fetchCreatorPosts();
+      setPostsLoading(false);
+    } else if (tab === 'content') {
+      setContentLoading(true);
+      await fetchCreatorContent();
+      setContentLoading(false);
     }
   };
 
@@ -226,10 +241,12 @@ const CreatorProfile = () => {
     },
     {
       key: 'posts',
-      label: `Posts (${posts.length})`,
+      label: 'Posts',
       children: (
         <motion.div variants={fadeIn}>
-          {posts.length === 0 ? (
+          {postsLoading ? (
+            <Skeleton type="card" count={3} />
+          ) : posts.length === 0 ? (
             <EmptyState
               type="no-data"
               title="No posts yet"
@@ -250,10 +267,12 @@ const CreatorProfile = () => {
     },
     {
       key: 'content',
-      label: `Content (${contentItems.filter(i => i.type === 'YOUTUBE_VIDEO').length})`,
+      label: 'Content',
       children: (
         <motion.div variants={fadeIn}>
-          {contentItems.filter(i => i.type === 'YOUTUBE_VIDEO').length === 0 ? (
+          {contentLoading ? (
+            <Skeleton type="card" count={3} />
+          ) : contentItems.filter(i => i.type === 'YOUTUBE_VIDEO').length === 0 ? (
             <EmptyState
               type="no-data"
               title="No videos yet"
@@ -441,7 +460,7 @@ const CreatorProfile = () => {
             <Tabs
               activeKey={activeTab}
               items={tabItems}
-              onChange={(key) => setActiveTab(key as TabKey)}
+              onChange={handleTabChange}
               style={{ padding: spacing[4], background: 'white', borderRadius: '16px', boxShadow: shadows.sm }}
               className="creator-tabs"
             />

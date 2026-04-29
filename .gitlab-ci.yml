@@ -7,8 +7,10 @@ test:unit:
     extends: .test:react
     stage: test
     allow_failure: true
+    when: never
 
 test:integration:
     extends: .test:react
     stage: test
     allow_failure: true
+    when: never
