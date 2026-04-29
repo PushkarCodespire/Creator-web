@@ -589,6 +589,7 @@ export const adminApi = {
   unsuspendUser: (userId: string) => api.post(`/admin/users/${userId}/unsuspend`),
   banUser: (userId: string, data?: { reason?: string }) => api.post(`/admin/users/${userId}/ban`, data),
   unbanUser: (userId: string) => api.post(`/admin/users/${userId}/unban`),
+  deleteUser: (userId: string) => api.delete(`/admin/users/${userId}`),
 
   // Creators
   getCreators: (params?: { page?: number; limit?: number; search?: string; verified?: boolean; active?: boolean; category?: string }) =>

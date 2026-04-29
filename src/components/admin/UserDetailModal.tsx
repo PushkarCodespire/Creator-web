@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Tabs, Form, Input, Select, Tag, Divider, Space, Statistic, Row, Col, message, Spin, Timeline, Badge, Switch, Card, Empty, InputNumber, Typography } from 'antd';
-import { User, Mail, History, Ban, Unlock, AlertTriangle, CheckCircle2, Clock, Pencil } from 'lucide-react';
+import { User, Mail, History, Ban, Unlock, AlertTriangle, CheckCircle2, Clock, Pencil, Trash2 } from 'lucide-react';
 import { adminApi } from '../../services/api';
 import { colors, spacing, shadows } from '../../styles/tokens';
 import CustomModal from '../common/Modal/CustomModal';
@@ -32,6 +32,11 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
     const [actionType, setActionType] = useState<'SUSPEND' | 'BAN'>('SUSPEND');
     const [actionForm] = Form.useForm();
 
+    // Delete confirmation modal state
+    const [deleteVisible, setDeleteVisible] = useState(false);
+    const [deleteConfirmEmail, setDeleteConfirmEmail] = useState('');
+    const [deleting, setDeleting] = useState(false);
+
     useEffect(() => {
         if (visible && userId) {
             fetchData();
@@ -43,6 +48,8 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
             form.resetFields();
             setActionVisible(false);
             actionForm.resetFields();
+            setDeleteVisible(false);
+            setDeleteConfirmEmail('');
         }
     }, [visible, userId]);
 
@@ -152,6 +159,23 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
             message.error('Failed to unban user');
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (!userId || deleteConfirmEmail !== user?.email) return;
+        try {
+            setDeleting(true);
+            await adminApi.deleteUser(userId);
+            message.success(`User ${user.email} has been permanently deleted`);
+            setDeleteVisible(false);
+            onSuccess();
+            onClose();
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        } catch (_err) {
+            message.error('Failed to delete user');
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -287,6 +311,14 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                                         <Unlock size={16} /> Unsuspend
                                     </CustomButton>
                                 )}
+
+                                <CustomButton
+                                    variant="danger"
+                                    onClick={() => { setDeleteConfirmEmail(''); setDeleteVisible(true); }}
+                                    style={{ borderColor: '#dc2626', background: '#dc2626' }}
+                                >
+                                    <Trash2 size={16} /> Delete Account
+                                </CustomButton>
                             </Space>
 
                             <CustomButton variant="primary" htmlType="submit" loading={loading}>
@@ -442,6 +474,44 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ userId, visible, onCl
                         />
                     </Form.Item>
                 </Form>
+            </CustomModal>
+
+            {/* Delete Confirmation Modal */}
+            <CustomModal
+                title="Permanently Delete Account"
+                icon={<Trash2 size={20} />}
+                open={deleteVisible}
+                onCancel={() => { setDeleteVisible(false); setDeleteConfirmEmail(''); }}
+                footer={[
+                    <CustomButton key="cancel" variant="secondary" onClick={() => { setDeleteVisible(false); setDeleteConfirmEmail(''); }}>
+                        Cancel
+                    </CustomButton>,
+                    <CustomButton
+                        key="confirm"
+                        variant="danger"
+                        loading={deleting}
+                        disabled={deleteConfirmEmail !== user?.email}
+                        onClick={handleDelete}
+                    >
+                        Permanently Delete
+                    </CustomButton>
+                ]}
+                width={500}
+            >
+                <div style={{ marginBottom: '16px', padding: '12px 16px', background: '#fef2f2', borderRadius: '8px', border: '1px solid #fecaca' }}>
+                    <Text style={{ color: '#dc2626', fontWeight: 600 }}>
+                        This action cannot be undone. Deleting this account will permanently remove the user and all associated data — conversations, messages, content, earnings, and subscriptions.
+                    </Text>
+                </div>
+                <Text style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>
+                    Type <strong>{user?.email}</strong> to confirm:
+                </Text>
+                <Input
+                    value={deleteConfirmEmail}
+                    onChange={e => setDeleteConfirmEmail(e.target.value)}
+                    placeholder={user?.email}
+                    style={{ height: '44px', borderRadius: '8px' }}
+                />
             </CustomModal>
         </>
     );
