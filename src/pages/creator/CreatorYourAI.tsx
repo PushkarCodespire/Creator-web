@@ -815,6 +815,9 @@ const CreatorYourAI = () => {
                       <span style={{ fontSize: 11, color: '#9ca3af' }}>{c._count?.chunks || 0} chunks</span>
                       <span style={{ fontSize: 11, color: '#9ca3af' }}>{c.type?.replace('_', ' ')}</span>
                     </div>
+                    {c.status === 'FAILED' && c.errorMessage && (
+                      <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{c.errorMessage}</div>
+                    )}
                   </div>
                   <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
                     <button type="button" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)} title="Preview" style={{
@@ -823,10 +826,13 @@ const CreatorYourAI = () => {
                     }}>
                       {expandedId === c.id ? <ChevronUp size={14} /> : <Eye size={14} />}
                     </button>
-                    {c.status === 'COMPLETED' && (
-                      <button type="button" onClick={() => handleRetrain(c.id)} title="Retrain" style={{
-                        width: 30, height: 30, borderRadius: 6, border: '1px solid #bfdbfe', background: '#eff6ff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#3b82f6',
+                    {(c.status === 'COMPLETED' || c.status === 'FAILED') && (
+                      <button type="button" onClick={() => handleRetrain(c.id)} title={c.status === 'FAILED' ? 'Retry processing' : 'Retrain'} style={{
+                        width: 30, height: 30, borderRadius: 6,
+                        border: c.status === 'FAILED' ? '1px solid #fecaca' : '1px solid #bfdbfe',
+                        background: c.status === 'FAILED' ? '#fff1f1' : '#eff6ff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                        color: c.status === 'FAILED' ? '#ef4444' : '#3b82f6',
                       }}>
                         <RotateCcw size={13} />
                       </button>
