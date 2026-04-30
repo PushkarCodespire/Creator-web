@@ -1,0 +1,74 @@
+/* ============================================================
+   Website design tokens — scoped under .website-shell
+   to prevent leaking into the main app.
+   ============================================================ */
+
+.website-shell {
+  /* Colors */
+  --bg: #fbf7f4;
+  --ink: #333333;
+  --ink-muted: #666666;
+  --ink-sub: #797979;
+  --ink-dim: #999999;
+  --ink-dark: #212121;
+  --card-cream: #f7f0e8;
+  --card-cream-alt: #f4ebe4;
+  --line: #e5e7eb;
+  --input-border: #d1d5dc;
+  --accent: #e75d3a;
+  --creator-card-bg: #d9d9d9;
+
+  /* Font families */
+  --font-serif: "Playfair Display", "Times New Roman", serif;
+  --font-sans: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-roboto: "Roboto", system-ui, sans-serif;
+  --font-poppins: "Poppins", system-ui, sans-serif;
+  --font-sf: -apple-system, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
+
+  /* Layout */
+  --container-max: 1229px;
+
+  /* Base styles for website shell */
+  width: 100%;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sf);
+  font-size: 16px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.website-shell *,
+.website-shell *::before,
+.website-shell *::after {
+  box-sizing: border-box;
+}
+
+/* Use :where() for all element resets so CSS Module classes (specificity 0,1,0) always win.
+   For <a> tags: we still need to beat the app's global `a { color: #1268ff }` (0,0,1).
+   :where(.website-shell) a has specificity 0,0,1, tying with global — but loads later so wins. */
+/* :where() zeroes out .website-shell so CSS Module classes always win.
+   Ties with global a (0,0,1) / a:hover (0,0,2) — loads later so wins the tie. */
+:where(.website-shell) a {
+  color: inherit;
+  text-decoration: none;
+}
+:where(.website-shell) a:hover {
+  color: inherit;
+}
+
+:where(.website-shell) button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+:where(.website-shell) img,
+:where(.website-shell) svg {
+  display: block;
+  max-width: 100%;
+}

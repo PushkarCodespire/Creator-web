@@ -1,0 +1,18 @@
+# GitLab CI configuration for VMS Platform API
+include:
+  - project: 'codespire-core/ci-templates'
+    file: '/complete/react.yml'
+
+test:unit:
+    extends: .test:react
+    stage: test
+    allow_failure: true
+    rules:
+      - when: never
+
+test:integration:
+    extends: .test:react
+    stage: test
+    allow_failure: true
+    rules:
+      - when: never

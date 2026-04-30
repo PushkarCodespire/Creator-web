@@ -1,0 +1,30 @@
+/* Upgrade Modal Styles */
+.upgrade-modal .ant-modal-content {
+    background: rgba(15, 23, 42, 0.95);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+}
+
+.upgrade-modal .ant-modal-close {
+    color: #94A3B8;
+}
+
+.upgrade-modal .ant-modal-close:hover {
+    color: #fff;
+}
+
+@media (max-width: 768px) {
+    .upgrade-modal .ant-modal {
+        max-width: 90% !important;
+        margin: 20px auto;
+    }
+
+    .upgrade-modal .ant-row {
+        flex-direction: column;
+    }
+
+    .upgrade-modal .ant-col {
+        margin-bottom: 16px;
+    }
+}

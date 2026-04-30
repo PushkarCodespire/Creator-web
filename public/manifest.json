@@ -1,0 +1,77 @@
+{
+  "name": "AI Creator Platform",
+  "short_name": "Creator Platform",
+  "description": "Connect with your favorite creators through AI-powered conversations",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1677ff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["social", "entertainment", "lifestyle"],
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "platform": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop.png",
+      "sizes": "1920x1080",
+      "type": "image/png",
+      "platform": "wide"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Discover Creators",
+      "short_name": "Creators",
+      "description": "Browse all creators",
+      "url": "/creators",
+      "icons": [
+        {
+          "src": "/icon-creators.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Trending",
+      "short_name": "Trending",
+      "description": "See what's trending",
+      "url": "/trending",
+      "icons": [
+        {
+          "src": "/icon-trending.png",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Feed",
+      "short_name": "Feed",
+      "description": "Your personalized feed",
+      "url": "/feed",
+      "icons": [
+        {
+          "src": "/icon-feed.png",
+          "sizes": "96x96"
+        }
+      ]
+    }
+  ]
+}

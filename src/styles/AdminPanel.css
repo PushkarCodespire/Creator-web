@@ -1,0 +1,303 @@
+/* ===========================================
+   ADMIN PANEL - PREMIUM LIGHT THEME
+   Standardized for CodeSpire Design System
+   =========================================== */
+
+:root {
+  --admin-bg: #f9fafb;
+  --admin-surface: #ffffff;
+  --admin-border: #e5e7eb;
+  --admin-shadow: 0 8px 16px rgba(16, 24, 40, 0.06);
+  --admin-text-primary: #101828;
+  --admin-text-secondary: #4a5565;
+  --admin-text-tertiary: #6a7282;
+  --admin-primary: #1268ff;
+  --admin-primary-subtle: #e6f0ff;
+}
+
+.admin-page {
+  background: var(--admin-bg);
+  border-radius: 24px;
+  padding: 32px;
+  min-height: calc(100vh - 64px);
+  color: var(--admin-text-primary);
+}
+
+/* Card Styling */
+.admin-card {
+  background: var(--admin-surface) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 16px !important;
+  box-shadow: var(--admin-shadow) !important;
+  transition: all 0.3s ease;
+}
+
+.admin-card:hover {
+  box-shadow: 0 12px 24px rgba(16, 24, 40, 0.08) !important;
+}
+
+/* Table Styling */
+.admin-table .ant-table {
+  background: var(--admin-surface) !important;
+  border-radius: 12px !important;
+}
+
+.admin-table .ant-table-thead>tr>th {
+  background: #f2f4f7 !important;
+  color: var(--admin-text-tertiary) !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 11px !important;
+  letter-spacing: 0.05em !important;
+  padding: 16px 24px !important;
+}
+
+.admin-table .ant-table-tbody>tr>td {
+  border-bottom: 1px solid #f2f4f7 !important;
+  color: var(--admin-text-primary) !important;
+  padding: 16px 24px !important;
+}
+
+.admin-table .ant-table-tbody>tr:hover>td {
+  background: #f9fafb !important;
+}
+
+/* Form Elements */
+.admin-page .ant-input,
+.admin-page .ant-input-number,
+.admin-page .ant-select-selector,
+.admin-page textarea {
+  background: var(--admin-surface) !important;
+  color: var(--admin-text-primary) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 10px !important;
+}
+
+.admin-page .ant-input:focus,
+.admin-page .ant-select-selector:focus {
+  border-color: var(--admin-primary) !important;
+  box-shadow: 0 0 0 4px var(--admin-primary-subtle) !important;
+}
+
+.admin-page .ant-input::placeholder {
+  color: var(--admin-text-tertiary) !important;
+}
+
+/* Pagination */
+.admin-page .ant-pagination-item {
+  border-radius: 8px !important;
+}
+
+.admin-page .ant-pagination-item-active {
+  border-color: var(--admin-primary) !important;
+  background: var(--admin-primary-subtle) !important;
+}
+
+.admin-page .ant-pagination-item-active a {
+  color: var(--admin-primary) !important;
+}
+
+/* Tabs */
+.admin-page .ant-tabs-tab {
+  color: var(--admin-text-secondary) !important;
+  font-weight: 600 !important;
+}
+
+.admin-page .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: var(--admin-primary) !important;
+}
+
+.admin-page .ant-tabs-ink-bar {
+  background: var(--admin-primary) !important;
+}
+
+/* Heading Styles */
+.admin-page h1,
+.admin-page h2,
+.admin-page h3,
+.admin-page h4,
+.admin-page .ant-typography {
+  color: var(--admin-text-primary) !important;
+  font-family: 'Inter', sans-serif !important;
+  letter-spacing: -0.02em !important;
+}
+
+.admin-page h1 {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+}
+
+.admin-page h2 {
+  font-size: 24px !important;
+  font-weight: 800 !important;
+}
+
+.admin-page h3 {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+
+/* Dashboard Headers */
+.admin-header {
+  margin-bottom: 32px;
+}
+
+.admin-title {
+  font-size: 32px !important;
+  font-weight: 800 !important;
+  color: var(--admin-text-primary) !important;
+  margin-bottom: 8px !important;
+}
+
+.admin-subtitle {
+  font-size: 16px !important;
+  color: var(--admin-text-secondary) !important;
+  font-weight: 500 !important;
+}
+
+/* Hero Section (Alternative for specific pages) */
+.admin-hero {
+  background: var(--admin-surface);
+  padding: 32px;
+  border-radius: 20px;
+  border: 1px solid var(--admin-border);
+  margin-bottom: 32px;
+  box-shadow: var(--admin-shadow);
+}
+
+.admin-hero-title {
+  font-size: 28px !important;
+  font-weight: 800 !important;
+  color: var(--admin-text-primary) !important;
+  margin-bottom: 4px !important;
+}
+
+.admin-hero-subtitle {
+  font-size: 15px !important;
+  color: var(--admin-text-secondary) !important;
+}
+
+/* Toolbar & Filters */
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--admin-surface);
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  margin-bottom: 24px;
+  box-shadow: var(--admin-shadow);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-search-container {
+  flex: 1;
+  min-width: 300px;
+}
+
+/* Ant Design Global Overrides for Form Elements */
+.admin-page .ant-input,
+.admin-page .ant-input-affix-wrapper,
+.admin-page .ant-select-selector {
+  background: #ffffff !important;
+  border: 1.5px solid #e5e7eb !important;
+  border-radius: 12px !important;
+  height: 44px !important;
+  display: flex !important;
+  align-items: center !important;
+  transition: all 0.2s ease !important;
+  color: var(--admin-text-primary) !important;
+  font-weight: 500 !important;
+}
+
+.admin-page .ant-input-affix-wrapper-focused,
+.admin-page .ant-input:focus,
+.admin-page .ant-select-focused .ant-select-selector {
+  border-color: var(--admin-primary) !important;
+  box-shadow: 0 0 0 4px rgba(18, 104, 255, 0.1) !important;
+}
+
+.admin-page .ant-input::placeholder,
+.admin-page .ant-select-selection-placeholder {
+  color: #94a3b8 !important;
+  font-weight: 400 !important;
+}
+
+/* Tag Overrides - No Dark Backgrounds */
+.admin-page .ant-tag {
+  border-radius: 6px !important;
+  padding: 4px 12px !important;
+  font-weight: 600 !important;
+  font-size: 11px !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.02em !important;
+  border: none !important;
+  line-height: 1.5 !important;
+  background: #f1f5f9 !important;
+  /* Default Light Gray */
+  color: #475569 !important;
+}
+
+/* Custom Tag Variants (Subtle Backgrounds) */
+.admin-tag-primary,
+.admin-page .ant-tag-blue,
+.admin-page .ant-tag-processing {
+  background: #eff6ff !important;
+  color: #1d4ed8 !important;
+}
+
+.admin-tag-success,
+.admin-page .ant-tag-green,
+.admin-page .ant-tag-success {
+  background: #ecfdf5 !important;
+  color: #047857 !important;
+}
+
+.admin-tag-warning,
+.admin-page .ant-tag-orange,
+.admin-page .ant-tag-warning {
+  background: #fffbeb !important;
+  color: #b45309 !important;
+}
+
+.admin-tag-error,
+.admin-page .ant-tag-red,
+.admin-page .ant-tag-error {
+  background: #fef2f2 !important;
+  color: #b91c1c !important;
+}
+
+.admin-tag-neutral,
+.admin-page .ant-tag-default {
+  background: #f1f5f9 !important;
+  color: #475569 !important;
+}
+
+.admin-page .ant-tag-purple {
+  background: #f5f3ff !important;
+  color: #7c3aed !important;
+}
+
+/* Table Selection/Highlighting */
+.admin-table .ant-table-row-selected>td {
+  background: var(--admin-primary-subtle) !important;
+}
+
+/* Utility Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
