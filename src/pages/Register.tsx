@@ -47,6 +47,7 @@ const Register = () => {
   const [password, setPassword] = useState('');
   const [dateOfBirth, setDateOfBirth] = useState('');
   const [location, setLocation] = useState('');
+  const [phone, setPhone] = useState('');
   const [terms, setTerms] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
@@ -77,25 +78,77 @@ const Register = () => {
 
   useEffect(() => {
     if (error) {
-      if (error.includes('email') || error.includes('Email')) {
-        setErrors({ email: 'This email is already registered' });
+      const isEmailError =
+        error.toLowerCase().includes('email') ||
+        error.toLowerCase().includes('domain') ||
+        error.toLowerCase().includes('disposable') ||
+        error.toLowerCase().includes('already') ||
+        error.toLowerCase().includes('check your');
+      if (isEmailError) {
+        const friendlyMsg = error.toLowerCase().includes('already')
+          ? 'This email is already registered'
+          : error;
+        setErrors(p => ({ ...p, email: friendlyMsg }));
       }
       message.error(error);
       dispatch(clearError());
     }
   }, [error, dispatch]);
 
+  const calcAge = (dob: string) => {
+    const d = new Date(dob);
+    if (isNaN(d.getTime())) return -1;
+    const today = new Date();
+    let age = today.getFullYear() - d.getFullYear();
+    const m = today.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < d.getDate())) age--;
+    return age;
+  };
+
+  const handleEmailBlur = () => {
+    if (!email.trim()) return;
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
+      setErrors(p => ({ ...p, email: 'Please enter a valid email address' }));
+  };
+
+  const handleDobBlur = () => {
+    if (!dateOfBirth) return;
+    const age = calcAge(dateOfBirth);
+    if (age < 0) setErrors(p => ({ ...p, dateOfBirth: 'Invalid date of birth' }));
+    else if (age < 18) setErrors(p => ({ ...p, dateOfBirth: 'You must be at least 18 years old' }));
+    else if (age > 100) setErrors(p => ({ ...p, dateOfBirth: 'Please enter a valid date of birth' }));
+    else setErrors(p => ({ ...p, dateOfBirth: '' }));
+  };
+
+  const handlePhoneBlur = () => {
+    if (!phone.trim()) return;
+    const cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+    if (!/^\+?[0-9]{7,15}$/.test(cleaned))
+      setErrors(p => ({ ...p, phone: 'Please enter a valid phone number (e.g. +91 9876543210)' }));
+  };
+
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
-    if (!firstName.trim()) newErrors.firstName = "First name is required";
-    if (!lastName.trim()) newErrors.lastName = "Last name is required";
-    if (!email.trim()) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Invalid email";
-    if (!password) newErrors.password = "Password is required";
-    else if (password.length < 8) newErrors.password = "Min 8 characters";
-    if (!dateOfBirth) newErrors.dateOfBirth = "Date of birth is required";
-    if (!location.trim()) newErrors.location = "Location is required";
-    if (!terms) newErrors.terms = "You must agree to the terms";
+    if (!firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!email.trim()) newErrors.email = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = 'Please enter a valid email address';
+    if (!password) newErrors.password = 'Password is required';
+    else if (password.length < 8) newErrors.password = 'Min 8 characters';
+    if (!dateOfBirth) {
+      newErrors.dateOfBirth = 'Date of birth is required';
+    } else {
+      const age = calcAge(dateOfBirth);
+      if (age < 18) newErrors.dateOfBirth = 'You must be at least 18 years old';
+      else if (age > 100) newErrors.dateOfBirth = 'Please enter a valid date of birth';
+    }
+    if (!location.trim()) newErrors.location = 'Location is required';
+    if (!phone.trim()) newErrors.phone = 'Phone number is required';
+    else {
+      const cleaned = phone.replace(/[\s\-\(\)\.]/g, '');
+      if (!/^\+?[0-9]{7,15}$/.test(cleaned)) newErrors.phone = 'Please enter a valid phone number';
+    }
+    if (!terms) newErrors.terms = 'You must agree to the terms';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -113,6 +166,7 @@ const Register = () => {
         role,
         dateOfBirth: dateOfBirth || undefined,
         location: location.trim() || undefined,
+        phone: phone.trim() || undefined,
         redirectAfterVerification: intendedDestination || undefined,
       })).unwrap();
       message.success('Account created! Please check your email to verify.');
@@ -239,7 +293,15 @@ const Register = () => {
 
             <div className="input-group">
               <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Email Address</label>
-              <input type="email" className={`custom-input ${errors.email ? 'error' : ''}`} style={{ paddingLeft: 16 }} placeholder="john.doe@example.com" value={email} onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }} />
+              <input
+                type="email"
+                className={`custom-input ${errors.email ? 'error' : ''}`}
+                style={{ paddingLeft: 16 }}
+                placeholder="john.doe@example.com"
+                value={email}
+                onChange={(e) => { setEmail(e.target.value); setErrors(p => ({ ...p, email: '' })); }}
+                onBlur={handleEmailBlur}
+              />
               {errors.email && <span className="error-message">{errors.email}</span>}
             </div>
 
@@ -262,8 +324,10 @@ const Register = () => {
                   className={`custom-input ${errors.dateOfBirth ? 'error' : ''}`}
                   style={{ paddingLeft: 16, colorScheme: 'light' }}
                   value={dateOfBirth}
-                  onChange={(e) => setDateOfBirth(e.target.value)}
-                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 13)).toISOString().split('T')[0]}
+                  onChange={(e) => { setDateOfBirth(e.target.value); setErrors(p => ({ ...p, dateOfBirth: '' })); }}
+                  onBlur={handleDobBlur}
+                  max={new Date(new Date().setFullYear(new Date().getFullYear() - 18)).toISOString().split('T')[0]}
+                  min={new Date(new Date().setFullYear(new Date().getFullYear() - 100)).toISOString().split('T')[0]}
                 />
                 {errors.dateOfBirth && <span className="error-message">{errors.dateOfBirth}</span>}
               </div>
@@ -275,10 +339,24 @@ const Register = () => {
                   style={{ paddingLeft: 16 }}
                   placeholder="e.g. Mumbai, India"
                   value={location}
-                  onChange={(e) => setLocation(e.target.value)}
+                  onChange={(e) => { setLocation(e.target.value); setErrors(p => ({ ...p, location: '' })); }}
                 />
                 {errors.location && <span className="error-message">{errors.location}</span>}
               </div>
+            </div>
+
+            <div className="input-group">
+              <label className="input-label" style={{ textTransform: 'uppercase', fontSize: 11, letterSpacing: '0.05em' }}>Phone Number</label>
+              <input
+                type="tel"
+                className={`custom-input ${errors.phone ? 'error' : ''}`}
+                style={{ paddingLeft: 16 }}
+                placeholder="+91 9876543210"
+                value={phone}
+                onChange={(e) => { setPhone(e.target.value); setErrors(p => ({ ...p, phone: '' })); }}
+                onBlur={handlePhoneBlur}
+              />
+              {errors.phone && <span className="error-message">{errors.phone}</span>}
             </div>
 
             <div style={{ marginBottom: 24 }}>

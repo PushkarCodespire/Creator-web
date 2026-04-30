@@ -11,6 +11,9 @@ const CATEGORIES = [
   "CrossFit", "Sports Performance", "Mental Wellness", "Women's Fitness",
 ];
 
+const FEATURED_PER_PAGE = 8;
+const EXPERTS_PER_PAGE = 10;
+
 function VerifiedIcon() {
   return (
     <svg viewBox="0 0 18 18" width="18" height="18" aria-hidden>
@@ -37,6 +40,55 @@ function ArrowRight() {
   );
 }
 
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+      <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function PaginationBar({ page, totalPages, onChange }: { page: number; totalPages: number; onChange: (p: number) => void }) {
+  if (totalPages <= 1) return null;
+
+  const getPages = () => {
+    if (totalPages <= 5) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    if (page <= 3) return [1, 2, 3, 4, 5];
+    if (page >= totalPages - 2) return [totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages];
+    return [page - 2, page - 1, page, page + 1, page + 2];
+  };
+
+  const pages = getPages();
+
+  return (
+    <div className={styles.pagination}>
+      <button className={styles.pageNav} onClick={() => onChange(page - 1)} disabled={page === 1}>← Prev</button>
+      {pages[0] > 1 && (
+        <>
+          <button className={styles.pageBtn} onClick={() => onChange(1)}>1</button>
+          <span className={styles.pageEllipsis}>…</span>
+        </>
+      )}
+      {pages.map(p => (
+        <button
+          key={p}
+          className={`${styles.pageBtn} ${p === page ? styles.pageBtnActive : ''}`}
+          onClick={() => onChange(p)}
+        >
+          {p}
+        </button>
+      ))}
+      {pages[pages.length - 1] < totalPages && (
+        <>
+          <span className={styles.pageEllipsis}>…</span>
+          <button className={styles.pageBtn} onClick={() => onChange(totalPages)}>{totalPages}</button>
+        </>
+      )}
+      <button className={styles.pageNav} onClick={() => onChange(page + 1)} disabled={page === totalPages}>Next →</button>
+    </div>
+  );
+}
+
 export default function WebsiteFindExpert() {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [featured, setFeatured] = useState<ApiCreator[]>([]);
@@ -45,7 +97,18 @@ export default function WebsiteFindExpert() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [showAllCategories, setShowAllCategories] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<Creator[]>([]);
+
+  // Featured modal
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
+  const [featuredModalPage, setFeaturedModalPage] = useState(1);
+
+  // Expert list pagination
+  const [expertPage, setExpertPage] = useState(1);
+  const [totalExpertPages, setTotalExpertPages] = useState(1);
+
   const listRef = useRef<HTMLElement>(null);
+  const suggestionTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -58,42 +121,98 @@ export default function WebsiteFindExpert() {
     })();
   }, []);
 
+  // Close modal on Escape
+  useEffect(() => {
+    if (!showFeaturedModal) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') setShowFeaturedModal(false); };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, [showFeaturedModal]);
+
   const scrollToList = () => {
     if (!listRef.current) return;
-    const offset = 96; // breathing room + sticky nav clearance
+    const offset = 96;
     const top = listRef.current.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top, behavior: 'smooth' });
   };
 
   useEffect(() => {
+    setLoading(true);
     (async () => {
       try {
-        const params: Record<string, string | number> = { limit: 20, sortBy: 'popular' };
+        const params: Record<string, string | number> = {
+          limit: EXPERTS_PER_PAGE,
+          page: expertPage,
+          sortBy: 'popular',
+        };
         if (activeCategory !== 'All') params.category = activeCategory;
         if (search.trim()) params.search = search.trim();
         const res = await creatorApi.getAll(params);
-        const data = res.data.data?.creators || res.data.data || [];
+        const responseData = res.data.data;
+        const data = responseData?.creators || (Array.isArray(responseData) ? responseData : []);
         setCreators(data);
+        setTotalExpertPages(responseData?.pagination?.totalPages || 1);
       } catch {
-        // Fallback — empty list
         setCreators([]);
+        setTotalExpertPages(1);
       } finally {
         setLoading(false);
       }
     })();
-  }, [activeCategory, search]);
+  }, [activeCategory, search, expertPage]);
+
+  const handleCategoryChange = (cat: string) => {
+    setActiveCategory(cat);
+    setExpertPage(1);
+    scrollToList();
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    setExpertPage(1);
     scrollToList();
   };
+
+  const handleSearchChange = (value: string) => {
+    setSearch(value);
+    setExpertPage(1);
+
+    if (suggestionTimer.current) clearTimeout(suggestionTimer.current);
+
+    if (!value.trim()) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
+
+    suggestionTimer.current = setTimeout(async () => {
+      try {
+        const res = await creatorApi.getAll({ limit: 5, search: value.trim(), sortBy: 'popular' });
+        const responseData = res.data.data;
+        const data: Creator[] = responseData?.creators || (Array.isArray(responseData) ? responseData : []);
+        setSuggestions(data.slice(0, 5));
+        setShowSuggestions(true);
+      } catch {
+        setSuggestions([]);
+      }
+    }, 300);
+  };
+
+  // Featured modal pagination
+  const featuredTotalPages = Math.ceil(featured.length / FEATURED_PER_PAGE);
+  const featuredPageItems = featured.slice(
+    (featuredModalPage - 1) * FEATURED_PER_PAGE,
+    featuredModalPage * FEATURED_PER_PAGE
+  );
 
   return (
     <div className={styles.page}>
       {/* HERO BANNER */}
       <section className={styles.hero}>
-        <div className={`${styles.blob} ${styles.blobA}`} aria-hidden />
-        <div className={`${styles.blob} ${styles.blobB}`} aria-hidden />
+        <div className={styles.heroBg} aria-hidden>
+          <div className={`${styles.blob} ${styles.blobA}`} />
+          <div className={`${styles.blob} ${styles.blobB}`} />
+        </div>
         <div className={styles.heroInner}>
           <h1 className={styles.heroTitle}>
             Get the right advice<br />
@@ -109,50 +228,68 @@ export default function WebsiteFindExpert() {
               className={styles.searchInput}
               aria-label="Search experts"
               value={search}
-              onChange={(e) => { setSearch(e.target.value); setShowSuggestions(true); }}
+              onChange={(e) => handleSearchChange(e.target.value)}
               onFocus={() => setShowSuggestions(true)}
               onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               autoComplete="off"
             />
             {search && (
-              <button type="button" onClick={() => { setSearch(''); setActiveCategory('All'); }}
+              <button type="button" onClick={() => { setSearch(''); setActiveCategory('All'); setExpertPage(1); setSuggestions([]); setShowSuggestions(false); }}
                 style={{ background: 'none', border: 'none', color: '#9ca3af', cursor: 'pointer', padding: '0 4px', fontSize: 18, lineHeight: 1 }}>×</button>
             )}
             <button type="submit" className={styles.searchBtn}>Search <ArrowRight /></button>
 
-            {showSuggestions && (() => {
-              const filtered = CATEGORIES.filter(c => c !== 'All').filter(c => !search.trim() || c.toLowerCase().includes(search.toLowerCase())).slice(0, 2);
-              return (
-                <div style={{
-                  position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
-                  background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(16px)',
-                  borderRadius: 14, padding: filtered.length ? '4px 0' : '12px 20px',
-                  border: '1px solid rgba(255,255,255,0.12)',
-                }}>
-                  {filtered.length === 0 && search.trim() ? (
-                    <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>No matching categories</span>
-                  ) : filtered.map(cat => (
-                    <button
-                      key={cat}
-                      type="button"
-                      onMouseDown={() => { setSearch(cat); setActiveCategory(cat); setShowSuggestions(false); scrollToList(); }}
-                      style={{
-                        display: 'flex', alignItems: 'center', gap: 10, width: '100%',
-                        padding: '11px 18px', textAlign: 'left',
-                        background: activeCategory === cat ? 'rgba(255,62,72,0.15)' : 'transparent',
-                        border: 'none', fontSize: 14, color: '#fff', cursor: 'pointer',
-                        fontFamily: 'inherit', transition: 'background 0.12s',
-                      }}
-                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
-                      onMouseLeave={(e) => e.currentTarget.style.background = activeCategory === cat ? 'rgba(255,62,72,0.15)' : 'transparent'}
-                    >
-                      <span style={{ width: 5, height: 5, borderRadius: '50%', background: '#ff3e48', flexShrink: 0 }} />
-                      {cat}
-                    </button>
-                  ))}
-                </div>
-              );
-            })()}
+            {showSuggestions && suggestions.length > 0 && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% + 6px)', left: 0, right: 0,
+                background: 'rgba(15,10,10,0.96)', backdropFilter: 'blur(16px)',
+                borderRadius: 14, padding: '6px 0',
+                border: '1px solid rgba(255,255,255,0.12)',
+                boxShadow: '0 16px 40px -8px rgba(0,0,0,0.5)',
+                zIndex: 20,
+                maxHeight: 240, overflowY: 'auto',
+              }}>
+                {suggestions.map(creator => (
+                  <button
+                    key={creator.id}
+                    type="button"
+                    onMouseDown={() => {
+                      setShowSuggestions(false);
+                      window.location.href = `/creator/${creator.id}`;
+                    }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: 12, width: '100%',
+                      padding: '10px 16px', textAlign: 'left',
+                      background: 'transparent', border: 'none', cursor: 'pointer',
+                      fontFamily: 'inherit', transition: 'background 0.12s',
+                    }}
+                    onMouseEnter={(e) => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+                    onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                      overflow: 'hidden', background: '#ff3e48',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {creator.profileImage
+                        ? <img src={getImageUrl(creator.profileImage)} alt={creator.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        : <span style={{ color: '#fff', fontSize: 15, fontWeight: 700 }}>{creator.displayName?.charAt(0)?.toUpperCase() || '?'}</span>
+                      }
+                    </div>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', lineHeight: 1.3, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {creator.displayName}
+                      </div>
+                      {(creator.category || creator.tags?.[0]) && (
+                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                          {creator.category || creator.tags[0]}
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </form>
 
           <div className={styles.categoryFilters} role="tablist" aria-label="Filter by category">
@@ -163,7 +300,7 @@ export default function WebsiteFindExpert() {
                 role="tab"
                 aria-selected={activeCategory === cat}
                 className={`${styles.categoryBtn} ${activeCategory === cat ? styles.categoryBtnActive : ""}`}
-                onClick={() => { setActiveCategory(cat); scrollToList(); }}
+                onClick={() => handleCategoryChange(cat)}
               >
                 {cat}
               </button>
@@ -179,15 +316,21 @@ export default function WebsiteFindExpert() {
         </div>
       </section>
 
-      {/* FEATURED EXPERTS — admin-managed, click = View Profile */}
+      {/* FEATURED EXPERTS */}
       {featured.length > 0 && (
         <section className={styles.featured}>
           <div className={styles.featuredHeader}>
             <h2 className={styles.featuredTitle}>Featured Experts</h2>
-            <a href="#all" className={styles.viewAll}>View all <ArrowRight /></a>
+            <button
+              type="button"
+              className={styles.viewAll}
+              onClick={() => { setFeaturedModalPage(1); setShowFeaturedModal(true); }}
+            >
+              View all <ArrowRight />
+            </button>
           </div>
           <div className={styles.featuredRow}>
-            {featured.map((c) => (
+            {featured.slice(0, 6).map((c) => (
               <Link
                 key={c.id}
                 to={`/creator/${c.id}`}
@@ -195,15 +338,10 @@ export default function WebsiteFindExpert() {
                 aria-label={`View ${c.displayName}'s profile`}
               >
                 {c.profileImage ? (
-                  <img
-                    src={getImageUrl(c.profileImage)}
-                    alt={c.displayName}
-                    className={styles.featuredCardImg}
-                  />
+                  <img src={getImageUrl(c.profileImage)} alt={c.displayName} className={styles.featuredCardImg} />
                 ) : (
                   <div style={{
-                    width: '100%', height: '100%',
-                    background: '#ffb4b8',
+                    width: '100%', height: '100%', background: '#ffb4b8',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     color: '#ff3e48', fontSize: 96, fontWeight: 700,
                   }}>
@@ -227,39 +365,37 @@ export default function WebsiteFindExpert() {
             No creators found. Try a different search or category.
           </div>
         ) : (
-          <div className={styles.expertGrid}>
-            {creators.map((c) => (
-              <article key={c.id} className={styles.expertRow}>
-                <div className={styles.expertAvatar}>
-                  {c.profileImage ? (
-                    <img
-                      src={getImageUrl(c.profileImage)}
-                      alt={c.displayName}
-                      className={styles.expertAvatarImg}
-                    />
-                  ) : (
-                    <div style={{
-                      width: '100%', height: '100%', borderRadius: '50%',
-                      background: '#ff3e48',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#fff', fontSize: 22, fontWeight: 700,
-                    }}>
-                      {c.displayName?.charAt(0)?.toUpperCase() || '?'}
-                    </div>
-                  )}
-                </div>
-                <div className={styles.expertNameWrap}>
-                  <h3 className={styles.expertName}>{c.displayName}</h3>
-                  {c.isFeatured && <VerifiedIcon />}
-                </div>
-                <p className={styles.expertTitle}>{c.category || c.tagline || 'Creator'}</p>
-                <div className={styles.expertBtns}>
-                  <Link to={`/creator/${c.id}`} className={styles.viewProfileBtn}>View Profile</Link>
-                  <Link to={`/website-chat/${c.id}`} className={styles.chatNowBtn}>Chat Now</Link>
-                </div>
-              </article>
-            ))}
-          </div>
+          <>
+            <div className={styles.expertGrid}>
+              {creators.map((c) => (
+                <article key={c.id} className={styles.expertRow}>
+                  <div className={styles.expertAvatar}>
+                    {c.profileImage ? (
+                      <img src={getImageUrl(c.profileImage)} alt={c.displayName} className={styles.expertAvatarImg} />
+                    ) : (
+                      <div style={{
+                        width: '100%', height: '100%', borderRadius: '50%', background: '#ff3e48',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#fff', fontSize: 22, fontWeight: 700,
+                      }}>
+                        {c.displayName?.charAt(0)?.toUpperCase() || '?'}
+                      </div>
+                    )}
+                  </div>
+                  <div className={styles.expertNameWrap}>
+                    <h3 className={styles.expertName}>{c.displayName}</h3>
+                    {c.isFeatured && <VerifiedIcon />}
+                  </div>
+                  <p className={styles.expertTitle}>{c.category || c.tagline || 'Creator'}</p>
+                  <div className={styles.expertBtns}>
+                    <Link to={`/creator/${c.id}`} className={styles.viewProfileBtn}>View Profile</Link>
+                    <Link to={`/website-chat/${c.id}`} className={styles.chatNowBtn}>Chat Now</Link>
+                  </div>
+                </article>
+              ))}
+            </div>
+            <PaginationBar page={expertPage} totalPages={totalExpertPages} onChange={(p) => { setExpertPage(p); scrollToList(); }} />
+          </>
         )}
       </section>
 
@@ -269,6 +405,58 @@ export default function WebsiteFindExpert() {
         <p className={styles.ctaSub}>Join thousands learning from experts in their field</p>
         <button type="button" className={styles.ctaBtn}>Get Started for Free</button>
       </section>
+
+      {/* FEATURED EXPERTS MODAL */}
+      {showFeaturedModal && (
+        <div className={styles.modalOverlay} onClick={() => setShowFeaturedModal(false)} role="dialog" aria-modal aria-label="All Featured Experts">
+          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.modalHeader}>
+              <h2 className={styles.modalTitle}>Featured Experts</h2>
+              <button type="button" className={styles.modalClose} onClick={() => setShowFeaturedModal(false)} aria-label="Close">
+                <CloseIcon />
+              </button>
+            </div>
+
+            <div className={styles.modalBody}>
+              {featuredPageItems.length === 0 ? (
+                <p style={{ textAlign: 'center', color: '#6b7280', padding: '40px 0' }}>No experts to show.</p>
+              ) : (
+                <div className={styles.modalGrid}>
+                  {featuredPageItems.map((c) => (
+                    <Link
+                      key={c.id}
+                      to={`/creator/${c.id}`}
+                      className={styles.modalCard}
+                      onClick={() => setShowFeaturedModal(false)}
+                      aria-label={`View ${c.displayName}'s profile`}
+                    >
+                      <div className={styles.modalCardImg}>
+                        {c.profileImage ? (
+                          <img src={getImageUrl(c.profileImage)} alt={c.displayName} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        ) : (
+                          <div style={{
+                            width: '100%', height: '100%', background: '#ffb4b8',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            color: '#ff3e48', fontSize: 40, fontWeight: 700,
+                          }}>
+                            {c.displayName?.charAt(0)?.toUpperCase() || '?'}
+                          </div>
+                        )}
+                      </div>
+                      <p className={styles.modalCardName}>{c.displayName}</p>
+                      {c.category && <p className={styles.modalCardCategory}>{c.category}</p>}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className={styles.modalFooter}>
+              <PaginationBar page={featuredModalPage} totalPages={featuredTotalPages} onChange={setFeaturedModalPage} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

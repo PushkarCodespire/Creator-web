@@ -47,15 +47,20 @@ export const login = createAsyncThunk(
       }
       return { user, token, isProfileComplete };
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string } } };
-      return rejectWithValue(err.response?.data?.error || 'Login failed');
+      const err = error as { response?: { data?: { error?: { message?: string } | string } } };
+      const apiError = err.response?.data?.error;
+      const errorMessage =
+        (typeof apiError === 'object' && apiError?.message) ||
+        (typeof apiError === 'string' && apiError) ||
+        'Login failed';
+      return rejectWithValue(errorMessage);
     }
   }
 );
 
 export const register = createAsyncThunk(
   'auth/register',
-  async (data: { email: string; password: string; name: string; role?: string; dateOfBirth?: string; location?: string; redirectAfterVerification?: string }, { rejectWithValue }) => {
+  async (data: { email: string; password: string; name: string; role?: string; dateOfBirth?: string; location?: string; phone?: string; redirectAfterVerification?: string }, { rejectWithValue }) => {
     try {
       const response = await authApi.register(data);
 
@@ -72,9 +77,12 @@ export const register = createAsyncThunk(
       localStorage.setItem('isProfileComplete', 'false');
       return { user, token };
     } catch (error: unknown) {
-      const err = error as { response?: { data?: { error?: string; message?: string } }; message?: string };
-      // Handle different error response formats
-      const errorMessage = err.response?.data?.error ||
+      const err = error as { response?: { data?: { error?: { message?: string } | string; message?: string } }; message?: string };
+      // API returns { error: { code, message, details } } — extract the string message
+      const apiError = err.response?.data?.error;
+      const errorMessage =
+        (typeof apiError === 'object' && apiError?.message) ||
+        (typeof apiError === 'string' && apiError) ||
         err.response?.data?.message ||
         err.message ||
         'Registration failed. Please try again.';

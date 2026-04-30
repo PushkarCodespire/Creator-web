@@ -22,6 +22,21 @@ const TABS = [
   { key: 'launch', label: 'Launch', icon: <Rocket size={16} /> },
 ];
 
+const CATEGORY_TAGS: Record<string, string[]> = {
+  'Fat Loss':           ['weight loss', 'calorie deficit', 'cardio', 'HIIT', 'fat burning', 'cutting', 'metabolism', 'lean body', 'body recomposition'],
+  'Muscle Gain':        ['hypertrophy', 'bulking', 'progressive overload', 'protein', 'compound lifts', 'bodybuilding', 'muscle building', 'mass gain'],
+  'PCOS':               ['hormonal health', 'insulin resistance', 'cycle health', 'anti-inflammatory', 'PCOS diet', 'hormones', 'women health', 'fertility'],
+  'Gut Health':         ['gut microbiome', 'probiotics', 'digestion', 'bloating', 'IBS', 'gut flora', 'fiber', 'fermented foods', 'leaky gut'],
+  'Yoga':               ['flexibility', 'mindfulness', 'asana', 'pranayama', 'meditation', 'flow', 'vinyasa', 'hatha', 'yin yoga'],
+  'Nutrition':          ['macros', 'meal prep', 'healthy eating', 'micronutrients', 'whole foods', 'clean eating', 'supplementation', 'intuitive eating'],
+  'Strength Training':  ['powerlifting', 'deadlift', 'squat', 'bench press', 'compound movements', 'progressive overload', '1RM', 'strength gains'],
+  'Calisthenics':       ['bodyweight', 'pull-ups', 'push-ups', 'dips', 'muscle-up', 'street workout', 'handstand', 'rings', 'planche'],
+  'CrossFit':           ['WOD', 'functional fitness', 'AMRAP', 'EMOM', 'Olympic lifting', 'metcon', 'kettlebell', 'box training'],
+  'Sports Performance': ['athletic performance', 'agility', 'speed', 'endurance', 'recovery', 'sports nutrition', 'plyometrics', 'mobility'],
+  'Mental Wellness':    ['mindfulness', 'stress management', 'anxiety', 'self-care', 'meditation', 'mental health', 'breathwork', 'resilience'],
+  "Women's Fitness":    ['female fitness', 'hormonal training', 'postpartum', 'menstrual cycle', 'strength for women', 'body confidence', 'women empowerment'],
+};
+
 const labelStyle: React.CSSProperties = { fontWeight: 700, fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.05em', color: '#374151' };
 const inputStyle: React.CSSProperties = { height: 40, borderRadius: 8, border: '1px solid #e5e7eb', background: '#fff', fontSize: 14, paddingLeft: 16 };
 const textareaStyle: React.CSSProperties = { ...inputStyle, height: 'auto', padding: '10px 16px' };
@@ -89,6 +104,8 @@ export const CreatorOnboardingWizard: React.FC = () => {
   const [currentScenario, setCurrentScenario] = useState(0);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   const taglineValue = Form.useWatch('tagline', form);
+  const categoryValue = Form.useWatch('category', form) as string | undefined;
+  const tagSuggestions = CATEGORY_TAGS[categoryValue || ''] ?? [];
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -358,7 +375,14 @@ export const CreatorOnboardingWizard: React.FC = () => {
               />
             </Form.Item>
             <Form.Item name="tags" label={<span style={labelStyle}>Tags</span>} style={{ marginBottom: 0 }}>
-              <Select mode="tags" style={{ width: '100%' }} placeholder="Add tags" tokenSeparators={[',']} />
+              <Select
+                mode="tags"
+                style={{ width: '100%' }}
+                placeholder={categoryValue ? 'Select suggested tags or type your own' : 'Add tags'}
+                tokenSeparators={[',']}
+                options={tagSuggestions.map(t => ({ value: t, label: t }))}
+                optionFilterProp="label"
+              />
             </Form.Item>
           </Form>
         );

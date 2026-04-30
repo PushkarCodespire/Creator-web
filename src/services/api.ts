@@ -123,7 +123,7 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post('/auth/login', { email, password }),
 
-  register: (data: { email: string; password: string; name: string; role?: string }) =>
+  register: (data: { email: string; password: string; name: string; role?: string; dateOfBirth?: string; location?: string; phone?: string; redirectAfterVerification?: string }) =>
     api.post('/auth/register', data),
 
   getCurrentUser: () => api.get('/auth/me'),

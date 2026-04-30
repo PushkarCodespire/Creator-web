@@ -15,14 +15,24 @@
    ============================================================ */
 .hero {
   position: relative;
-  background: linear-gradient(180deg, #1a0f0f 0%, #0a0505 100%);
-  overflow: hidden;
+  overflow: visible;
   border-radius: 0 0 24px 24px;
   margin: 0 24px;
   padding: 80px 24px 88px;
   isolation: isolate;
 }
-.hero::before {
+
+/* Separate clipping layer for bg + blobs so the search dropdown isn't clipped */
+.heroBg {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  overflow: hidden;
+  background: linear-gradient(180deg, #1a0f0f 0%, #0a0505 100%);
+  pointer-events: none;
+  z-index: 0;
+}
+.heroBg::before {
   content: "";
   position: absolute;
   inset: 0;
@@ -31,7 +41,6 @@
     linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
   pointer-events: none;
-  z-index: 0;
 }
 
 .blob {
@@ -194,7 +203,7 @@
 .featured { max-width: 1189px; margin: 64px auto 0; padding: 0 32px; }
 .featuredHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .featuredTitle { font-family: var(--font-poppins); font-weight: 600; font-size: 24px; line-height: 32px; color: #1a1a1a; }
-.viewAll { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-sf); font-weight: 500; font-size: 14px; color: #555555; transition: color 120ms ease; }
+.viewAll { display: inline-flex; align-items: center; gap: 8px; font-family: var(--font-sf); font-weight: 500; font-size: 14px; color: #555555; transition: color 120ms ease; background: none; border: none; cursor: pointer; padding: 0; }
 .viewAll:hover { color: #1a1a1a; }
 
 .featuredRow { margin-top: 32px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px; }
@@ -218,6 +227,159 @@
 .viewProfileBtn:hover { background: #f9fafb; color: #111827; border-color: #d1d5db; transform: translateY(-1px); }
 .chatNowBtn { padding: 10px 20px; border-radius: 10px; background: linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%); color: #ffffff; font-family: var(--font-sf); font-weight: 600; font-size: 14px; line-height: 22px; transition: all 120ms ease; text-align: center; box-shadow: 0 2px 8px rgba(255, 62, 72, 0.2); }
 .chatNowBtn:hover { color: #ffffff; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(255, 62, 72, 0.3); }
+
+/* ============================================================
+   PAGINATION
+   ============================================================ */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 32px;
+  padding-bottom: 8px;
+}
+.pageNav {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-family: var(--font-sf);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.pageNav:hover:not(:disabled) { background: #f9fafb; border-color: #d1d5db; }
+.pageNav:disabled { opacity: 0.4; cursor: not-allowed; }
+.pageBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #374151;
+  font-family: var(--font-sf);
+  font-weight: 500;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.pageBtn:hover { background: #f9fafb; border-color: #d1d5db; }
+.pageBtnActive { background: #ff3e48; color: #ffffff; border-color: #ff3e48; }
+.pageBtnActive:hover { background: #e63540; border-color: #e63540; }
+.pageEllipsis { color: #9ca3af; font-size: 14px; padding: 0 2px; line-height: 36px; }
+
+/* ============================================================
+   FEATURED MODAL
+   ============================================================ */
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.modal {
+  width: 100%;
+  max-width: 860px;
+  max-height: 90vh;
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px -16px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24px 28px 20px;
+  border-bottom: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+.modalTitle {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+  font-size: 20px;
+  color: #1a1a1a;
+}
+.modalClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background: #ffffff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+.modalClose:hover { background: #f9fafb; color: #1a1a1a; }
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+.modalGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+.modalCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: transform 150ms ease;
+}
+.modalCard:hover { transform: translateY(-3px); }
+.modalCardImg {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+.modalCardName {
+  font-family: var(--font-poppins);
+  font-weight: 600;
+  font-size: 14px;
+  color: #1a1a1a;
+  text-align: center;
+  line-height: 1.3;
+}
+.modalCardCategory {
+  font-family: var(--font-sf);
+  font-size: 12px;
+  color: #6b7280;
+  text-align: center;
+  margin-top: -4px;
+}
+.modalFooter {
+  padding: 16px 28px 20px;
+  border-top: 1px solid #f3f4f6;
+  flex-shrink: 0;
+}
+.modalFooter .pagination { margin-top: 0; }
+
+@media (max-width: 640px) {
+  .modalGrid { grid-template-columns: repeat(2, 1fr); }
+  .modal { border-radius: 16px; }
+  .modalHeader { padding: 20px 20px 16px; }
+  .modalBody { padding: 20px; }
+  .modalFooter { padding: 12px 20px 16px; }
+}
 
 /* ============================================================
    BOTTOM CTA
