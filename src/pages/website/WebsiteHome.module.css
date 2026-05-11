@@ -138,14 +138,14 @@
   align-items: center;
   justify-content: center;
   margin-top: 24px;
-  padding: 14px 26px;
+  padding: 18px 40px;
   border-radius: 10px;
   background: var(--ink);
   color: #ffffff;
   font-family: var(--font-sf);
   font-weight: 500;
-  font-size: 16px;
-  line-height: 20px;
+  font-size: 20px;
+  line-height: 24px;
   text-transform: capitalize;
   transition: transform 120ms ease, background 120ms ease;
 }
