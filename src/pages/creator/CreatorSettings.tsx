@@ -3,8 +3,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
-import { creatorApi, contentApi } from '../../services/api';
-import { Share2, HelpCircle, Plus, Trash2, Eye, DollarSign, Save } from 'lucide-react';
+import { creatorApi, contentApi, userApi, getImageUrl } from '../../services/api';
+import AvatarUpload from '../../components/upload/AvatarUpload';
+import { Share2, HelpCircle, Plus, Trash2, Eye, DollarSign, Save, User } from 'lucide-react';
 
 const card: React.CSSProperties = {
   background: '#ffffff',
@@ -122,12 +123,38 @@ const CreatorSettings = () => {
     }
   };
 
+  const handleAvatarUpdate = async (url: string) => {
+    try {
+      await userApi.updateProfile({ avatar: url });
+      dispatch(updateUser({ avatar: url }));
+    } catch {
+      // Avatar URL already saved by the upload endpoint; profile sync is best-effort
+    }
+  };
+
   return (
     <div>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Settings</h1>
         {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.includes('Failed') ? '#ef4444' : '#10b981' }}>{msg}</span>}
+      </div>
+
+      {/* Profile Photo */}
+      <div style={{ ...card, marginBottom: 20 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
+          <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3e48' }}><User size={18} /></div>
+          <div>
+            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Profile Photo</h3>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Update your creator avatar shown on your profile and chat</p>
+          </div>
+        </div>
+        <AvatarUpload
+          currentAvatar={user?.creator?.profileImage ? getImageUrl(user.creator.profileImage) : user?.avatar ? getImageUrl(user.avatar) : undefined}
+          userId={user?.id}
+          onUploadSuccess={handleAvatarUpdate}
+          size={100}
+        />
       </div>
 
       {/* Change Pricing */}

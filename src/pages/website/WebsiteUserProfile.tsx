@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState, AppDispatch } from '../../store';
-import { logout } from '../../store/slices/authSlice';
-import { notificationApi } from '../../services/api';
+import { logout, updateUser } from '../../store/slices/authSlice';
+import { notificationApi, userApi, getImageUrl } from '../../services/api';
+import AvatarUpload from '../../components/upload/AvatarUpload';
 
 export default function WebsiteUserProfile() {
   const navigate = useNavigate();
@@ -33,9 +34,14 @@ export default function WebsiteUserProfile() {
     } catch {}
   };
 
-  if (!user) return null;
+  const handleAvatarUpdate = async (url: string) => {
+    try {
+      await userApi.updateProfile({ avatar: url });
+      dispatch(updateUser({ avatar: url }));
+    } catch {}
+  };
 
-  const initial = (user.name || '?').charAt(0).toUpperCase();
+  if (!user) return null;
 
   return (
     <div style={{ minHeight: '100vh', background: '#fbf7f4' }}>
@@ -45,15 +51,13 @@ export default function WebsiteUserProfile() {
         {/* Profile Card */}
         <div style={{ background: '#fff', border: '1px solid #ede8e3', borderRadius: 20, padding: 32, marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div style={{
-              width: 72, height: 72, borderRadius: '50%',
-              background: 'linear-gradient(135deg, #ff5b1f, #ff3e48)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: '#fff', fontSize: 28, fontWeight: 700, flexShrink: 0,
-            }}>
-              {user.avatar ? (
-                <img src={user.avatar} alt="" style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }} />
-              ) : initial}
+            <div style={{ flexShrink: 0 }}>
+              <AvatarUpload
+                currentAvatar={user.avatar ? getImageUrl(user.avatar) : undefined}
+                userId={user.id}
+                onUploadSuccess={handleAvatarUpdate}
+                size={72}
+              />
             </div>
             <div style={{ flex: 1 }}>
               <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0 }}>{user.name}</h1>

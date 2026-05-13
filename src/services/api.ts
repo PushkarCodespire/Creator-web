@@ -602,6 +602,20 @@ export const adminApi = {
   verifyCreator: (creatorId: string) => api.post(`/admin/creators/${creatorId}/verify`),
   rejectCreator: (creatorId: string, data?: { reason?: string }) =>
     api.post(`/admin/creators/${creatorId}/reject`, data),
+  uploadCreatorAvatar: (creatorId: string, blob: Blob, fileName: string) => {
+    const formData = new FormData();
+    formData.append('avatar', blob, fileName);
+    return api.post(`/upload/admin/creator/${creatorId}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  uploadUserAvatar: (userId: string, blob: Blob, fileName: string) => {
+    const formData = new FormData();
+    formData.append('avatar', blob, fileName);
+    return api.post(`/upload/admin/user/${userId}/avatar`, formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
 
   // Companies
   getCompanies: (params?: { page?: number; limit?: number; search?: string; verified?: boolean; industry?: string }) =>
