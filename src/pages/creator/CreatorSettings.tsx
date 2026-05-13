@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
-import { creatorApi, contentApi, userApi, getImageUrl } from '../../services/api';
-import AvatarUpload from '../../components/upload/AvatarUpload';
+import { creatorApi, contentApi, getImageUrl } from '../../services/api';
+import api from '../../services/api';
 import { Share2, HelpCircle, Plus, Trash2, Eye, DollarSign, Save, User } from 'lucide-react';
 
 const card: React.CSSProperties = {
@@ -27,6 +27,12 @@ const CreatorSettings = () => {
   const _navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(
+    user?.creator?.profileImage ? getImageUrl(user.creator.profileImage) : user?.avatar ? getImageUrl(user.avatar) : undefined
+  );
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const [profileLink, setProfileLink] = useState('');
   const [copied, setCopied] = useState(false);
@@ -123,12 +129,24 @@ const CreatorSettings = () => {
     }
   };
 
-  const handleAvatarUpdate = async (url: string) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
     try {
-      await userApi.updateProfile({ avatar: url });
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const res = await api.post('/upload/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const url = res.data.data.url;
+      setAvatarUrl(getImageUrl(url));
       dispatch(updateUser({ avatar: url }));
+      setMsg('Photo updated!');
+      setTimeout(() => setMsg(''), 3000);
     } catch {
-      // Avatar URL already saved by the upload endpoint; profile sync is best-effort
+      setMsg('Failed to upload photo');
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -141,6 +159,7 @@ const CreatorSettings = () => {
       </div>
 
       {/* Profile Photo */}
+      <input ref={fileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleFileChange} />
       <div style={{ ...card, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 20 }}>
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3e48' }}><User size={18} /></div>
@@ -149,12 +168,42 @@ const CreatorSettings = () => {
             <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Update your creator avatar shown on your profile and chat</p>
           </div>
         </div>
-        <AvatarUpload
-          currentAvatar={user?.creator?.profileImage ? getImageUrl(user.creator.profileImage) : user?.avatar ? getImageUrl(user.avatar) : undefined}
-          userId={user?.id}
-          onUploadSuccess={handleAvatarUpdate}
-          size={100}
-        />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+          <div
+            style={{ position: 'relative', width: 80, height: 80, cursor: 'pointer', flexShrink: 0 }}
+            onClick={() => !avatarUploading && fileInputRef.current?.click()}
+            title="Change photo"
+          >
+            <div style={{
+              width: 80, height: 80, borderRadius: '50%',
+              background: 'linear-gradient(135deg, #ff5b1f, #ff3e48)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontSize: 32, fontWeight: 700, overflow: 'hidden',
+              opacity: avatarUploading ? 0.6 : 1,
+            }}>
+              {avatarUrl
+                ? <img src={avatarUrl} alt="avatar" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : (user?.name || '?').charAt(0).toUpperCase()}
+            </div>
+            <div style={{
+              position: 'absolute', bottom: 0, right: 0,
+              width: 26, height: 26, borderRadius: '50%',
+              background: '#111827', border: '2px solid #fff',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <svg viewBox="0 0 16 16" width="13" height="13" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M14.5 12.5a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h2l1.5-2h4L12 4.5h1.5a1 1 0 0 1 1 1z"/>
+                <circle cx="8" cy="8.5" r="2"/>
+              </svg>
+            </div>
+          </div>
+          <div>
+            <p style={{ fontSize: 14, fontWeight: 600, color: '#111827', margin: '0 0 4px' }}>
+              {avatarUploading ? 'Uploading...' : 'Click to change photo'}
+            </p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>JPG, PNG or WebP · Max 5MB</p>
+          </div>
+        </div>
       </div>
 
       {/* Change Pricing */}

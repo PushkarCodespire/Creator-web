@@ -1,12 +1,10 @@
-import React, { useEffect, useState } from 'react';
-import { Tabs, Form, Input, Select, Button, Tag, Divider, Space, Statistic, Row, Col, message, Spin, Card, Switch, Table, Popconfirm, Timeline, Typography, Avatar } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import React, { useEffect, useState, useRef } from 'react';
+import { Tabs, Form, Input, Select, Button, Tag, Divider, Space, Statistic, Row, Col, message, Spin, Card, Switch, Table, Popconfirm, Timeline, Typography } from 'antd';
 import { User, Mail, ShieldCheck, CheckCircle2, Ban, Clock, Edit3, PlayCircle, Trash2, History, AlertTriangle, Info, Youtube, Instagram, Twitter, Globe } from 'lucide-react';
 import { adminApi, getImageUrl } from '../../services/api';
 import { colors, shadows } from '../../styles/tokens';
 import CustomModal from '../../components/common/Modal/CustomModal';
 import CustomCard from '../../components/common/Card/CustomCard';
-import { ImageUpload } from '../upload/ImageUpload';
 import { logger } from '../../utils/logger';
 
 const { Text, Title, Paragraph } = Typography;
@@ -54,6 +52,7 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
 
   // Avatar upload
   const [avatarUploading, setAvatarUploading] = useState(false);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (visible && creatorId) {
@@ -328,20 +327,20 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
     </div>
   );
 
-  const handleAdminAvatarUpload = async (croppedBlob: Blob, fileName: string) => {
-    if (!creatorId) throw new Error('No creator selected');
+  const handleAdminAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !creatorId) return;
     setAvatarUploading(true);
     try {
-      const res = await adminApi.uploadCreatorAvatar(creatorId, croppedBlob, fileName);
+      const res = await adminApi.uploadCreatorAvatar(creatorId, file, file.name);
       const url = res.data.data.url;
       message.success('Avatar updated');
-      await fetchData(); // refresh creator data so UI shows new photo
-      return { url };
+      await fetchData();
     } catch {
       message.error('Failed to upload avatar');
-      throw new Error('Upload failed');
     } finally {
       setAvatarUploading(false);
+      if (avatarFileInputRef.current) avatarFileInputRef.current.value = '';
     }
   };
 
@@ -350,32 +349,46 @@ const CreatorDetailModal: React.FC<CreatorDetailModalProps> = ({
       <Row gutter={[16, 16]}>
         {/* Avatar upload */}
         <Col span={24}>
+          <input ref={avatarFileInputRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleAdminAvatarFileChange} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 20, padding: '16px 20px', background: colors.gray[50], borderRadius: 12, border: `1px solid ${colors.gray[100]}`, marginBottom: 4 }}>
-            <Spin spinning={avatarUploading}>
-              <Avatar
-                size={80}
-                src={creator?.profileImage ? getImageUrl(creator.profileImage) : undefined}
-                icon={<UserOutlined />}
-                style={{ background: colors.primary.subtle, border: `2px solid ${colors.gray[100]}`, flexShrink: 0 }}
-              />
-            </Spin>
+            <div
+              style={{ position: 'relative', width: 72, height: 72, flexShrink: 0, cursor: 'pointer' }}
+              onClick={() => !avatarUploading && avatarFileInputRef.current?.click()}
+              title="Change photo"
+            >
+              <div style={{
+                width: 72, height: 72, borderRadius: '50%',
+                background: colors.primary.subtle,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: 28, fontWeight: 700, color: colors.primary.solid,
+                overflow: 'hidden', opacity: avatarUploading ? 0.6 : 1,
+              }}>
+                {creator?.profileImage
+                  ? <img src={getImageUrl(creator.profileImage)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : (creator?.displayName || creator?.user?.name || '?').charAt(0).toUpperCase()}
+              </div>
+              <div style={{
+                position: 'absolute', bottom: 0, right: 0,
+                width: 24, height: 24, borderRadius: '50%',
+                background: colors.primary.solid, border: '2px solid #fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {avatarUploading
+                  ? <div style={{ width: 10, height: 10, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  : <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14.5 12.5a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h2l1.5-2h4L12 4.5h1.5a1 1 0 0 1 1 1z"/>
+                      <circle cx="8" cy="8.5" r="2"/>
+                    </svg>
+                }
+              </div>
+            </div>
             <div>
-              <Text strong style={{ color: colors.text.primary, display: 'block', marginBottom: 4 }}>
+              <Text strong style={{ color: colors.text.primary, display: 'block', marginBottom: 2 }}>
                 {creator?.displayName || creator?.user?.name}
               </Text>
-              <Text style={{ color: colors.text.tertiary, fontSize: 12, display: 'block', marginBottom: 10 }}>
-                Change the creator&apos;s profile photo
+              <Text style={{ color: colors.text.tertiary, fontSize: 12, display: 'block' }}>
+                {avatarUploading ? 'Uploading...' : 'Click photo to change'}
               </Text>
-              <ImageUpload
-                aspectRatio={1}
-                maxSize={5}
-                minWidth={200}
-                minHeight={200}
-                onUpload={handleAdminAvatarUpload}
-                disabled={avatarUploading}
-                buttonText="Change Photo"
-                cropShape="round"
-              />
             </div>
           </div>
         </Col>

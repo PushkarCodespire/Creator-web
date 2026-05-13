@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { RootState, AppDispatch } from '../../store';
 import { logout, updateUser } from '../../store/slices/authSlice';
 import { notificationApi, userApi, getImageUrl } from '../../services/api';
-import AvatarUpload from '../../components/upload/AvatarUpload';
+import api from '../../services/api';
 
 export default function WebsiteUserProfile() {
   const navigate = useNavigate();
@@ -13,6 +13,13 @@ export default function WebsiteUserProfile() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loadingNotifs, setLoadingNotifs] = useState(true);
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [avatarUploading, setAvatarUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user?.avatar) setAvatarUrl(getImageUrl(user.avatar));
+  }, [user?.avatar]);
 
   useEffect(() => {
     if (!isAuthenticated) { navigate('/login'); return; }
@@ -34,31 +41,84 @@ export default function WebsiteUserProfile() {
     } catch {}
   };
 
-  const handleAvatarUpdate = async (url: string) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarUploading(true);
     try {
-      await userApi.updateProfile({ avatar: url });
+      const formData = new FormData();
+      formData.append('avatar', file);
+      const res = await api.post('/upload/avatar', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const url = res.data.data.url;
+      const resolved = getImageUrl(url);
+      setAvatarUrl(resolved);
       dispatch(updateUser({ avatar: url }));
-    } catch {}
+      await userApi.updateProfile({ avatar: url });
+    } catch {
+      // silent fail — upload error doesn't break the page
+    } finally {
+      setAvatarUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
   };
 
   if (!user) return null;
 
+  const initial = (user.name || '?').charAt(0).toUpperCase();
+
   return (
     <div style={{ minHeight: '100vh', background: '#fbf7f4' }}>
+      {/* Hidden file input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        style={{ display: 'none' }}
+        onChange={handleFileChange}
+      />
+
       {/* Header */}
       <div style={{ maxWidth: 800, margin: '0 auto', padding: '40px 24px' }}>
 
         {/* Profile Card */}
         <div style={{ background: '#fff', border: '1px solid #ede8e3', borderRadius: 20, padding: 32, marginBottom: 24 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-            <div style={{ flexShrink: 0 }}>
-              <AvatarUpload
-                currentAvatar={user.avatar ? getImageUrl(user.avatar) : undefined}
-                userId={user.id}
-                onUploadSuccess={handleAvatarUpdate}
-                size={72}
-              />
+            {/* Avatar with edit overlay */}
+            <div
+              style={{ position: 'relative', width: 72, height: 72, flexShrink: 0, cursor: 'pointer' }}
+              onClick={() => !avatarUploading && fileInputRef.current?.click()}
+              title="Change profile photo"
+            >
+              <div style={{
+                width: 72, height: 72, borderRadius: '50%',
+                background: 'linear-gradient(135deg, #ff5b1f, #ff3e48)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                color: '#fff', fontSize: 28, fontWeight: 700,
+                overflow: 'hidden',
+                opacity: avatarUploading ? 0.6 : 1,
+                transition: 'opacity 0.2s',
+              }}>
+                {avatarUrl
+                  ? <img src={avatarUrl} alt={user.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  : initial}
+              </div>
+              {/* Camera icon overlay */}
+              <div style={{
+                position: 'absolute', bottom: 0, right: 0,
+                width: 24, height: 24, borderRadius: '50%',
+                background: '#111827', border: '2px solid #fff',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+              }}>
+                {avatarUploading
+                  ? <div style={{ width: 10, height: 10, border: '2px solid #fff', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  : <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="#fff" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14.5 12.5a1 1 0 0 1-1 1h-11a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h2l1.5-2h4L12 4.5h1.5a1 1 0 0 1 1 1z"/>
+                      <circle cx="8" cy="8.5" r="2"/>
+                    </svg>
+                }
+              </div>
             </div>
+
             <div style={{ flex: 1 }}>
               <h1 style={{ fontSize: 24, fontWeight: 700, color: '#111827', margin: 0 }}>{user.name}</h1>
               <p style={{ fontSize: 14, color: '#6b7280', margin: '4px 0 0' }}>{user.email}</p>
@@ -143,6 +203,7 @@ export default function WebsiteUserProfile() {
           )}
         </div>
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
