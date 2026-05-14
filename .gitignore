@@ -41,6 +41,12 @@ output/
 Thumbs.db
 desktop.ini
 
+# npm internal cache
+.npm/
+
+# Cursor IDE rules (project-specific scratchpad files)
+cursorrulesCodeSpire*
+
 # Vite
 .vite/
 
