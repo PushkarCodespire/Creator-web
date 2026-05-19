@@ -59,6 +59,7 @@ const Community = lazy(() => import('./pages/Community'));
 
 // Onboarding
 const CreatorOnboardingWizard = lazy(() => import('./components/Onboarding/CreatorOnboardingWizard'));
+const WebsiteOnboarding = lazy(() => import('./pages/website/WebsiteOnboarding'));
 
 // User Dashboard
 const UserDashboard = lazy(() => import('./pages/user/UserDashboard'));
@@ -76,6 +77,7 @@ const CreatorPayouts = lazy(() => import('./pages/creator/CreatorPayouts'));
 const CreatorRevenue = lazy(() => import('./pages/creator/CreatorRevenue'));
 const CreatorProducts = lazy(() => import('./pages/creator/CreatorProducts'));
 const CreatorYourAI = lazy(() => import('./pages/creator/CreatorYourAI'));
+const CreatorTrainAI = lazy(() => import('./pages/creator/CreatorTrainAI'));
 
 // Company Dashboard
 const CompanyDashboard = lazy(() => import('./pages/company/CompanyDashboard'));
@@ -155,6 +157,11 @@ function App() {
         </Route>
 
         {/* Onboarding Routes */}
+        <Route path="/onboarding" element={
+          <ProtectedRoute allowedRoles={['USER']}>
+            <WebsiteOnboarding />
+          </ProtectedRoute>
+        } />
         <Route path="/onboarding/creator" element={
           <ProtectedRoute allowedRoles={['USER', 'CREATOR']}>
             <CreatorOnboardingWizard />
@@ -208,6 +215,7 @@ function App() {
           <Route path="products" element={<CreatorProducts />} />
           <Route path="payouts" element={<CreatorPayouts />} />
           <Route path="your-ai" element={<CreatorYourAI />} />
+          <Route path="train-ai" element={<CreatorTrainAI />} />
           <Route path="settings" element={<CreatorSettings />} />
         </Route>
 

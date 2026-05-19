@@ -34,31 +34,42 @@ function stripMarkdown(text: string): string {
 }
 
 export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent, onVoiceBlocked, voiceProvider }: Props) {
-  const [state, setState] = useState<ModalState>('idle');
-  const [transcript, setTranscript] = useState('');
+  const [state, setState]                     = useState<ModalState>('idle');
+  const [transcript, setTranscript]           = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
-  const [aiText, setAiText] = useState('');
-  const [highlightIndex, setHighlightIndex] = useState(-1);
-  const [currentLine, setCurrentLine] = useState(0);
-  const [error, setError] = useState('');
+  const [aiText, setAiText]                   = useState('');
+  const [highlightIndex, setHighlightIndex]   = useState(-1);
+  const [currentLine, setCurrentLine]         = useState(0);
+  const [error, setError]                     = useState('');
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const recognitionRef = useRef<any>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const highlightTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recognitionRef   = useRef<any>(null);
+  const audioRef         = useRef<HTMLAudioElement | null>(null);
+  // stateRef mirrors `state` so async / event callbacks always see the current value
+  const stateRef         = useRef<ModalState>('idle');
+  // Tracks consecutive network-error retries so we don't loop forever
+  const networkRetryRef  = useRef(0);
+
+  // Keep stateRef in sync
+  const setStateSafe = useCallback((s: ModalState) => {
+    stateRef.current = s;
+    setState(s);
+  }, []);
 
   // Reset on open
   useEffect(() => {
     if (open) {
-      setState('idle');
+      setStateSafe('idle');
       setTranscript('');
       setInterimTranscript('');
       setAiText('');
       setHighlightIndex(-1);
       setError('');
+      networkRetryRef.current = 0;
     } else {
       stopEverything();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Escape key to close
@@ -80,10 +91,6 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
       audioRef.current.pause();
       audioRef.current = null;
     }
-    if (highlightTimerRef.current) {
-      clearInterval(highlightTimerRef.current);
-      highlightTimerRef.current = null;
-    }
   }, []);
 
   const stopSpeaking = useCallback(() => {
@@ -91,72 +98,65 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
       audioRef.current.pause();
       audioRef.current = null;
     }
-    if (highlightTimerRef.current) {
-      clearInterval(highlightTimerRef.current);
-      highlightTimerRef.current = null;
-    }
-    setState('idle');
+    setStateSafe('idle');
     setAiText('');
     setHighlightIndex(-1);
-  }, []);
+  }, [setStateSafe]);
+
+  // ── Audio playback with per-word highlighting ────────────────────────────────
+  //
+  // Uses `ontimeupdate` (fires ~4×/s based on actual playback position) instead
+  // of a setInterval with estimated msPerWord.  This works even when the audio
+  // has an unknown / Infinity duration at load time (common with Cloudinary CDN).
 
   const playAudio = useCallback((audioUrl: string, text: string) => {
     const cleanText = stripMarkdown(text);
-    setState('speaking');
+    setStateSafe('speaking');
     setAiText(cleanText);
     setHighlightIndex(0);
     setCurrentLine(0);
 
-    const fullUrl = getImageUrl(audioUrl);
+    const words = cleanText.split(/\s+/).filter(Boolean);
 
-    const audio = new Audio(fullUrl);
+    // Pre-compute per-line word ranges for caption display
+    const sentences = cleanText.split(/(?<=[.!?])\s+/);
+    let wordCount = 0;
+    const lineWordCounts = sentences.map(s => {
+      const wc = s.split(/\s+/).filter(Boolean).length;
+      const result = { start: wordCount, end: wordCount + wc };
+      wordCount += wc;
+      return result;
+    });
+
+    const fullUrl = getImageUrl(audioUrl);
+    const audio   = new Audio(fullUrl);
     audioRef.current = audio;
 
-    audio.onloadedmetadata = () => {
-      const words = cleanText.split(/\s+/);
-      if (words.length === 0) return;
-      const msPerWord = (audio.duration * 1000) / words.length;
-
-      // Split into lines (by sentence or ~8 words)
-      const sentences = cleanText.split(/(?<=[.!?])\s+/);
-      let wordCount = 0;
-      const lineWordCounts = sentences.map(s => {
-        const wc = s.split(/\s+/).length;
-        const start = wordCount;
-        wordCount += wc;
-        return { start, end: wordCount };
-      });
-
-      let idx = 0;
-      highlightTimerRef.current = setInterval(() => {
-        idx++;
-        if (idx >= words.length) {
-          if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
-          return;
-        }
-        setHighlightIndex(idx);
-        // Update current line based on word index
-        const lineIdx = lineWordCounts.findIndex(l => idx >= l.start && idx < l.end);
-        if (lineIdx >= 0) setCurrentLine(lineIdx);
-      }, msPerWord);
+    // ontimeupdate: fires on actual playback progress — handles Infinity duration gracefully
+    audio.ontimeupdate = () => {
+      const dur = audio.duration;
+      if (!dur || !isFinite(dur) || dur === 0) return;
+      const pct = audio.currentTime / dur;
+      const idx = Math.min(Math.floor(pct * words.length), words.length - 1);
+      setHighlightIndex(idx);
+      const lineIdx = lineWordCounts.findIndex(l => idx >= l.start && idx < l.end);
+      if (lineIdx >= 0) setCurrentLine(lineIdx);
     };
 
     audio.onended = () => {
-      if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
-      setState('idle');
+      setStateSafe('idle');
       setAiText('');
       setHighlightIndex(-1);
       setCurrentLine(0);
     };
     audio.onerror = () => {
-      if (highlightTimerRef.current) clearInterval(highlightTimerRef.current);
-      setState('idle');
+      setStateSafe('idle');
       setHighlightIndex(-1);
     };
-    audio.play().catch(() => {
-      setState('idle');
-    });
-  }, []);
+    audio.play().catch(() => setStateSafe('idle'));
+  }, [setStateSafe]);
+
+  // ── Speech recognition ───────────────────────────────────────────────────────
 
   const startListening = useCallback(() => {
     if (!SpeechRecognition) {
@@ -167,15 +167,15 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     setTranscript('');
     setInterimTranscript('');
     setError('');
-    setState('listening');
+    setStateSafe('listening');
 
     const recognition = new SpeechRecognition();
-    recognition.continuous = true;
+    recognition.continuous     = true;
     recognition.interimResults = true;
-    recognition.lang = 'en-US';
+    recognition.lang           = 'en-US';
 
     recognition.onresult = (event: { results: { [index: number]: { [index: number]: { transcript: string }; isFinal: boolean }; length: number }; resultIndex: number }) => {
-      let final = '';
+      let final   = '';
       let interim = '';
       for (let i = 0; i < event.results.length; i++) {
         if (event.results[i].isFinal) {
@@ -189,44 +189,81 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     };
 
     recognition.onerror = (event: { error: string }) => {
+      // Ignore errors that arrive after we've already moved past 'listening'.
+      // Chrome frequently fires 'network' or 'aborted' after recognition.stop()
+      // is called from stopAndSend — these are stale events, not real failures.
+      if (stateRef.current !== 'listening') return;
+
       if (event.error === 'no-speech') {
-        setState('idle');
+        setStateSafe('idle');
         return;
       }
       if (event.error === 'aborted') return;
 
+      if (event.error === 'network') {
+        // Network errors from Chrome STT are often transient (Google server hiccup).
+        // Silently retry once; show a message only if the second attempt also fails.
+        if (networkRetryRef.current < 1) {
+          networkRetryRef.current++;
+          console.warn('[STT] transient network error — auto-retrying…');
+          setTimeout(() => {
+            if (stateRef.current === 'listening') startListening();
+          }, 400);
+          return;
+        }
+        // Second failure — show a concise message, stay tappable
+        setError('Connection interrupted. Tap to try again.');
+        setStateSafe('error');
+        return;
+      }
+
       const micErrorMessages: Record<string, string> = {
-        'not-allowed': 'Microphone access was denied. Click the mic icon in your browser address bar and allow microphone access, then try again.',
-        'service-not-allowed': 'Speech recognition is blocked on this page. Make sure the site is loaded over HTTPS.',
-        'audio-capture': 'No microphone was found. Please connect a microphone and try again.',
-        'network': 'A network error occurred during speech recognition. Check your connection and try again.',
-        'bad-grammar': 'Speech recognition configuration error. Please try again.',
-        'language-not-supported': 'Your language is not supported. Try switching your browser language to English.',
+        'not-allowed':           'Microphone access was denied. Allow it in your browser and tap to try again.',
+        'service-not-allowed':   'Speech recognition is blocked on this page. Make sure the site is loaded over HTTPS.',
+        'audio-capture':         'No microphone was found. Connect a microphone and tap to try again.',
+        'bad-grammar':           'Speech recognition configuration error. Tap to try again.',
+        'language-not-supported':'Your language is not supported. Switch your browser language to English.',
       };
-      setError(micErrorMessages[event.error] || `Speech recognition failed (${event.error}). Please try again.`);
-      setState('error');
+      setError(micErrorMessages[event.error] || `Speech recognition failed (${event.error}). Tap to try again.`);
+      setStateSafe('error');
+    };
+
+    recognition.onend = () => {
+      // If recognition ends on its own while we're still in listening state
+      // (can happen after ~60 s of silence on some browsers), return to idle.
+      if (stateRef.current === 'listening') {
+        setStateSafe('idle');
+      }
     };
 
     recognition.start();
     recognitionRef.current = recognition;
-  }, []);
+  // startListening intentionally references itself for retry — safe because
+  // it only recurses once (networkRetryRef guard) and the ref is stable.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setStateSafe]);
 
   const stopAndSend = useCallback(async () => {
-    recognitionRef.current?.stop();
+    // abort() instead of stop() — cancels immediately without queuing any
+    // further result or error events, eliminating spurious 'network' errors
+    // that fire when stop() is called mid-stream.
+    recognitionRef.current?.abort();
+
     const text = (transcript + ' ' + interimTranscript).trim();
 
     if (!text) {
-      setState('idle');
+      setStateSafe('idle');
       return;
     }
 
     setTranscript(text);
     setInterimTranscript('');
-    setState('sending');
+    setError('');          // wipe any stale error from the previous listen attempt
+    setStateSafe('sending');
 
     if (!conversationId) {
       setError('No active conversation');
-      setState('error');
+      setStateSafe('error');
       return;
     }
 
@@ -247,25 +284,26 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
         // No audio — show clean text as caption briefly
         const cleanText = stripMarkdown(aiMsg.content);
         setAiText(cleanText);
-        setState('speaking');
+        setStateSafe('speaking');
         setTimeout(() => {
-          setState('idle');
+          setStateSafe('idle');
           setAiText('');
         }, 4000);
       } else {
-        setState('idle');
+        setStateSafe('idle');
       }
 
       onMessageSent?.();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { error?: string } } };
       setError(e?.response?.data?.error || 'Failed to send');
-      setState('error');
+      setStateSafe('error');
     }
-  }, [transcript, interimTranscript, conversationId, playAudio, onMessageSent]);
+  }, [transcript, interimTranscript, conversationId, playAudio, onMessageSent, setStateSafe, onClose, onVoiceBlocked, voiceProvider]);
 
   const handleMicTap = useCallback(() => {
     if (state === 'idle' || state === 'error') {
+      networkRetryRef.current = 0;
       startListening();
     } else if (state === 'listening') {
       stopAndSend();
@@ -277,11 +315,10 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
   if (!open) return null;
 
   const avatarUrl = creatorAvatar ? getImageUrl(creatorAvatar) : null;
-  const initial = creatorName.charAt(0).toUpperCase();
+  const initial   = creatorName.charAt(0).toUpperCase();
 
   // Split into lines (sentences) for caption display
-  const lines = aiText ? aiText.split(/(?<=[.!?])\s+/).filter(Boolean) : [];
-  const _allWords = aiText ? aiText.split(/\s+/) : [];
+  const lines    = aiText ? aiText.split(/(?<=[.!?])\s+/).filter(Boolean) : [];
 
   return (
     <div style={{
@@ -314,6 +351,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
         onClick={handleMicTap}
         role="button"
         tabIndex={0}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') handleMicTap(); }}
         style={{
           width: 140, height: 140, borderRadius: '50%',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -375,11 +413,11 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
           color: state === 'listening' ? '#ff3e48' : state === 'speaking' ? '#10b981' : 'rgba(255,255,255,0.5)',
           fontSize: 14, fontWeight: 600, letterSpacing: '0.02em', margin: 0,
         }}>
-          {state === 'idle' && 'Tap to speak'}
-          {state === 'listening' && 'Listening... tap to send'}
-          {state === 'sending' && 'Thinking...'}
-          {state === 'speaking' && 'Speaking...'}
-          {state === 'error' && 'Tap to try again'}
+          {state === 'idle'      && 'Tap to speak'}
+          {state === 'listening' && 'Listening… tap to send'}
+          {state === 'sending'   && 'Thinking…'}
+          {state === 'speaking'  && 'Speaking…'}
+          {state === 'error'     && 'Tap to try again'}
         </p>
         {state === 'speaking' && (
           <button
@@ -409,7 +447,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
           <p style={{ color: '#fff', fontSize: 18, fontWeight: 400, lineHeight: 1.6 }}>
             {transcript}{interimTranscript && <span style={{ opacity: 0.5 }}>{interimTranscript}</span>}
             {!transcript && !interimTranscript && (
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>Say something...</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>Say something…</span>
             )}
           </p>
         )}
@@ -421,11 +459,10 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
         {state === 'speaking' && aiText && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {lines.map((line, lineIdx) => {
-              // Calculate word offset for this line
-              const prevWords = lines.slice(0, lineIdx).join(' ').split(/\s+/).filter(Boolean).length;
-              const lineWords = line.split(/\s+/);
+              const prevWords  = lines.slice(0, lineIdx).join(' ').split(/\s+/).filter(Boolean).length;
+              const lineWords  = line.split(/\s+/).filter(Boolean);
               const isCurrentLine = lineIdx === currentLine;
-              const isPastLine = lineIdx < currentLine;
+              const isPastLine    = lineIdx < currentLine;
 
               return (
                 <p
@@ -434,7 +471,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
                     fontSize: 17, lineHeight: 1.7, fontWeight: 400, margin: 0,
                     opacity: isCurrentLine ? 1 : isPastLine ? 0.3 : 0.15,
                     transition: 'opacity 0.3s ease',
-                    ...(isCurrentLine ? {} : { display: isPastLine ? 'block' : lineIdx <= currentLine + 1 ? 'block' : 'none' }),
+                    display: isCurrentLine || isPastLine || lineIdx === currentLine + 1 ? 'block' : 'none',
                   }}
                 >
                   {lineWords.map((word, wi) => {
@@ -444,7 +481,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
                         key={wi}
                         style={{
                           color: globalIdx <= highlightIndex ? '#ffffff' : 'rgba(255,255,255,0.3)',
-                          transition: 'color 0.12s ease',
+                          transition: 'color 0.1s ease',
                         }}
                       >
                         {word}{' '}
@@ -456,8 +493,10 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
             })}
           </div>
         )}
-        {error && (
-          <p style={{ color: '#ef4444', fontSize: 13 }}>{error}</p>
+        {/* Only show error text when actually in error state — prevents stale
+            network-error messages from leaking into speaking/sending states */}
+        {state === 'error' && error && (
+          <p style={{ color: '#ef4444', fontSize: 13, marginTop: 8 }}>{error}</p>
         )}
       </div>
 
@@ -471,12 +510,12 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
 
       <style>{`
         @keyframes voicePulse {
-          0% { transform: scale(1); opacity: 0.4; }
-          50% { transform: scale(1.08); opacity: 0.15; }
-          100% { transform: scale(1); opacity: 0.4; }
+          0%   { transform: scale(1);    opacity: 0.4; }
+          50%  { transform: scale(1.08); opacity: 0.15; }
+          100% { transform: scale(1);    opacity: 0.4; }
         }
         @keyframes voiceSpin {
-          0% { transform: rotate(0deg); }
+          0%   { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
         }
       `}</style>

@@ -62,7 +62,7 @@ export function WebsiteFooter() {
               <img src={LOGO_SRC} alt="CreatorPal" className={styles.footerLogoImg} />
             </Link>
             <p className={styles.footerTagline}>
-              Turn your knowledge into an AI that talks to your audience and earns for you
+              Your creator expert, like a pal, 24/7.
             </p>
           </div>
 

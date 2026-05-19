@@ -67,6 +67,8 @@ const VerifyEmail = () => {
       if (u?.role === 'CREATOR') { navigate('/onboarding/creator'); return; }
       if (u?.role === 'COMPANY') { navigate('/company-dashboard'); return; }
       if (u?.role === 'ADMIN') { navigate('/admin'); return; }
+      // New users: send to fitness onboarding; returning users: honour redirect
+      if (!u?.onboardingCompleted) { navigate('/onboarding'); return; }
       const savedRedirect = localStorage.getItem('postVerifyRedirect') || '/';
       localStorage.removeItem('postVerifyRedirect');
       navigate(redirectParam || savedRedirect);

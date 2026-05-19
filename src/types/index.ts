@@ -33,6 +33,15 @@ export interface User {
   creator?: CreatorProfile;
   company?: CompanyProfile;
   subscription?: Subscription;
+  // Fitness onboarding
+  onboardingCompleted?: boolean;
+  ageRange?: string;
+  heightCm?: number;
+  weightKg?: number;
+  dietPreference?: string;
+  fitnessGoal?: string;
+  fitnessChallenge?: string;
+  coachStyle?: string;
 }
 
 export interface Creator {

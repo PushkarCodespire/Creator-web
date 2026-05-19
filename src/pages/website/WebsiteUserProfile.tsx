@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { RootState, AppDispatch } from '../../store';
 import { logout } from '../../store/slices/authSlice';
 import { notificationApi } from '../../services/api';
+import { Activity } from 'lucide-react';
 
 export default function WebsiteUserProfile() {
   const navigate = useNavigate();
@@ -86,6 +87,37 @@ export default function WebsiteUserProfile() {
             </button>
           </div>
         )}
+
+        {/* Fitness Profile */}
+        <div style={{ background: '#fff', border: '1px solid #ede8e3', borderRadius: 20, padding: 28, marginBottom: 24 }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ width: 40, height: 40, borderRadius: 12, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3e48' }}>
+                <Activity size={18} />
+              </div>
+              <div>
+                <h2 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Fitness Profile</h2>
+                <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>
+                  {user.onboardingCompleted ? 'Your goals & preferences' : 'Not set up yet'}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => navigate('/onboarding')}
+              style={{ padding: '8px 20px', borderRadius: 10, border: '1px solid #ede8e3', background: '#fff', color: '#111827', fontSize: 13, fontWeight: 600, cursor: 'pointer' }}
+            >
+              {user.onboardingCompleted ? 'Edit' : 'Set up'}
+            </button>
+          </div>
+          {user.onboardingCompleted && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 16 }}>
+              {[user.fitnessGoal, user.dietPreference, user.ageRange, user.coachStyle].filter(Boolean).map(tag => (
+                <span key={tag} style={{ padding: '4px 12px', borderRadius: 99, background: '#f3f4f6', fontSize: 12, color: '#374151', fontWeight: 500 }}>{tag}</span>
+              ))}
+            </div>
+          )}
+        </div>
 
         {/* Notifications */}
         <div style={{ background: '#fff', border: '1px solid #ede8e3', borderRadius: 20, padding: 28 }}>

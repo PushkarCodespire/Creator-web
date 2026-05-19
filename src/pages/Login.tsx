@@ -55,7 +55,12 @@ const Login = () => {
       } else if (user.role === 'ADMIN') {
         navigate('/admin/home-page', { replace: true });
       } else {
-        navigate('/', { replace: true });
+        // Send new users through fitness onboarding first
+        if (!isProfileComplete) {
+          navigate('/onboarding', { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       }
     }
   }, [isAuthenticated, user, navigate, isProfileComplete]);

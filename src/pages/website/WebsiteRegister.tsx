@@ -9,7 +9,7 @@ export default function WebsiteRegister() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const dispatch = useDispatch<AppDispatch>();
-  const { isAuthenticated, isLoading, error } = useSelector((state: RootState) => state.auth);
+  const { isAuthenticated, isLoading, error, user } = useSelector((state: RootState) => state.auth);
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -22,13 +22,17 @@ export default function WebsiteRegister() {
   const redirectTo = searchParams.get('redirect') || '/';
   const plan = searchParams.get('plan') || '';
 
-  // If already authenticated, redirect
+  // If already authenticated, send new users to onboarding, others to intended destination
   useEffect(() => {
     if (isAuthenticated) {
-      const target = plan ? `${redirectTo}?plan=${plan}` : redirectTo;
-      navigate(target, { replace: true });
+      if (user?.role === 'USER' && !user?.onboardingCompleted) {
+        navigate('/onboarding', { replace: true });
+      } else {
+        const target = plan ? `${redirectTo}?plan=${plan}` : redirectTo;
+        navigate(target, { replace: true });
+      }
     }
-  }, [isAuthenticated, navigate, redirectTo, plan]);
+  }, [isAuthenticated, navigate, redirectTo, plan, user]);
 
   // Clear errors on unmount
   useEffect(() => {

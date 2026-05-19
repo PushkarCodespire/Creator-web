@@ -555,9 +555,9 @@ export const CreatorOnboardingWizard: React.FC = () => {
                 )}
               </div>
               <p style={{ fontSize: 12, color: '#6b7280', marginTop: 0, marginBottom: 12 }}>
-                Upload or record a sample of your voice. Your AI will speak in your voice when chatting with fans.
+                Record up to 3 voice clips — different scripts, emotions, and pacing. More clips = more accurate AI voice. Minimum 15 seconds each, your voice only.
               </p>
-              <VoiceCloneSection compact onStatusChange={setVoiceStatus} />
+              <VoiceCloneSection onStatusChange={setVoiceStatus} />
             </div>
 
             {/* Persona style — 2×2 grid */}

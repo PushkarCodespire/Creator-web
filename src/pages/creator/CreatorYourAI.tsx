@@ -4,7 +4,7 @@ import { message as antMessage } from 'antd';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
 import { creatorApi, contentApi } from '../../services/api';
-import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, ChevronUp, Mic, Brain, MessageSquare } from 'lucide-react';
+import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, ChevronUp, Mic, Brain, MessageSquare, Zap } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { VoiceCloneSection } from '../../components/VoiceCloneSection/VoiceCloneSection';
 
@@ -90,6 +90,14 @@ const CreatorYourAI = () => {
   const [generatingSummary, setGeneratingSummary] = useState(false);
   const [_summaryLoaded, setSummaryLoaded] = useState(false);
 
+  // Fine-tune state
+  const [ftStatus, setFtStatus] = useState<'none' | 'pending' | 'ready' | 'failed'>('none');
+  const [ftCorrections, setFtCorrections] = useState(0);
+  const [ftMinRequired, setFtMinRequired] = useState(10);
+  const [ftCanTrain, setFtCanTrain] = useState(false);
+  const [ftLastTrained, setFtLastTrained] = useState<string | null>(null);
+  const [ftRunning, setFtRunning] = useState(false);
+
   // Voice clone status — owned and updated by <VoiceCloneSection />
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
 
@@ -152,7 +160,44 @@ const CreatorYourAI = () => {
         setSummaryLoaded(true);
       }
     })();
+
+    // Load fine-tune status
+    fetchFineTuneStatus();
   }, []);
+
+  // Auto-poll while fine-tuning is pending
+  useEffect(() => {
+    if (ftStatus !== 'pending') return;
+    const interval = setInterval(fetchFineTuneStatus, 30000); // every 30s
+    return () => clearInterval(interval);
+  }, [ftStatus]);
+
+  const fetchFineTuneStatus = async () => {
+    try {
+      const res = await creatorApi.getTrainingStatus();
+      const d = res.data.data;
+      setFtStatus(d.status || 'none');
+      setFtCorrections(d.totalExamples ?? d.correctionCount ?? 0);
+      setFtMinRequired(d.minRequired || 10);
+      setFtCanTrain(d.canTrain || false);
+      if (d.lastFineTunedAt) setFtLastTrained(d.lastFineTunedAt);
+    } catch {}
+  };
+
+  const handleStartFineTune = async () => {
+    if (!ftCanTrain || ftRunning) return;
+    setFtRunning(true);
+    try {
+      await creatorApi.startFineTune();
+      setFtStatus('pending');
+      antMessage.success('Fine-tuning started — check back in 15–20 minutes.');
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      antMessage.error(msg || 'Failed to start fine-tuning.');
+    } finally {
+      setFtRunning(false);
+    }
+  };
 
   const fetchContents = async () => {
     try {
@@ -319,6 +364,43 @@ const CreatorYourAI = () => {
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
           {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.includes('Failed') ? '#ef4444' : '#10b981' }}>{msg}</span>}
+          {/* Fine-Tune button */}
+          <div style={{ position: 'relative' }}>
+            <button
+              type="button"
+              onClick={handleStartFineTune}
+              disabled={!ftCanTrain || ftRunning || ftStatus === 'pending'}
+              title={
+                ftStatus === 'pending'   ? 'Training in progress — check back soon' :
+                ftStatus === 'ready'     ? `Fine-tuned model active${ftLastTrained ? ` · ${new Date(ftLastTrained).toLocaleDateString()}` : ''}` :
+                !ftCanTrain              ? `${ftCorrections}/${ftMinRequired} corrections needed to fine-tune` :
+                'Fine-tune your AI on real corrections'
+              }
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 10,
+                background: ftStatus === 'ready'
+                  ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+                  : ftStatus === 'pending'
+                  ? '#6b7280'
+                  : ftCanTrain
+                  ? 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)'
+                  : '#e5e7eb',
+                color: ftCanTrain || ftStatus !== 'none' ? '#fff' : '#9ca3af',
+                fontSize: 13, fontWeight: 600, border: 'none',
+                cursor: ftCanTrain && ftStatus !== 'pending' ? 'pointer' : 'default',
+                boxShadow: ftCanTrain && ftStatus !== 'pending' ? '0 4px 12px rgba(99,102,241,0.25)' : 'none',
+                transition: 'all 0.2s',
+              }}
+            >
+              <Zap size={14} />
+              {ftStatus === 'pending' ? 'Training...' :
+               ftStatus === 'ready'   ? 'Re-Train' :
+               ftStatus === 'failed'  ? 'Retry Fine-Tune' :
+               ftCanTrain             ? 'Fine-Tune AI' :
+               `${ftCorrections}/${ftMinRequired} to Fine-Tune`}
+            </button>
+          </div>
+
           <button type="button" onClick={handleOpenSummary} disabled={generatingSummary} style={{
             display: 'flex', alignItems: 'center', gap: 6, padding: '9px 20px', borderRadius: 10,
             background: 'linear-gradient(135deg, #ff5b1f 0%, #ff3e48 100%)', color: '#fff',
@@ -694,7 +776,7 @@ const CreatorYourAI = () => {
           <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#8b5cf6' }}><Mic size={18} /></div>
           <div>
             <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Voice Clone</h3>
-            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Upload voice samples to create your AI voice</p>
+            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Record up to 10 clips — more clips = better voice accuracy</p>
           </div>
           {voiceStatus === 'READY' && (
             <span style={{ marginLeft: 'auto', fontSize: 11, fontWeight: 700, color: '#10b981', background: '#ecfdf5', padding: '3px 10px', borderRadius: 6 }}>

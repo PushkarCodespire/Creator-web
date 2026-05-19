@@ -161,12 +161,53 @@ export const userApi = {
   getChatSummary: () => api.get('/users/chat-summary'),
 
   // Get available categories
-  getCategories: () => api.get('/users/categories')
+  getCategories: () => api.get('/users/categories'),
+
+  // Complete fitness onboarding
+  completeOnboarding: (data: {
+    ageRange: string;
+    heightCm: number;
+    weightKg: number;
+    dietPreference: string;
+    fitnessGoal: string;
+    fitnessChallenge: string;
+    coachStyle: string;
+  }) => api.patch('/users/onboarding', data),
 };
 
 // ===========================================
 // CREATOR API
 // ===========================================
+
+// ===========================================
+// TRAINING API (creator corrections + fine-tune)
+// ===========================================
+export const trainingApi = {
+  getCorrections: () =>
+    api.get('/creators/training/corrections'),
+
+  saveCorrection: (data: { userMessage: string; rejectedResponse: string; chosenResponse: string }) =>
+    api.post('/creators/training/correct', data),
+
+  toggleCorrection: (id: string) =>
+    api.patch(`/creators/training/corrections/${id}/toggle`),
+
+  deleteCorrection: (id: string) =>
+    api.delete(`/creators/training/corrections/${id}`),
+
+  getStatus: () =>
+    api.get('/creators/training/status'),
+
+  startFineTune: () =>
+    api.post('/creators/training/fine-tune'),
+
+  // Reuse existing conversation endpoints for the review UI
+  getMyConversations: (params?: { page?: number; limit?: number }) =>
+    api.get('/creators/conversations/me', { params }),
+
+  getMyConversationDetails: (conversationId: string) =>
+    api.get(`/creators/conversations/me/${conversationId}`),
+};
 
 export const creatorApi = {
   getAll: (params?: {
@@ -256,6 +297,10 @@ export const creatorApi = {
 
   generateAiPersonality: (data: { displayName?: string; category?: string; tagline?: string; bio?: string; aiTone?: string; tags?: string[] }) =>
     api.post('/creators/generate-ai-personality', data),
+
+  // Fine-tune training
+  getTrainingStatus: () => api.get('/creators/training/status'),
+  startFineTune: () => api.post('/creators/training/fine-tune'),
 };
 
 // ===========================================
@@ -290,8 +335,8 @@ export const chatApi = {
   startConversation: (creatorId: string) =>
     api.post('/chat/start', { creatorId }),
 
-  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean, voiceProvider?: 'chatterbox' | 'inworld' | 'elevenlabs') =>
-    api.post('/chat/message', { conversationId, content, media, voiceMode, ...(voiceMode ? { voiceProvider } : {}) }),
+  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean, voiceProvider?: 'chatterbox' | 'inworld' | 'elevenlabs', userProfile?: string) =>
+    api.post('/chat/message', { conversationId, content, media, voiceMode, userProfile, ...(voiceMode ? { voiceProvider } : {}) }),
 
   uploadChatMedia: (files: File[]) => {
     const formData = new FormData();
@@ -372,6 +417,15 @@ export const contentApi = {
     api.post('/content/voice-clone', formData, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getVoiceClone: () => api.get('/content/voice-clone'),
   deleteVoiceClone: () => api.delete('/content/voice-clone'),
+  // Voice sample CRUD
+  renameSample: (sampleId: string, name: string) =>
+    api.patch(`/content/voice-clone/samples/${sampleId}`, { name }),
+  deleteSample: (sampleId: string) =>
+    api.delete(`/content/voice-clone/samples/${sampleId}`),
+  updateVoiceSettings: (settings: { speakingRate?: number; pitch?: number }) =>
+    api.patch('/content/voice-clone/settings', settings),
+  // Generate a short TTS sample so the creator can verify their clone sounds right
+  previewVoiceClone: () => api.post('/content/voice-preview'),
 };
 
 // ===========================================

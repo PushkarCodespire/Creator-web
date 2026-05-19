@@ -20,6 +20,23 @@ type SuggestedCard =
   | { type: 'product'; id: string; name: string; price: number; link?: string; promoCode?: string; imageUrl?: string; description?: string }
   | { type: 'booking'; creatorId: string };
 
+// Build a compact, token-efficient profile string from the user's fitness onboarding data.
+// Result is stored in the Redux store (which hydrates from localStorage on page load),
+// so it persists across window reloads without any extra API calls.
+function buildFitnessProfile(user: import('../../../types').User | null): string | undefined {
+  if (!user?.onboardingCompleted) return undefined;
+  const parts: string[] = [];
+  if (user.ageRange)         parts.push(user.ageRange.replace(' years', 'yr'));
+  if (user.heightCm)         parts.push(`${user.heightCm}cm`);
+  if (user.weightKg)         parts.push(`${user.weightKg}kg`);
+  if (user.dietPreference)   parts.push(user.dietPreference.toLowerCase());
+  if (user.fitnessGoal)      parts.push(`goal=${user.fitnessGoal.toLowerCase()}`);
+  if (user.fitnessChallenge) parts.push(`challenge=${user.fitnessChallenge.toLowerCase()}`);
+  if (user.coachStyle)       parts.push(`style=${user.coachStyle.toLowerCase()}`);
+  if (parts.length === 0) return undefined;
+  return `[User: ${parts.join(', ')}]`;
+}
+
 const BOOKING_KW = ['book', 'booking', 'meet', 'meeting', 'schedule', 'appointment', 'slot', 'availability', 'available', 'consult', 'consultation', 'session', '1:1', 'one-on-one', 'call', 'video call', 'zoom', 'google meet', 'calendar', 'reschedule', 'free time', 'hop on', 'connect live', 'talk live', 'live chat', 'when are you', 'what day', 'what time', 'free slot', 'speak to you', 'speak with you', 'talk to you', 'talk with you', 'chat with you', 'get in touch', 'catch up', 'connect with', 'arrange a', 'set up a', 'fix a time', 'find a time'];
 const PROGRAM_KW = ['program', 'programmes', 'course', 'courses', 'coaching', 'training', 'workout', 'workouts', 'fitness plan', 'fitness program', 'challenge', 'diet plan', 'meal plan', 'nutrition plan', 'routine', 'regime', 'transformation', 'weight loss', 'lose weight', 'build muscle', 'gain muscle', 'get fit', 'get in shape', 'enroll', 'sign up', 'join', 'membership', 'class', 'lesson', 'tutorial', 'guide me', 'help me train', 'help me lose', 'help me gain'];
 const PRODUCT_KW = ['product', 'products', 'buy', 'purchase', 'order', 'supplement', 'supplements', 'protein', 'vitamins', 'gear', 'equipment', 'recommend', 'recommendation', 'suggest', 'suggestion', 'shop', 'store', 'sell', 'selling', 'discount', 'promo code', 'promo', 'offer', 'deal', 'what do you sell', 'do you have', 'how much', 'price', 'cost'];
@@ -386,7 +403,7 @@ export function ChatUI({ creatorId }: Props) {
     setIsSending(true);
 
     try {
-      const res = await chatApi.sendMessage(conversationId, text, undefined, false, voiceProvider);
+      const res = await chatApi.sendMessage(conversationId, text, undefined, false, voiceProvider, buildFitnessProfile(user));
       const aiMsg = res.data?.data?.aiMessage;
 
       // If socket delivers the response, the socket handler will update the UI.

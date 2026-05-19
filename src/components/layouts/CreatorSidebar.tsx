@@ -12,6 +12,7 @@ interface Props {
 const NAV_ITEMS = [
   { icon: 'dashboard', label: 'Dashboard', path: '/creator-dashboard' },
   { icon: 'yourai', label: 'Your AI', path: '/creator-dashboard/your-ai' },
+  { icon: 'train',  label: 'Train AI', path: '/creator-dashboard/train-ai' },
   { icon: 'content', label: 'Bookings', path: '/creator-dashboard/content' },
   { icon: 'messages', label: 'Revenue', path: '/creator-dashboard/revenue' },
   { icon: 'deals', label: 'Products', path: '/creator-dashboard/products' },
@@ -23,6 +24,7 @@ function NavIcon({ type, size = 20 }: { type: string; size?: number }) {
   switch (type) {
     case 'dashboard': return (<svg viewBox="0 0 20 20" width={size} height={size}><rect x="2" y="2" width="7" height="7" rx="1.5" {...s} /><rect x="11" y="2" width="7" height="7" rx="1.5" {...s} /><rect x="2" y="11" width="7" height="7" rx="1.5" {...s} /><rect x="11" y="11" width="7" height="7" rx="1.5" {...s} /></svg>);
     case 'yourai': return (<svg viewBox="0 0 20 20" width={size} height={size}><circle cx="10" cy="7" r="4" {...s} /><path d="M3 18c0-3.3 3.1-6 7-6s7 2.7 7 6" {...s} /><path d="M14 3l2 2-2 2" {...s} /></svg>);
+    case 'train':     return (<svg viewBox="0 0 20 20" width={size} height={size}><path d="M10 2L12.5 7.5H18L13.5 11L15.5 17L10 13.5L4.5 17L6.5 11L2 7.5H7.5Z" {...s} /></svg>);
     case 'analytics': return (<svg viewBox="0 0 20 20" width={size} height={size}><path d="M2 16L7 9L11 13L18 4" {...s} /><path d="M14 4H18V8" {...s} /></svg>);
     case 'content': return (<svg viewBox="0 0 20 20" width={size} height={size}><rect x="3" y="2" width="14" height="16" rx="2" {...s} /><path d="M7 6H13M7 10H13M7 14H10" {...s} /></svg>);
     case 'messages': return (<svg viewBox="0 0 20 20" width={size} height={size}><rect x="2" y="3" width="16" height="12" rx="2" {...s} /><path d="M6 9H14M6 12H10" {...s} /></svg>);
