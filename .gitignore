@@ -25,6 +25,7 @@ output/
 .env.test.local
 .env.production.local
 *.env*
+!.env.production
 
 # IDE / Editor files
 .vscode/*
