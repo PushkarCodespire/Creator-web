@@ -10,6 +10,7 @@
     "antd": "^5.23.2",
     "axios": "^1.7.9",
     "date-fns": "^4.1.0",
+    "dayjs": "^1.11.20",
     "framer-motion": "^12.23.26",
     "jspdf": "^3.0.4",
     "lucide-react": "^0.563.0",
