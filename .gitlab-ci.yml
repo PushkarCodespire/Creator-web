@@ -1,18 +1,27 @@
-# GitLab CI configuration for VMS Platform API
 include:
-  - project: 'codespire-core/ci-templates'
-    file: '/complete/react.yml'
+  - project: 'codespire-solutions-core/ci-templates'
+    ref: 'main'
+    file: '/stacks/react-vite.yml'
 
-test:unit:
-    extends: .test:react
-    stage: test
-    allow_failure: true
-    rules:
-      - when: never
+variables:
+  GITOPS_REPO: products/creator-platform/deploy
+  ARGOCD_SERVER: argocd.vps.codespiresolutions.com
 
-test:integration:
-    extends: .test:react
-    stage: test
-    allow_failure: true
-    rules:
-      - when: never
+deploy:dev:
+  variables:
+    GITOPS_FILE: helm-values/web/values-dev.yaml
+    ARGOCD_APP: creator-platform-web-dev
+
+deploy:prd:
+  variables:
+    GITOPS_FILE: helm-values/web/values-prd.yaml
+    ARGOCD_APP: creator-platform-web-prd
+
+pnpm:test:
+  allow_failure: true
+
+pnpm:lint:
+  allow_failure: true
+
+pnpm:sonar:
+  allow_failure: true
