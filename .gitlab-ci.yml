@@ -5,6 +5,7 @@ include:
 
 variables:
   GITOPS_REPO: products/creator-platform/deploy
+  GITOPS_BRANCH: develop
   ARGOCD_SERVER: argocd.vps.codespiresolutions.com
 
 deploy:dev:
