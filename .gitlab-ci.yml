@@ -12,11 +12,13 @@ deploy:dev:
   variables:
     GITOPS_FILE: helm-values/web/values-dev.yaml
     ARGOCD_APP: creator-platform-web-dev
+    GITOPS_BRANCH: develop
 
 deploy:prd:
   variables:
     GITOPS_FILE: helm-values/web/values-prd.yaml
     ARGOCD_APP: creator-platform-web-prd
+    GITOPS_BRANCH: develop
 
 # Disable cache on install and build — the pnpm store archive (~500MB+) OOMKills
 # the helper container on memory-constrained runners. node_modules are passed
