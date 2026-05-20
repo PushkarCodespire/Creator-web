@@ -17,8 +17,12 @@ deploy:prd:
     GITOPS_FILE: helm-values/web/values-prd.yaml
     ARGOCD_APP: creator-platform-web-prd
 
-# node_modules arrive as artifacts from pnpm:install — cache restore is
-# redundant and OOMKills the helper container on memory-constrained runners.
+# Disable cache on install and build — the pnpm store archive (~500MB+) OOMKills
+# the helper container on memory-constrained runners. node_modules are passed
+# between jobs via GitLab artifacts so no cache is needed.
+pnpm:install:
+  cache: []
+
 pnpm:build:
   cache: []
 
