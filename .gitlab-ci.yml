@@ -17,6 +17,11 @@ deploy:prd:
     GITOPS_FILE: helm-values/web/values-prd.yaml
     ARGOCD_APP: creator-platform-web-prd
 
+# node_modules arrive as artifacts from pnpm:install — cache restore is
+# redundant and OOMKills the helper container on memory-constrained runners.
+pnpm:build:
+  cache: []
+
 pnpm:test:
   allow_failure: true
 
