@@ -1,65 +1,62 @@
 # ===========================================
 # PRODUCTION DOCKERFILE - FRONTEND
 # ===========================================
-# Multi-stage build for optimized production image
+# Multi-stage. Stage 1 builds dist/ with Vite + pnpm; stage 2 packages
+# dist/ behind nginx with the canonical react-vite layout — writes
+# confined to /tmp, /etc/nginx fully read-only, restricted PSS compatible.
 
-# Stage 1: Builder
-FROM node:20-alpine AS builder
-
-# Enable corepack so pnpm is available without a separate install step
+# ---- Stage 1: Vite build ----
+FROM node:22-alpine AS builder
 RUN corepack enable
-
 WORKDIR /app
-
-# Copy lockfile and manifest first for better layer caching
-COPY package.json pnpm-lock.yaml pnpm.yaml* ./
-
-# Install dependencies using pnpm (matches CI pipeline)
+COPY package.json pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
-
-# Copy source code
 COPY . .
-
-# Build production bundle (TypeScript check + Vite build)
 RUN pnpm run build
 
-# Stage 2: Production (Nginx)
-FROM nginx:alpine
+# ---- Stage 2: nginx ----
+ARG NGINX_VERSION=1.30
+FROM nginx:${NGINX_VERSION}-alpine
 
-# Install curl for healthcheck and envsubst for runtime env injection
-RUN apk add --no-cache curl gettext
+# Replace the default nginx user (UID 101) with one matching the
+# react-vite helm chart's runAsUser=1000. Pre-create temp/pid paths so
+# the non-root process can run. `gettext` provides envsubst (used by
+# the entrypoint to render the live nginx.conf at container start).
+#
+# /etc/nginx STAYS READ-ONLY. The entrypoint renders the live
+# nginx.conf to /tmp/nginx.conf instead, which lets the helm chart run
+# this image with `readOnlyRootFilesystem: true` (restricted PSS).
+# CMD passes `-c /tmp/nginx.conf` so nginx loads from there.
+RUN deluser nginx \
+ && addgroup -S -g 1000 nginx \
+ && adduser  -S -u 1000 -G nginx -H -D nginx \
+ && touch /tmp/nginx.pid \
+ && chown 1000:1000 /tmp/nginx.pid /var/log/nginx \
+ # Pull latest alpine package patches at build time so Trivy doesn't
+ # fail on transient CVEs in the upstream nginx base.
+ && apk upgrade --no-cache \
+ && apk add --no-cache tini gettext
 
-# Copy custom nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /usr/share/nginx/html
 
-# Copy nginx snippets (API proxy config, env-substituted at container start)
-COPY nginx-snippets/ /etc/nginx/snippets/
+# Products group standardizes on port 8080 — the chart's containerPort
+# and the gateway both expect it. Override via SERVER_PORT if needed.
+ENV SERVER_PORT=8080
 
-# Copy entrypoint that substitutes env vars into nginx snippets
-COPY docker-entrypoint.sh /docker-entrypoint.sh
-RUN chmod +x /docker-entrypoint.sh
+COPY --chown=1000:1000 --from=builder /app/dist /usr/share/nginx/html/
+COPY --chown=1000:1000 nginx-snippets/             /etc/nginx/snippets/
+COPY --chown=1000:1000 docker-entrypoint.sh        /docker-entrypoint.sh
+RUN chmod 0755 /docker-entrypoint.sh
 
-# Copy built assets from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Docker / OCI HEALTHCHECK. Kubernetes ignores this in favour of the
+# helm chart's livenessProbe; useful for `docker ps` / docker-compose.
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD wget --quiet --tries=1 --spider http://localhost:8080/healthz/liveness || exit 1
 
-# Create non-root user
-RUN addgroup -g 1001 -S nginx-user && \
-    adduser -S nginx-user -u 1001 && \
-    chown -R nginx-user:nginx-user /usr/share/nginx/html && \
-    chown -R nginx-user:nginx-user /var/cache/nginx && \
-    chown -R nginx-user:nginx-user /var/log/nginx && \
-    chown -R nginx-user:nginx-user /etc/nginx/snippets && \
-    touch /var/run/nginx.pid && \
-    chown -R nginx-user:nginx-user /var/run/nginx.pid
-
-# Switch to non-root user
-USER nginx-user
-
+USER 1000
 EXPOSE 8080
 
-# Health check
-HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8080/health || exit 1
-
-ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["nginx", "-g", "daemon off;"]
+ENTRYPOINT ["/sbin/tini", "--", "/docker-entrypoint.sh"]
+# `-c /tmp/nginx.conf` matches where the entrypoint renders the live
+# config; this keeps /etc/nginx fully read-only at runtime.
+CMD ["nginx", "-c", "/tmp/nginx.conf", "-g", "daemon off;"]
