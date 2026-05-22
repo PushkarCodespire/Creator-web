@@ -1,31 +1,26 @@
-# ===========================================
-# PRODUCTION DOCKERFILE - FRONTEND
-# ===========================================
-# Multi-stage. Stage 1 builds dist/ with Vite + pnpm; stage 2 packages
-# dist/ behind nginx with the canonical react-vite layout — writes
-# confined to /tmp, /etc/nginx fully read-only, restricted PSS compatible.
+# Single-stage nginx image. Same artifact-based pattern as the canonical
+# react-vite starter: the build is done in the CI `pnpm:build` job
+# (stacks/react-vite.yml) which produces `dist/`. This Dockerfile is
+# just packaging — no Node, no pnpm, no Vite inside. Running them again
+# in the builder stage OOMKilled the CI runner (~6.3k modules, exit 137).
+#
+# Build context expectations (CI provides via `needs:` artifacts):
+#   ./dist/                       vite-built static bundle
+#   ./nginx-snippets/             config snippets the entrypoint composes
+#                                 (api/proxy snippets included only when
+#                                 API_BACKEND_URL is set at container start)
+#   ./docker-entrypoint.sh        assembles snippets + renders nginx.conf
+#
+# Local build: run `pnpm install && pnpm build`, then `docker build .`.
 
-# Global ARG — must appear BEFORE the first FROM so BuildKit makes it
-# available to all stages (an ARG declared between FROMs is scoped to
-# the previous stage only and is undefined in the next FROM).
 ARG NGINX_VERSION=1.30
 
-# ---- Stage 1: Vite build ----
-FROM node:22-alpine AS builder
-RUN corepack enable
-WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
-RUN pnpm install --frozen-lockfile
-COPY . .
-RUN pnpm run build
-
-# ---- Stage 2: nginx ----
 FROM nginx:${NGINX_VERSION}-alpine
 
 # Replace the default nginx user (UID 101) with one matching the
-# react-vite helm chart's runAsUser=1000. Pre-create temp/pid paths so
-# the non-root process can run. `gettext` provides envsubst (used by
-# the entrypoint to render the live nginx.conf at container start).
+# react-vite helm chart's runAsUser=1000. Pre-create temp/pid paths
+# so the non-root process can run. `gettext` provides envsubst (used
+# by the entrypoint to render the live nginx.conf at container start).
 #
 # /etc/nginx STAYS READ-ONLY. The entrypoint renders the live
 # nginx.conf to /tmp/nginx.conf instead, which lets the helm chart run
@@ -47,9 +42,9 @@ WORKDIR /usr/share/nginx/html
 # and the gateway both expect it. Override via SERVER_PORT if needed.
 ENV SERVER_PORT=8080
 
-COPY --chown=1000:1000 --from=builder /app/dist /usr/share/nginx/html/
-COPY --chown=1000:1000 nginx-snippets/             /etc/nginx/snippets/
-COPY --chown=1000:1000 docker-entrypoint.sh        /docker-entrypoint.sh
+COPY --chown=1000:1000 dist/                 /usr/share/nginx/html/
+COPY --chown=1000:1000 nginx-snippets/       /etc/nginx/snippets/
+COPY --chown=1000:1000 docker-entrypoint.sh  /docker-entrypoint.sh
 RUN chmod 0755 /docker-entrypoint.sh
 
 # Docker / OCI HEALTHCHECK. Kubernetes ignores this in favour of the
