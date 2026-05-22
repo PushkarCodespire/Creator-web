@@ -5,6 +5,11 @@
 # dist/ behind nginx with the canonical react-vite layout — writes
 # confined to /tmp, /etc/nginx fully read-only, restricted PSS compatible.
 
+# Global ARG — must appear BEFORE the first FROM so BuildKit makes it
+# available to all stages (an ARG declared between FROMs is scoped to
+# the previous stage only and is undefined in the next FROM).
+ARG NGINX_VERSION=1.30
+
 # ---- Stage 1: Vite build ----
 FROM node:22-alpine AS builder
 RUN corepack enable
@@ -15,7 +20,6 @@ COPY . .
 RUN pnpm run build
 
 # ---- Stage 2: nginx ----
-ARG NGINX_VERSION=1.30
 FROM nginx:${NGINX_VERSION}-alpine
 
 # Replace the default nginx user (UID 101) with one matching the
