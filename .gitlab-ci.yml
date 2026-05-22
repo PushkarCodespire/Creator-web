@@ -17,14 +17,28 @@ deploy:prd:
     GITOPS_FILE: helm-values/web/values-prd.yaml
     ARGOCD_APP: creator-platform-web-prd
 
-# Disable cache on install and build — the pnpm store archive (~500MB+) OOMKills
-# the helper container on memory-constrained runners. node_modules are passed
-# between jobs via GitLab artifacts so no cache is needed.
+# Disable cache on install/build — the pnpm store archive (~500MB+)
+# OOMKills the helper container on memory-constrained runners.
+# node_modules + dist + image inputs are passed between jobs via
+# GitLab artifacts.
 pnpm:install:
   cache: []
 
 pnpm:build:
   cache: []
+  # vite + tsc + ~6.3k modules exceeded the runner's default heap →
+  # SIGKILL during build. Cap Node old-space at 1.5 GB to fit.
+  variables:
+    NODE_OPTIONS: "--max-old-space-size=1536"
+  # image:build consumes these via `needs:` — must include every path
+  # the Dockerfile COPYs (dist, server config, snippets, entrypoint).
+  artifacts:
+    paths:
+      - dist/
+      - nginx/
+      - nginx-snippets/
+      - docker-entrypoint.sh
+    expire_in: 1h
 
 pnpm:test:
   allow_failure: true
