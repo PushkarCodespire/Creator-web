@@ -60,7 +60,7 @@ livenessProbe:
   enabled: true
   type: httpGet
   httpGet:
-    path: /health
+    path: /healthz/liveness
     port: http
     scheme: HTTP
   initialDelaySeconds: 5
@@ -72,7 +72,7 @@ readinessProbe:
   enabled: true
   type: httpGet
   httpGet:
-    path: /health
+    path: /healthz/readiness
     port: http
     scheme: HTTP
   initialDelaySeconds: 3
@@ -84,7 +84,7 @@ startupProbe:
   enabled: true
   type: httpGet
   httpGet:
-    path: /health
+    path: /healthz/readiness
     port: http
     scheme: HTTP
   initialDelaySeconds: 0
