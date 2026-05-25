@@ -2,9 +2,6 @@
 node_modules
 npm-debug.log
 
-# Build output
-dist
-
 # Environment files
 .env
 .env.local
@@ -39,4 +36,3 @@ __tests__
 # Development files
 docker-compose.yml
 .dockerignore
-Dockerfile
