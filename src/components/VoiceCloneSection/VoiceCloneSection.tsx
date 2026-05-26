@@ -559,6 +559,7 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
           <p style={{ fontSize: 11, fontWeight: 600, color: '#6b7280', margin: 0, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
             Saved Voice Samples
           </p>
+          <div className="ya-scroll" style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 2 }}>
           {savedSamples.map(sample => (
             <div key={sample.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #d1fae5' }}>
               <div style={{ width: 22, height: 22, borderRadius: 6, background: '#dcfce7', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
@@ -600,6 +601,7 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
               </button>
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -611,6 +613,7 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
               New Clips (for re-training)
             </p>
           )}
+          <div className="ya-scroll" style={{ maxHeight: 150, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 6, paddingRight: 2 }}>
           {clips.map((clip, i) => (
             <div key={clip.id} style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', background: '#f0fdf4', borderRadius: 10, border: '1px solid #d1fae5' }}>
 
@@ -664,6 +667,7 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
               </button>
             </div>
           ))}
+          </div>
         </div>
       )}
 
@@ -686,7 +690,7 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
       )}
 
       {clips.length >= MAX_CLIPS && (
-        <div style={{ padding: '10px 14px', background: '#f8fafc', borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 12, color: '#6b7280', textAlign: 'center' }}>
+        <div style={{ padding: '10px 14px', background: '#fdf6f0', borderRadius: 10, border: '1px solid #e8d5c4', fontSize: 12, color: '#a07050', textAlign: 'center' }}>
           Maximum {MAX_CLIPS} clips reached. Remove one to add another.
         </div>
       )}
@@ -705,9 +709,9 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
       )}
 
       {/* ── Validation hint ── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '10px 12px', background: '#f8fafc', borderRadius: 8, border: '1px solid #e5e7eb' }}>
-        <AlertCircle size={13} style={{ color: '#9ca3af', flexShrink: 0, marginTop: 1 }} />
-        <p style={{ fontSize: 11, color: '#9ca3af', margin: 0, lineHeight: 1.6 }}>
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: 6, padding: '10px 12px', background: '#fdf6f0', borderRadius: 8, border: '1px solid #e8d5c4' }}>
+        <AlertCircle size={13} style={{ color: '#a07050', flexShrink: 0, marginTop: 1 }} />
+        <p style={{ fontSize: 11, color: '#a07050', margin: 0, lineHeight: 1.6 }}>
           Each clip min {MIN_RECORD_SECS}s · max {MAX_UPLOAD_SECS / 60} min · max {MAX_FILE_MB} MB · MP3, WAV, M4A, WebM · your voice only, no background music or other speakers
         </p>
       </div>
@@ -732,7 +736,7 @@ export function VoiceCloneSection({ onStatusChange }: Props) {
       )}
 
       {!isReady && clips.length === 0 && savedSamples.length === 0 && (
-        <div style={{ padding: '13px', borderRadius: 12, background: '#f3f4f6', textAlign: 'center', fontSize: 13, color: '#9ca3af' }}>
+        <div style={{ padding: '13px', borderRadius: 12, background: '#fdf6f0', border: '1px solid #e8d5c4', textAlign: 'center', fontSize: 13, color: '#a07050' }}>
           Add at least one clip to create your voice clone
         </div>
       )}
@@ -1010,7 +1014,7 @@ function AddClipPanel({ clipIndex, clipNumber, script, hasSaved = false, onAdd, 
       </div>
 
       {/* Script suggestion */}
-      <div style={{ padding: '12px 14px', background: '#fafafa', borderBottom: '1px solid #f3f4f6', fontSize: 12, color: '#374151', lineHeight: 1.7, maxHeight: 180, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
+      <div className="ya-scroll" style={{ padding: '12px 14px', background: '#fafafa', borderBottom: '1px solid #f3f4f6', fontSize: 12, color: '#374151', lineHeight: 1.7, maxHeight: 180, overflowY: 'auto', whiteSpace: 'pre-wrap' }}>
         {script}
       </div>
 

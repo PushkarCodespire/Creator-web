@@ -429,6 +429,33 @@ export const contentApi = {
 };
 
 // ===========================================
+// INSTAGRAM API
+// ===========================================
+
+export const instagramApi = {
+  /** Returns the Instagram OAuth URL to redirect the creator to */
+  getAuthUrl: () => api.get<{ success: true; data: { url: string } }>('/instagram/auth-url'),
+
+  /** Check whether the creator's Instagram is connected */
+  getStatus: () =>
+    api.get<{
+      success: true;
+      data: {
+        connected: boolean;
+        instagramUserId?: string;
+        expiresAt?: string;
+        expired?: boolean;
+      };
+    }>('/instagram/status'),
+
+  /** Trigger a manual re-sync of Instagram posts */
+  sync: () => api.post<{ success: true; message: string }>('/instagram/sync'),
+
+  /** Disconnect the Instagram account */
+  disconnect: () => api.delete<{ success: true; message: string }>('/instagram/disconnect')
+};
+
+// ===========================================
 // USER DASHBOARD API (New - from API_REFERENCE.md)
 // ===========================================
 

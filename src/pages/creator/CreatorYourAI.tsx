@@ -3,8 +3,8 @@ import { useSelector, useDispatch } from 'react-redux';
 import { message as antMessage } from 'antd';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
-import { creatorApi, contentApi } from '../../services/api';
-import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, ChevronUp, Mic, Brain, MessageSquare, Zap } from 'lucide-react';
+import { creatorApi, contentApi, instagramApi } from '../../services/api';
+import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, ChevronUp, Mic, Brain, MessageSquare, Zap, Plus, Instagram, RefreshCw, Link2Off, CheckCircle2, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { VoiceCloneSection } from '../../components/VoiceCloneSection/VoiceCloneSection';
 
@@ -63,6 +63,9 @@ const CreatorYourAI = () => {
   const [contents, setContents] = useState<any[]>([]);
   const [loadingContent, setLoadingContent] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [ytPage, setYtPage] = useState(1);
+  const [manualPage, setManualPage] = useState(1);
+  const [faqPage, setFaqPage] = useState(1);
 
   // Add content forms
   const [showAddYoutube, setShowAddYoutube] = useState(false);
@@ -100,6 +103,14 @@ const CreatorYourAI = () => {
 
   // Voice clone status — owned and updated by <VoiceCloneSection />
   const [voiceStatus, setVoiceStatus] = useState<string | null>(null);
+
+  // Instagram OAuth
+  const [igConnected, setIgConnected] = useState(false);
+  const [igUserId, setIgUserId] = useState<string | null>(null);
+  const [igExpired, setIgExpired] = useState(false);
+  const [igSyncing, setIgSyncing] = useState(false);
+  const [igDisconnecting, setIgDisconnecting] = useState(false);
+  const [igConnecting, setIgConnecting] = useState(false);
 
   // Auto-poll when any content is PROCESSING
   useEffect(() => {
@@ -163,6 +174,27 @@ const CreatorYourAI = () => {
 
     // Load fine-tune status
     fetchFineTuneStatus();
+
+    // Load Instagram connection status
+    fetchIgStatus();
+
+    // Handle OAuth redirect params (?ig_connected=1 or ?ig_error=...)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('ig_connected') === '1') {
+      antMessage.success('Instagram connected! Your posts are being imported.');
+      window.history.replaceState({}, '', window.location.pathname);
+    } else if (params.get('ig_error')) {
+      const igErr = params.get('ig_error');
+      const errorMessages: Record<string, string> = {
+        access_denied: 'You cancelled the Instagram connection.',
+        token_exchange_failed: 'Failed to connect Instagram. Please try again.',
+        invalid_state: 'Connection expired. Please try again.',
+        creator_not_found: 'Creator profile not found.',
+        missing_params: 'Invalid callback from Instagram.'
+      };
+      antMessage.error(errorMessages[igErr!] || 'Instagram connection failed.');
+      window.history.replaceState({}, '', window.location.pathname);
+    }
   }, []);
 
   // Auto-poll while fine-tuning is pending
@@ -182,6 +214,57 @@ const CreatorYourAI = () => {
       setFtCanTrain(d.canTrain || false);
       if (d.lastFineTunedAt) setFtLastTrained(d.lastFineTunedAt);
     } catch {}
+  };
+
+  const fetchIgStatus = async () => {
+    try {
+      const res = await instagramApi.getStatus();
+      const data = res.data.data;
+      setIgConnected(data.connected);
+      setIgUserId(data.instagramUserId ?? null);
+      setIgExpired(data.expired ?? false);
+    } catch {}
+  };
+
+  const handleIgConnect = async () => {
+    setIgConnecting(true);
+    try {
+      const res = await instagramApi.getAuthUrl();
+      const url = res.data.data.url;
+      window.location.href = url;
+    } catch {
+      antMessage.error('Failed to start Instagram connection. Please try again.');
+      setIgConnecting(false);
+    }
+  };
+
+  const handleIgSync = async () => {
+    setIgSyncing(true);
+    try {
+      await instagramApi.sync();
+      antMessage.success('Sync started — posts will appear in the Knowledge Base shortly.');
+      setTimeout(fetchContents, 3000);
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      antMessage.error(msg || 'Sync failed. Your Instagram token may have expired — try reconnecting.');
+    } finally {
+      setIgSyncing(false);
+    }
+  };
+
+  const handleIgDisconnect = async () => {
+    setIgDisconnecting(true);
+    try {
+      await instagramApi.disconnect();
+      setIgConnected(false);
+      setIgUserId(null);
+      setIgExpired(false);
+      antMessage.success('Instagram disconnected.');
+    } catch {
+      antMessage.error('Failed to disconnect Instagram.');
+    } finally {
+      setIgDisconnecting(false);
+    }
   };
 
   const handleStartFineTune = async () => {
@@ -204,6 +287,9 @@ const CreatorYourAI = () => {
       const res = await contentApi.getAll();
       const items = res.data.data?.contents || res.data.data || [];
       setContents(Array.isArray(items) ? items : []);
+      setYtPage(1);
+      setManualPage(1);
+      setFaqPage(1);
     } catch {}
     finally { setLoadingContent(false); }
   };
@@ -323,8 +409,22 @@ const CreatorYourAI = () => {
 
   const handleDelete = async (id: string) => {
     try {
+      const deletedItem = contents.find(c => c.id === id);
       await contentApi.delete(id);
-      setContents(prev => prev.filter(c => c.id !== id));
+      setContents(prev => {
+        const next = prev.filter(c => c.id !== id);
+        if (deletedItem?.type === 'YOUTUBE_VIDEO') {
+          const pages = Math.max(1, Math.ceil(next.filter(c => c.type === 'YOUTUBE_VIDEO').length / 10));
+          setYtPage(p => Math.min(p, pages));
+        } else if (deletedItem?.type === 'MANUAL_TEXT') {
+          const pages = Math.max(1, Math.ceil(next.filter(c => c.type === 'MANUAL_TEXT').length / 10));
+          setManualPage(p => Math.min(p, pages));
+        } else if (deletedItem?.type === 'FAQ') {
+          const pages = Math.max(1, Math.ceil(next.filter(c => c.type === 'FAQ').length / 10));
+          setFaqPage(p => Math.min(p, pages));
+        }
+        return next;
+      });
       showMsg('Content deleted');
     } catch { showMsg('Failed to delete'); }
   };
@@ -356,6 +456,17 @@ const CreatorYourAI = () => {
 
   return (
     <div>
+      <style>{`
+        .ya-scroll::-webkit-scrollbar { width: 5px; }
+        .ya-scroll::-webkit-scrollbar-track { background: rgba(180,120,80,0.08); border-radius: 99px; }
+        .ya-scroll::-webkit-scrollbar-thumb { background: rgba(139,80,40,0.3); border-radius: 99px; }
+        .ya-scroll::-webkit-scrollbar-thumb:hover { background: rgba(139,80,40,0.55); }
+        .ya-scroll-dark::-webkit-scrollbar { width: 5px; }
+        .ya-scroll-dark::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 99px; }
+        .ya-scroll-dark::-webkit-scrollbar-thumb { background: rgba(180,80,40,0.45); border-radius: 99px; }
+        .ya-scroll-dark::-webkit-scrollbar-thumb:hover { background: rgba(200,100,60,0.7); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+      `}</style>
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
         <div>
@@ -436,7 +547,7 @@ const CreatorYourAI = () => {
                 border: 'none', color: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}><X size={16} /></button>
             </div>
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
+            <div className="ya-scroll" style={{ flex: 1, overflowY: 'auto', padding: '24px' }}>
               {generatingSummary ? (
                 <div style={{ textAlign: 'center', padding: '48px 0' }}>
                   <div style={{ width: 40, height: 40, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
@@ -560,7 +671,7 @@ const CreatorYourAI = () => {
         {/* 2×2 button group grid */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
           {/* Energy Level */}
-          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#fdf6f0', border: '1px solid #e8d5c4' }}>
             <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Energy Level</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {(['calm', 'balanced', 'high-energy'] as const).map(opt => (
@@ -577,7 +688,7 @@ const CreatorYourAI = () => {
           </div>
 
           {/* Honesty Style */}
-          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#fdf6f0', border: '1px solid #e8d5c4' }}>
             <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Honesty Style</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {(['supportive', 'direct', 'tough-love'] as const).map(opt => (
@@ -594,7 +705,7 @@ const CreatorYourAI = () => {
           </div>
 
           {/* Humor */}
-          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#fdf6f0', border: '1px solid #e8d5c4' }}>
             <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Humor</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {(['none', 'light', 'sarcastic'] as const).map(opt => (
@@ -611,7 +722,7 @@ const CreatorYourAI = () => {
           </div>
 
           {/* Response Format */}
-          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#f9fafb', border: '1px solid #ede8e3' }}>
+          <div style={{ padding: '14px 16px', borderRadius: 10, background: '#fdf6f0', border: '1px solid #e8d5c4' }}>
             <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Response Format</label>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {(['short-punchy', 'detailed', 'bullet-lists'] as const).map(opt => (
@@ -664,9 +775,9 @@ const CreatorYourAI = () => {
           {opinionatedTopics.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
               {opinionatedTopics.map((t, i) => (
-                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, background: '#f3f4f6', fontSize: 12, fontWeight: 600, color: '#374151' }}>
+                <span key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '4px 10px', borderRadius: 99, background: '#f5e8d8', fontSize: 12, fontWeight: 600, color: '#374151' }}>
                   {t}
-                  <button type="button" onClick={() => setOpinionatedTopics(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af', lineHeight: 1, padding: 0 }}>×</button>
+                  <button type="button" onClick={() => setOpinionatedTopics(prev => prev.filter((_, idx) => idx !== i))} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#a07050', lineHeight: 1, padding: 0 }}>×</button>
                 </span>
               ))}
             </div>
@@ -694,26 +805,26 @@ const CreatorYourAI = () => {
         const strengthLabel = answered === 0 ? 'Not started' : answered <= 3 ? 'Weak' : answered <= 6 ? 'Getting there' : answered <= 9 ? 'Strong' : 'Fully trained';
         const strengthColor = answered === 0 ? '#9ca3af' : answered <= 3 ? '#ef4444' : answered <= 6 ? '#f59e0b' : answered <= 9 ? '#3b82f6' : '#10b981';
         return (
-          <div style={{ ...card, marginBottom: 20 }}>
+          <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginBottom: 20 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 6 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f0', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5b1f' }}><MessageSquare size={18} /></div>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,91,31,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff5b1f' }}><MessageSquare size={18} /></div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Scenario Training</h3>
+                  <h3 style={{ fontSize: 16, fontWeight: 700, color: '#fff', margin: 0 }}>Scenario Training</h3>
                   <span style={{ fontSize: 12, fontWeight: 700, color: strengthColor }}>{answered}/10 — {strengthLabel}</span>
                 </div>
-                <p style={{ fontSize: 12, color: '#9ca3af', margin: '2px 0 0' }}>Answer these in your own voice — the AI learns exactly how you talk</p>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: '2px 0 0' }}>Answer these in your own voice — the AI learns exactly how you talk</p>
               </div>
             </div>
 
             {/* Strength bar */}
-            <div style={{ height: 6, borderRadius: 99, background: '#f3f4f6', marginBottom: 16, overflow: 'hidden' }}>
+            <div style={{ height: 6, borderRadius: 99, background: 'rgba(255,255,255,0.1)', marginBottom: 16, overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${pct}%`, borderRadius: 99, background: `linear-gradient(90deg, ${strengthColor}, ${strengthColor}cc)`, transition: 'width 0.4s ease' }} />
             </div>
 
             {/* Single question view */}
             <div style={{ minHeight: 110, marginBottom: 14 }}>
-              <label style={{ ...labelStyle, color: '#374151', display: 'block', marginBottom: 8, lineHeight: 1.5 }}>
+              <label style={{ ...labelStyle, color: 'rgba(255,255,255,0.7)', display: 'block', marginBottom: 8, lineHeight: 1.5 }}>
                 {currentScenario + 1}. {SCENARIO_QUESTIONS[currentScenario]}
               </label>
               <textarea
@@ -725,14 +836,14 @@ const CreatorYourAI = () => {
                 }}
                 placeholder="Write your answer here in your own words..."
                 rows={3}
-                style={{ ...inputStyle, resize: 'vertical', padding: '8px 12px', minHeight: 72, fontSize: 13, lineHeight: 1.5, width: '100%', boxSizing: 'border-box' }}
+                style={{ ...inputStyle, resize: 'vertical', padding: '8px 12px', minHeight: 72, fontSize: 13, lineHeight: 1.5, width: '100%', boxSizing: 'border-box', background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }}
               />
             </div>
 
             {/* Numbered pagination */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
               <button type="button" onClick={() => setCurrentScenario(i => Math.max(0, i - 1))} disabled={currentScenario === 0}
-                style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid #e5e7eb', background: '#fff', color: currentScenario === 0 ? '#d1d5db' : '#374151', cursor: currentScenario === 0 ? 'not-allowed' : 'pointer' }}>
+                style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: currentScenario === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.8)', cursor: currentScenario === 0 ? 'not-allowed' : 'pointer' }}>
                 ← Prev
               </button>
               <div style={{ display: 'flex', gap: 5 }}>
@@ -742,9 +853,9 @@ const CreatorYourAI = () => {
                   return (
                     <button key={i} type="button" onClick={() => setCurrentScenario(i)} style={{
                       width: 28, height: 28, borderRadius: 7, fontSize: 11, fontWeight: 700, border: '1.5px solid',
-                      borderColor: isActive ? '#ff5b1f' : isDone ? '#10b981' : '#e5e7eb',
-                      background: isActive ? '#ff5b1f' : isDone ? '#ecfdf5' : '#fff',
-                      color: isActive ? '#fff' : isDone ? '#10b981' : '#9ca3af',
+                      borderColor: isActive ? '#ff5b1f' : isDone ? '#10b981' : 'rgba(255,255,255,0.15)',
+                      background: isActive ? '#ff5b1f' : isDone ? 'rgba(16,185,129,0.15)' : 'rgba(255,255,255,0.06)',
+                      color: isActive ? '#fff' : isDone ? '#10b981' : 'rgba(255,255,255,0.35)',
                       cursor: 'pointer', transition: 'all 0.15s ease',
                     }}>
                       {i + 1}
@@ -753,15 +864,15 @@ const CreatorYourAI = () => {
                 })}
               </div>
               <button type="button" onClick={() => setCurrentScenario(i => Math.min(9, i + 1))} disabled={currentScenario === 9}
-                style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid #e5e7eb', background: '#fff', color: currentScenario === 9 ? '#d1d5db' : '#374151', cursor: currentScenario === 9 ? 'not-allowed' : 'pointer' }}>
+                style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: currentScenario === 9 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.8)', cursor: currentScenario === 9 ? 'not-allowed' : 'pointer' }}>
                 Next →
               </button>
             </div>
 
-            <div style={{ marginTop: 14, borderTop: '1px solid #f3f4f6', paddingTop: 14 }}>
+            <div style={{ marginTop: 14, borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: 14 }}>
               <button type="button" onClick={handleSaveAi} disabled={savingAi} style={{
                 display: 'flex', alignItems: 'center', gap: 6, padding: '8px 20px', borderRadius: 8,
-                background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer',
+                background: 'rgba(255,255,255,0.1)', color: '#fff', fontSize: 13, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', cursor: 'pointer',
               }}>
                 <Save size={14} /> {savingAi ? 'Saving...' : 'Save Answers'}
               </button>
@@ -788,69 +899,140 @@ const CreatorYourAI = () => {
         <VoiceCloneSection onStatusChange={setVoiceStatus} />
       </div>
 
-      {/* Knowledge Base */}
-      <div style={{ ...card }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-          <div>
-            <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: 0 }}>Knowledge Base</h3>
-            <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Everything your AI knows — {contents.length} item{contents.length !== 1 ? 's' : ''}</p>
+      {/* ── Knowledge Base: YouTube Videos ── */}
+      <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(220,38,38,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Youtube size={18} style={{ color: '#f87171' }} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>YouTube Videos</h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                {(() => { const n = contents.filter(c => c.type === 'YOUTUBE_VIDEO').length; return `${n} video${n !== 1 ? 's' : ''} · trained on transcripts`; })()}
+              </p>
+            </div>
           </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button type="button" onClick={() => { setShowAddYoutube(true); setShowAddManual(false); setShowAddFaq(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 14px', borderRadius: 8, background: '#fff5f5', color: '#ff3e48', fontSize: 12, fontWeight: 600, border: '1px solid #fecaca', cursor: 'pointer' }}>
-              <Youtube size={13} /> YouTube
-            </button>
-            <button type="button" onClick={() => { setShowAddManual(true); setShowAddYoutube(false); setShowAddFaq(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 14px', borderRadius: 8, background: '#eff6ff', color: '#3b82f6', fontSize: 12, fontWeight: 600, border: '1px solid #bfdbfe', cursor: 'pointer' }}>
-              <FileText size={13} /> Text
-            </button>
-            <button type="button" onClick={() => { setShowAddFaq(true); setShowAddYoutube(false); setShowAddManual(false); }}
-              style={{ display: 'flex', alignItems: 'center', gap: 4, padding: '7px 14px', borderRadius: 8, background: '#fef3c7', color: '#d97706', fontSize: 12, fontWeight: 600, border: '1px solid #fde68a', cursor: 'pointer' }}>
-              <HelpCircle size={13} /> FAQ
-            </button>
-          </div>
+          <button type="button" onClick={() => setShowAddYoutube(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: showAddYoutube ? 'rgba(220,38,38,0.22)' : 'rgba(220,38,38,0.12)', color: '#f87171', fontSize: 12, fontWeight: 600, border: '1px solid rgba(220,38,38,0.35)', cursor: 'pointer' }}>
+            <Plus size={13} /> {showAddYoutube ? 'Cancel' : 'Add Video'}
+          </button>
         </div>
 
-        {/* Add YouTube Form */}
+        {(showAddYoutube || contents.filter(c => c.type === 'YOUTUBE_VIDEO').length > 0) && (
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
+        )}
+
         {showAddYoutube && (
-          <div style={{ padding: 16, borderRadius: 12, border: '1px solid #fecaca', background: '#fff5f5', marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Add YouTube Video</span>
-              <button type="button" onClick={() => setShowAddYoutube(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={16} /></button>
-            </div>
+          <div style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(220,38,38,0.3)', background: 'rgba(220,38,38,0.08)', marginBottom: 12 }}>
             <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
-              <input type="text" value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="Paste YouTube URL" style={{ ...inputStyle, flex: 1 }} />
+              <input type="text" value={ytUrl} onChange={(e) => setYtUrl(e.target.value)} placeholder="Paste YouTube URL" style={{ ...inputStyle, flex: 1, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
               <button type="button" disabled={!ytUrl.trim() || ytFetching} onClick={handleFetchTranscript} style={{
-                padding: '0 16px', borderRadius: 8, background: ytFetching ? '#d1d5db' : '#ff3e48', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: ytFetching ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
+                padding: '0 16px', borderRadius: 8, background: ytFetching ? 'rgba(255,255,255,0.12)' : '#dc2626', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: ytFetching ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
               }}>
                 {ytFetching ? 'Fetching...' : 'Fetch Transcript'}
               </button>
             </div>
-            {ytError && <div style={{ padding: '8px 12px', borderRadius: 8, background: '#fef2f2', color: '#dc2626', fontSize: 12, marginBottom: 8 }}>{ytError}</div>}
+            {ytError && <div style={{ padding: '8px 12px', borderRadius: 8, background: 'rgba(239,68,68,0.15)', color: '#f87171', fontSize: 12, marginBottom: 8 }}>{ytError}</div>}
             {ytPreview && (
-              <div style={{ padding: '10px 12px', borderRadius: 8, background: '#f0fdf4', border: '1px solid #bbf7d0', fontSize: 12, color: '#374151', maxHeight: 150, overflowY: 'auto', lineHeight: 1.5, marginBottom: 10 }}>
+              <div className="ya-scroll-dark" style={{ padding: '10px 12px', borderRadius: 8, background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.1)', fontSize: 12, color: 'rgba(255,255,255,0.75)', maxHeight: 150, overflowY: 'auto', lineHeight: 1.5, marginBottom: 10 }}>
                 <div style={{ fontSize: 10, fontWeight: 700, color: '#10b981', marginBottom: 4 }}>TRANSCRIPT PREVIEW ({ytPreview.length} chars)</div>
                 {ytPreview}
               </div>
             )}
             <button type="button" disabled={saving || !ytUrl.trim()} onClick={handleAddYoutube} style={{
-              padding: '8px 20px', borderRadius: 8, background: '#ff3e48', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
+              padding: '8px 20px', borderRadius: 8, background: '#dc2626', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
             }}>
               {saving ? 'Adding...' : 'Add to Knowledge Base'}
             </button>
           </div>
         )}
 
-        {/* Add Manual Form */}
-        {showAddManual && (
-          <div style={{ padding: 16, borderRadius: 12, border: '1px solid #bfdbfe', background: '#eff6ff', marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Add Manual Content</span>
-              <button type="button" onClick={() => setShowAddManual(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={16} /></button>
+        {loadingContent ? (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Loading...</div>
+        ) : (() => {
+          const items = contents.filter(c => c.type === 'YOUTUBE_VIDEO');
+          if (items.length === 0) return null;
+          const totalPages = Math.ceil(items.length / 10);
+          const paginated = items.slice((ytPage - 1) * 10, ytPage * 10);
+          return (
+            <>
+              <div className="ya-scroll-dark" style={{ maxHeight: 170, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
+                {paginated.map(c => (
+                  <div key={c.id} style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: expandedId === c.id ? 'rgba(220,38,38,0.1)' : 'rgba(255,255,255,0.04)', transition: 'background 0.15s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flexShrink: 0 }}>{getTypeIcon(c.type)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'Untitled'}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                          {getStatusBadge(c.status)}
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{c._count?.chunks || 0} chunks</span>
+                        </div>
+                        {c.status === 'FAILED' && c.errorMessage && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{c.errorMessage}</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button type="button" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)} title="Preview" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.55)' }}>
+                          {expandedId === c.id ? <ChevronUp size={14} /> : <Eye size={14} />}
+                        </button>
+                        {(c.status === 'COMPLETED' || c.status === 'FAILED') && (
+                          <button type="button" onClick={() => handleRetrain(c.id)} title={c.status === 'FAILED' ? 'Retry' : 'Retrain'} style={{ width: 30, height: 30, borderRadius: 6, border: c.status === 'FAILED' ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(220,38,38,0.3)', background: c.status === 'FAILED' ? 'rgba(239,68,68,0.1)' : 'rgba(220,38,38,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: c.status === 'FAILED' ? '#ef4444' : '#f87171' }}>
+                            <RotateCcw size={13} />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => handleDelete(c.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3e48' }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                    {expandedId === c.id && (
+                      <div className="ya-scroll-dark" style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, maxHeight: 240, overflowY: 'auto' }}>
+                        {c.rawText ? (<>{c.rawText.substring(0, 2000)}{c.rawText.length > 2000 && <span style={{ color: 'rgba(255,255,255,0.35)' }}> ... ({c.rawText.length} total chars)</span>}</>) : c.sourceUrl ? (<span>Source: {c.sourceUrl}</span>) : (<span style={{ color: 'rgba(255,255,255,0.35)' }}>No preview available</span>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <button type="button" onClick={() => setYtPage(p => Math.max(1, p - 1))} disabled={ytPage === 1} style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: ytPage === 1 ? 'rgba(255,255,255,0.2)' : '#f87171', cursor: ytPage === 1 ? 'not-allowed' : 'pointer' }}>← Prev</button>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Page {ytPage} of {totalPages} · {items.length} video{items.length !== 1 ? 's' : ''}</span>
+                  <button type="button" onClick={() => setYtPage(p => Math.min(totalPages, p + 1))} disabled={ytPage === totalPages} style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: ytPage === totalPages ? 'rgba(255,255,255,0.2)' : '#f87171', cursor: ytPage === totalPages ? 'not-allowed' : 'pointer' }}>Next →</button>
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </div>
+
+      {/* ── Knowledge Base: Text & Articles ── */}
+      <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(59,130,246,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <FileText size={18} style={{ color: '#93c5fd' }} />
             </div>
-            <input type="text" value={manualTitle} onChange={(e) => setManualTitle(e.target.value)} placeholder="Title" style={{ ...inputStyle, marginBottom: 8 }} />
-            <textarea value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="Paste your content here..." rows={4} style={{ ...inputStyle, resize: 'none', marginBottom: 8 }} />
-            {manualText && <div style={{ fontSize: 10, color: '#9ca3af', marginBottom: 8 }}>{manualText.length} characters</div>}
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Text & Articles</h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                {(() => { const n = contents.filter(c => c.type === 'MANUAL_TEXT').length; return `${n} item${n !== 1 ? 's' : ''} · pasted or written content`; })()}
+              </p>
+            </div>
+          </div>
+          <button type="button" onClick={() => setShowAddManual(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: showAddManual ? 'rgba(59,130,246,0.22)' : 'rgba(59,130,246,0.12)', color: '#93c5fd', fontSize: 12, fontWeight: 600, border: '1px solid rgba(59,130,246,0.35)', cursor: 'pointer' }}>
+            <Plus size={13} /> {showAddManual ? 'Cancel' : 'Add Text'}
+          </button>
+        </div>
+
+        {(showAddManual || contents.filter(c => c.type === 'MANUAL_TEXT').length > 0) && (
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
+        )}
+
+        {showAddManual && (
+          <div style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(59,130,246,0.3)', background: 'rgba(59,130,246,0.08)', marginBottom: 12 }}>
+            <input type="text" value={manualTitle} onChange={(e) => setManualTitle(e.target.value)} placeholder="Title" style={{ ...inputStyle, marginBottom: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+            <textarea value={manualText} onChange={(e) => setManualText(e.target.value)} placeholder="Paste your content here..." rows={4} style={{ ...inputStyle, resize: 'none', marginBottom: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+            {manualText && <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginBottom: 8 }}>{manualText.length} characters</div>}
             <button type="button" disabled={saving || manualText.length < 10} onClick={handleAddManual} style={{
               padding: '8px 20px', borderRadius: 8, background: '#3b82f6', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
             }}>
@@ -859,15 +1041,90 @@ const CreatorYourAI = () => {
           </div>
         )}
 
-        {/* Add FAQ Form */}
-        {showAddFaq && (
-          <div style={{ padding: 16, borderRadius: 12, border: '1px solid #fde68a', background: '#fef3c7', marginBottom: 16 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: '#111827' }}>Add FAQ</span>
-              <button type="button" onClick={() => setShowAddFaq(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={16} /></button>
+        {loadingContent ? (
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Loading...</div>
+        ) : (() => {
+          const items = contents.filter(c => c.type === 'MANUAL_TEXT');
+          if (items.length === 0) return null;
+          const totalPages = Math.ceil(items.length / 10);
+          const paginated = items.slice((manualPage - 1) * 10, manualPage * 10);
+          return (
+            <>
+              <div className="ya-scroll-dark" style={{ maxHeight: 170, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
+                {paginated.map(c => (
+                  <div key={c.id} style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: expandedId === c.id ? 'rgba(59,130,246,0.1)' : 'rgba(255,255,255,0.04)', transition: 'background 0.15s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flexShrink: 0 }}>{getTypeIcon(c.type)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'Untitled'}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                          {getStatusBadge(c.status)}
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{c._count?.chunks || 0} chunks</span>
+                        </div>
+                        {c.status === 'FAILED' && c.errorMessage && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{c.errorMessage}</div>}
+                      </div>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button type="button" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)} title="Preview" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.55)' }}>
+                          {expandedId === c.id ? <ChevronUp size={14} /> : <Eye size={14} />}
+                        </button>
+                        {(c.status === 'COMPLETED' || c.status === 'FAILED') && (
+                          <button type="button" onClick={() => handleRetrain(c.id)} title={c.status === 'FAILED' ? 'Retry' : 'Retrain'} style={{ width: 30, height: 30, borderRadius: 6, border: c.status === 'FAILED' ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(59,130,246,0.3)', background: c.status === 'FAILED' ? 'rgba(239,68,68,0.1)' : 'rgba(59,130,246,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: c.status === 'FAILED' ? '#ef4444' : '#93c5fd' }}>
+                            <RotateCcw size={13} />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => handleDelete(c.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3e48' }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                    {expandedId === c.id && (
+                      <div className="ya-scroll-dark" style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, maxHeight: 240, overflowY: 'auto' }}>
+                        {c.rawText ? (<>{c.rawText.substring(0, 2000)}{c.rawText.length > 2000 && <span style={{ color: 'rgba(255,255,255,0.35)' }}> ... ({c.rawText.length} total chars)</span>}</>) : (<span style={{ color: 'rgba(255,255,255,0.35)' }}>No preview available</span>)}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <button type="button" onClick={() => setManualPage(p => Math.max(1, p - 1))} disabled={manualPage === 1} style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: manualPage === 1 ? 'rgba(255,255,255,0.2)' : '#93c5fd', cursor: manualPage === 1 ? 'not-allowed' : 'pointer' }}>← Prev</button>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Page {manualPage} of {totalPages} · {items.length} item{items.length !== 1 ? 's' : ''}</span>
+                  <button type="button" onClick={() => setManualPage(p => Math.min(totalPages, p + 1))} disabled={manualPage === totalPages} style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: manualPage === totalPages ? 'rgba(255,255,255,0.2)' : '#93c5fd', cursor: manualPage === totalPages ? 'not-allowed' : 'pointer' }}>Next →</button>
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </div>
+
+      {/* ── Knowledge Base: FAQs ── */}
+      <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(217,119,6,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <HelpCircle size={18} style={{ color: '#fcd34d' }} />
             </div>
-            <input type="text" value={faqQ} onChange={(e) => setFaqQ(e.target.value)} placeholder="Question" style={{ ...inputStyle, marginBottom: 8 }} />
-            <input type="text" value={faqA} onChange={(e) => setFaqA(e.target.value)} placeholder="Answer" style={{ ...inputStyle, marginBottom: 8 }} />
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>FAQs</h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                {(() => { const n = contents.filter(c => c.type === 'FAQ').length; return `${n} FAQ${n !== 1 ? 's' : ''} · Q&A knowledge pairs`; })()}
+              </p>
+            </div>
+          </div>
+          <button type="button" onClick={() => setShowAddFaq(v => !v)}
+            style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: showAddFaq ? 'rgba(217,119,6,0.22)' : 'rgba(217,119,6,0.12)', color: '#fcd34d', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,119,6,0.35)', cursor: 'pointer' }}>
+            <Plus size={13} /> {showAddFaq ? 'Cancel' : 'Add FAQ'}
+          </button>
+        </div>
+
+        {(showAddFaq || contents.filter(c => c.type === 'FAQ').length > 0) && (
+          <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
+        )}
+
+        {showAddFaq && (
+          <div style={{ padding: 16, borderRadius: 12, border: '1px solid rgba(217,119,6,0.3)', background: 'rgba(217,119,6,0.08)', marginBottom: 12 }}>
+            <input type="text" value={faqQ} onChange={(e) => setFaqQ(e.target.value)} placeholder="Question" style={{ ...inputStyle, marginBottom: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
+            <input type="text" value={faqA} onChange={(e) => setFaqA(e.target.value)} placeholder="Answer" style={{ ...inputStyle, marginBottom: 8, background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.12)', color: '#fff' }} />
             <button type="button" disabled={saving || !faqQ.trim() || !faqA.trim()} onClick={handleAddFaq} style={{
               padding: '8px 20px', borderRadius: 8, background: '#d97706', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer',
             }}>
@@ -876,94 +1133,213 @@ const CreatorYourAI = () => {
           </div>
         )}
 
-        {/* Content List */}
         {loadingContent ? (
-          <div style={{ textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 14 }}>Loading knowledge base...</div>
-        ) : contents.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '48px 0', color: '#9ca3af' }}>
-            <Bot size={40} style={{ color: '#d1d5db', marginBottom: 12 }} />
-            <div style={{ fontSize: 15, fontWeight: 600, color: '#6b7280', marginBottom: 4 }}>No training data yet</div>
-            <div style={{ fontSize: 13 }}>Add YouTube videos, text content, or FAQs to train your AI</div>
-          </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {contents.map((c) => (
-              <div key={c.id} style={{
-                padding: '14px 16px', borderRadius: 10, border: '1px solid #ede8e3',
-                background: expandedId === c.id ? '#fafaf8' : '#fff',
-                transition: 'background 0.15s ease',
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ flexShrink: 0 }}>{getTypeIcon(c.type)}</div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 14, fontWeight: 600, color: '#111827', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'Untitled'}</div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
-                      {getStatusBadge(c.status)}
-                      <span style={{ fontSize: 11, color: '#9ca3af' }}>{c._count?.chunks || 0} chunks</span>
-                      <span style={{ fontSize: 11, color: '#9ca3af' }}>{c.type?.replace('_', ' ')}</span>
-                    </div>
-                    {c.status === 'FAILED' && c.errorMessage && (
-                      <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{c.errorMessage}</div>
-                    )}
-                  </div>
-                  <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
-                    <button type="button" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)} title="Preview" style={{
-                      width: 30, height: 30, borderRadius: 6, border: '1px solid #ede8e3', background: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#6b7280',
-                    }}>
-                      {expandedId === c.id ? <ChevronUp size={14} /> : <Eye size={14} />}
-                    </button>
-                    {(c.status === 'COMPLETED' || c.status === 'FAILED') && (
-                      <button type="button" onClick={() => handleRetrain(c.id)} title={c.status === 'FAILED' ? 'Retry processing' : 'Retrain'} style={{
-                        width: 30, height: 30, borderRadius: 6,
-                        border: c.status === 'FAILED' ? '1px solid #fecaca' : '1px solid #bfdbfe',
-                        background: c.status === 'FAILED' ? '#fff1f1' : '#eff6ff',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
-                        color: c.status === 'FAILED' ? '#ef4444' : '#3b82f6',
-                      }}>
-                        <RotateCcw size={13} />
-                      </button>
-                    )}
-                    <button type="button" onClick={() => handleDelete(c.id)} title="Delete" style={{
-                      width: 30, height: 30, borderRadius: 6, border: '1px solid #fecaca', background: '#fff',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3e48',
-                    }}>
-                      <Trash2 size={13} />
-                    </button>
-                  </div>
-                </div>
-                {/* Expanded preview */}
-                {expandedId === c.id && (
-                  <div style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: '#fff', border: '1px solid #ede8e3', fontSize: 12, color: '#6b7280', lineHeight: 1.6, maxHeight: 240, overflowY: 'auto' }}>
-                    {c.type === 'FAQ' && c.rawText ? (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-                        {c.rawText.split('\n\n').filter(Boolean).map((pair: string, i: number) => {
-                          const qLine = pair.split('\n').find((l: string) => l.startsWith('Q:'));
-                          const aLine = pair.split('\n').find((l: string) => l.startsWith('A:'));
-                          return (
-                            <div key={i} style={{ borderLeft: '3px solid #fbbf24', paddingLeft: 10 }}>
-                              <div style={{ fontWeight: 600, color: '#111827', marginBottom: 2 }}>{qLine?.replace(/^Q:\s*/, '') || pair}</div>
-                              {aLine && <div style={{ color: '#6b7280' }}>{aLine.replace(/^A:\s*/, '')}</div>}
-                            </div>
-                          );
-                        })}
+          <div style={{ textAlign: 'center', padding: '20px 0', color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>Loading...</div>
+        ) : (() => {
+          const items = contents.filter(c => c.type === 'FAQ');
+          if (items.length === 0) return null;
+          const totalPages = Math.ceil(items.length / 10);
+          const paginated = items.slice((faqPage - 1) * 10, faqPage * 10);
+          return (
+            <>
+              <div className="ya-scroll-dark" style={{ maxHeight: 170, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
+                {paginated.map(c => (
+                  <div key={c.id} style={{ padding: '14px 16px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: expandedId === c.id ? 'rgba(217,119,6,0.1)' : 'rgba(255,255,255,0.04)', transition: 'background 0.15s ease' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ flexShrink: 0 }}>{getTypeIcon(c.type)}</div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: 14, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'Untitled'}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 3 }}>
+                          {getStatusBadge(c.status)}
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{c._count?.chunks || 0} chunks</span>
+                        </div>
+                        {c.status === 'FAILED' && c.errorMessage && <div style={{ fontSize: 11, color: '#ef4444', marginTop: 4 }}>{c.errorMessage}</div>}
                       </div>
-                    ) : c.rawText ? (
-                      <>
-                        {c.rawText.substring(0, 2000)}
-                        {c.rawText.length > 2000 && <span style={{ color: '#9ca3af' }}> ... ({c.rawText.length} total chars)</span>}
-                      </>
-                    ) : c.sourceUrl ? (
-                      <span>Source: {c.sourceUrl}</span>
-                    ) : (
-                      <span style={{ color: '#9ca3af' }}>No preview available</span>
+                      <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                        <button type="button" onClick={() => setExpandedId(expandedId === c.id ? null : c.id)} title="Preview" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: 'rgba(255,255,255,0.55)' }}>
+                          {expandedId === c.id ? <ChevronUp size={14} /> : <Eye size={14} />}
+                        </button>
+                        {(c.status === 'COMPLETED' || c.status === 'FAILED') && (
+                          <button type="button" onClick={() => handleRetrain(c.id)} title={c.status === 'FAILED' ? 'Retry' : 'Retrain'} style={{ width: 30, height: 30, borderRadius: 6, border: c.status === 'FAILED' ? '1px solid rgba(239,68,68,0.3)' : '1px solid rgba(217,119,6,0.3)', background: c.status === 'FAILED' ? 'rgba(239,68,68,0.1)' : 'rgba(217,119,6,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: c.status === 'FAILED' ? '#ef4444' : '#fcd34d' }}>
+                            <RotateCcw size={13} />
+                          </button>
+                        )}
+                        <button type="button" onClick={() => handleDelete(c.id)} title="Delete" style={{ width: 30, height: 30, borderRadius: 6, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3e48' }}>
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
+                    </div>
+                    {expandedId === c.id && (
+                      <div className="ya-scroll-dark" style={{ marginTop: 12, padding: '12px 14px', borderRadius: 8, background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.08)', fontSize: 12, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, maxHeight: 240, overflowY: 'auto' }}>
+                        {c.type === 'FAQ' && c.rawText ? (
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+                            {c.rawText.split('\n\n').filter(Boolean).map((pair: string, i: number) => {
+                              const qLine = pair.split('\n').find((l: string) => l.startsWith('Q:'));
+                              const aLine = pair.split('\n').find((l: string) => l.startsWith('A:'));
+                              return (
+                                <div key={i} style={{ borderLeft: '3px solid #fbbf24', paddingLeft: 10 }}>
+                                  <div style={{ fontWeight: 600, color: '#fff', marginBottom: 2 }}>{qLine?.replace(/^Q:\s*/, '') || pair}</div>
+                                  {aLine && <div style={{ color: 'rgba(255,255,255,0.55)' }}>{aLine.replace(/^A:\s*/, '')}</div>}
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ) : c.rawText ? (
+                          <>{c.rawText.substring(0, 2000)}{c.rawText.length > 2000 && <span style={{ color: 'rgba(255,255,255,0.35)' }}> ... ({c.rawText.length} total chars)</span>}</>
+                        ) : (
+                          <span style={{ color: 'rgba(255,255,255,0.35)' }}>No preview available</span>
+                        )}
+                      </div>
                     )}
+                  </div>
+                ))}
+              </div>
+              {totalPages > 1 && (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, paddingTop: 12, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                  <button type="button" onClick={() => setFaqPage(p => Math.max(1, p - 1))} disabled={faqPage === 1} style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: faqPage === 1 ? 'rgba(255,255,255,0.2)' : '#fcd34d', cursor: faqPage === 1 ? 'not-allowed' : 'pointer' }}>← Prev</button>
+                  <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)' }}>Page {faqPage} of {totalPages} · {items.length} FAQ{items.length !== 1 ? 's' : ''}</span>
+                  <button type="button" onClick={() => setFaqPage(p => Math.min(totalPages, p + 1))} disabled={faqPage === totalPages} style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: faqPage === totalPages ? 'rgba(255,255,255,0.2)' : '#fcd34d', cursor: faqPage === totalPages ? 'not-allowed' : 'pointer' }}>Next →</button>
+                </div>
+              )}
+            </>
+          );
+        })()}
+      </div>
+
+      {/* ── Knowledge Base: Instagram Posts ── */}
+      <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginTop: 20 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(217,70,239,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Instagram size={18} style={{ color: '#e879f9' }} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Instagram Posts</h3>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                {(() => {
+                  const n = contents.filter(c => c.type === 'INSTAGRAM_POST').length;
+                  return igConnected
+                    ? `${n} post${n !== 1 ? 's' : ''} imported · AI trained on captions`
+                    : 'Connect to pull captions into your knowledge base';
+                })()}
+              </p>
+            </div>
+          </div>
+
+          {/* Action buttons */}
+          <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+            {igConnected ? (
+              <>
+                <button
+                  type="button"
+                  onClick={handleIgSync}
+                  disabled={igSyncing}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igSyncing ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.14)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.35)', cursor: igSyncing ? 'not-allowed' : 'pointer', opacity: igSyncing ? 0.7 : 1 }}>
+                  <RefreshCw size={12} style={{ animation: igSyncing ? 'spin 1s linear infinite' : 'none' }} />
+                  {igSyncing ? 'Syncing…' : 'Sync Now'}
+                </button>
+                <button
+                  type="button"
+                  onClick={handleIgDisconnect}
+                  disabled={igDisconnecting}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', cursor: igDisconnecting ? 'not-allowed' : 'pointer', opacity: igDisconnecting ? 0.7 : 1 }}>
+                  <Link2Off size={12} />
+                  {igDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                </button>
+              </>
+            ) : (
+              <button
+                type="button"
+                onClick={handleIgConnect}
+                disabled={igConnecting}
+                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 16px', borderRadius: 8, background: igConnecting ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.18)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.4)', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1 }}>
+                <Instagram size={12} />
+                {igConnecting ? 'Redirecting…' : 'Connect Instagram'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Connected status strip */}
+        {igConnected && (
+          <>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: igExpired ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.08)', border: igExpired ? '1px solid rgba(239,68,68,0.25)' : '1px solid rgba(16,185,129,0.2)' }}>
+              {igExpired
+                ? <AlertCircle size={15} style={{ color: '#ef4444', flexShrink: 0 }} />
+                : <CheckCircle2 size={15} style={{ color: '#34d399', flexShrink: 0 }} />}
+              <span style={{ fontSize: 12, color: igExpired ? '#fca5a5' : 'rgba(255,255,255,0.65)' }}>
+                {igExpired
+                  ? 'Access token expired — please reconnect your Instagram account.'
+                  : `Connected as Instagram user ${igUserId} · Posts are automatically imported`}
+              </span>
+              {igExpired && (
+                <button type="button" onClick={handleIgConnect} disabled={igConnecting} style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.15)', color: '#f87171', fontSize: 11, fontWeight: 600, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer' }}>
+                  Reconnect
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Not connected explanation */}
+        {!igConnected && (
+          <>
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 16px', borderRadius: 12, background: 'rgba(217,70,239,0.06)', border: '1px solid rgba(217,70,239,0.15)' }}>
+              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
+                Connect your Instagram account and your post captions will be automatically pulled into your AI knowledge base. Your AI will learn from your content and be able to discuss your posts with fans.
+              </p>
+              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
+                {['Post captions imported automatically', 'Up to 50 recent posts', 'Re-sync anytime'].map(feat => (
+                  <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#e879f9' }} />
+                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{feat}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Imported posts list */}
+        {igConnected && (() => {
+          const items = contents.filter(c => c.type === 'INSTAGRAM_POST');
+          if (items.length === 0) return (
+            <div style={{ marginTop: 12, textAlign: 'center', padding: '16px 0', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
+              No posts imported yet — click Sync Now to pull your latest posts.
+            </div>
+          );
+          return (
+            <>
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '12px 0' }} />
+              <div className="ya-scroll-dark" style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
+                {items.slice(0, 20).map(c => (
+                  <div key={c.id} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ flexShrink: 0 }}>
+                      <Instagram size={14} style={{ color: '#e879f9' }} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'Instagram Post'}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
+                        {getStatusBadge(c.status)}
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{c._count?.chunks || 0} chunks</span>
+                      </div>
+                    </div>
+                    <button type="button" onClick={() => handleDelete(c.id)} title="Delete" style={{ width: 28, height: 28, borderRadius: 6, border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#ff3e48', flexShrink: 0 }}>
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                ))}
+                {items.length > 20 && (
+                  <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)', paddingTop: 4 }}>
+                    Showing 20 of {items.length} posts
                   </div>
                 )}
               </div>
-            ))}
-          </div>
-        )}
+            </>
+          );
+        })()}
       </div>
     </div>
   );
