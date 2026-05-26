@@ -111,6 +111,8 @@ const CreatorYourAI = () => {
   const [igSyncing, setIgSyncing] = useState(false);
   const [igDisconnecting, setIgDisconnecting] = useState(false);
   const [igConnecting, setIgConnecting] = useState(false);
+  const [igExportUploading, setIgExportUploading] = useState(false);
+  const [igShowHowTo, setIgShowHowTo] = useState(false);
 
   // Auto-poll when any content is PROCESSING
   useEffect(() => {
@@ -264,6 +266,30 @@ const CreatorYourAI = () => {
       antMessage.error('Failed to disconnect Instagram.');
     } finally {
       setIgDisconnecting(false);
+    }
+  };
+
+  const handleIgExportUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    setIgExportUploading(true);
+    try {
+      const res = await instagramApi.uploadExport(file);
+      const { imported, found, message } = res.data;
+      if (imported > 0) {
+        antMessage.success(message);
+        setTimeout(fetchContents, 2000);
+      } else if (found > 0) {
+        antMessage.info(message);
+      } else {
+        antMessage.warning(message);
+      }
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: { message?: string } } } })?.response?.data?.error?.message;
+      antMessage.error(msg || 'Upload failed. Make sure it\'s a valid Instagram data export ZIP.');
+    } finally {
+      setIgExportUploading(false);
     }
   };
 
@@ -1248,14 +1274,24 @@ const CreatorYourAI = () => {
                 </button>
               </>
             ) : (
-              <button
-                type="button"
-                onClick={handleIgConnect}
-                disabled={igConnecting}
-                style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 16px', borderRadius: 8, background: igConnecting ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.18)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.4)', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1 }}>
-                <Instagram size={12} />
-                {igConnecting ? 'Redirecting…' : 'Connect Instagram'}
-              </button>
+              <>
+                {/* OAuth connect — requires Meta app setup */}
+                <button
+                  type="button"
+                  onClick={handleIgConnect}
+                  disabled={igConnecting}
+                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 16px', borderRadius: 8, background: igConnecting ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.18)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.4)', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1 }}>
+                  <Instagram size={12} />
+                  {igConnecting ? 'Redirecting…' : 'Connect Instagram'}
+                </button>
+
+                {/* Export upload — works immediately, no OAuth needed */}
+                <label style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igExportUploading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)', color: igExportUploading ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', cursor: igExportUploading ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
+                  <input type="file" accept=".zip" style={{ display: 'none' }} disabled={igExportUploading} onChange={handleIgExportUpload} />
+                  <RefreshCw size={12} style={{ animation: igExportUploading ? 'spin 1s linear infinite' : 'none' }} />
+                  {igExportUploading ? 'Uploading…' : 'Upload Export'}
+                </label>
+              </>
             )}
           </div>
         </div>
@@ -1282,21 +1318,49 @@ const CreatorYourAI = () => {
           </>
         )}
 
-        {/* Not connected explanation */}
+        {/* Not connected — show both options */}
         {!igConnected && (
           <>
             <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '14px 16px', borderRadius: 12, background: 'rgba(217,70,239,0.06)', border: '1px solid rgba(217,70,239,0.15)' }}>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.55)', margin: 0, lineHeight: 1.6 }}>
-                Connect your Instagram account and your post captions will be automatically pulled into your AI knowledge base. Your AI will learn from your content and be able to discuss your posts with fans.
-              </p>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
-                {['Post captions imported automatically', 'Up to 50 recent posts', 'Re-sync anytime'].map(feat => (
-                  <div key={feat} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                    <div style={{ width: 5, height: 5, borderRadius: '50%', background: '#e879f9' }} />
-                    <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)' }}>{feat}</span>
-                  </div>
-                ))}
+            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+
+              {/* Option A: OAuth */}
+              <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(217,70,239,0.06)', border: '1px solid rgba(217,70,239,0.18)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                  <Instagram size={14} style={{ color: '#e879f9' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: '#e879f9' }}>Connect Account</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.07)', padding: '2px 7px', borderRadius: 99 }}>OAuth</span>
+                </div>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+                  One-click login. Posts sync automatically. Requires a Meta developer app setup.
+                </p>
+              </div>
+
+              {/* Option B: Export upload */}
+              <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                  <RefreshCw size={14} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>Upload Export</span>
+                  <span style={{ fontSize: 10, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '2px 7px', borderRadius: 99 }}>Works now</span>
+                </div>
+                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+                  Download your data from Instagram → Settings → Your Activity → Download your information. Upload the ZIP here.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setIgShowHowTo(v => !v)}
+                  style={{ marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                  {igShowHowTo ? 'Hide steps' : 'How to get the export?'}
+                </button>
+                {igShowHowTo && (
+                  <ol style={{ margin: '8px 0 0', paddingLeft: 16, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8 }}>
+                    <li>Open Instagram app → Profile → ☰ Menu</li>
+                    <li>Settings → Your Activity → Download your information</li>
+                    <li>Select <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Posts</strong> → choose <strong style={{ color: 'rgba(255,255,255,0.65)' }}>JSON</strong> format</li>
+                    <li>Request download → wait for email → download ZIP</li>
+                    <li>Upload the ZIP using the button above</li>
+                  </ol>
+                )}
               </div>
             </div>
           </>

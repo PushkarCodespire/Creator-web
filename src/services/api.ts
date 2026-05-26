@@ -452,7 +452,18 @@ export const instagramApi = {
   sync: () => api.post<{ success: true; message: string }>('/instagram/sync'),
 
   /** Disconnect the Instagram account */
-  disconnect: () => api.delete<{ success: true; message: string }>('/instagram/disconnect')
+  disconnect: () => api.delete<{ success: true; message: string }>('/instagram/disconnect'),
+
+  /** Upload an Instagram data export ZIP and import post captions */
+  uploadExport: (file: File) => {
+    const form = new FormData();
+    form.append('export', file);
+    return api.post<{ success: true; message: string; imported: number; found: number }>(
+      '/instagram/upload-export',
+      form,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    );
+  }
 };
 
 // ===========================================
