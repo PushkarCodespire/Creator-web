@@ -1344,7 +1344,7 @@ const CreatorYourAI = () => {
                   <span style={{ fontSize: 10, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '2px 7px', borderRadius: 99 }}>Works now</span>
                 </div>
                 <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
-                  Download your data from Instagram → Settings → Your Activity → Download your information. Upload the ZIP here.
+                  Download your data from Instagram. Select <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Posts</strong>, format <strong style={{ color: '#e879f9' }}>JSON</strong>, date range <strong style={{ color: '#e879f9' }}>All time</strong>. Upload the ZIP here.
                 </p>
                 <button
                   type="button"
@@ -1359,8 +1359,8 @@ const CreatorYourAI = () => {
                       { step: '2', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Your information and permissions</strong></> },
                       { step: '3', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Download your information</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export or transfer information</strong></> },
                       { step: '4', text: <>Select your Instagram account → choose <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Some of your information</strong> → tick <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Posts</strong></> },
-                      { step: '5', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export to device</strong> → set format to <strong style={{ color: '#e879f9' }}>JSON</strong> → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Create export</strong></> },
-                      { step: '6', text: <>Wait for the notification → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Start export</strong> → download the ZIP → upload it here</> },
+                      { step: '5', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export to device</strong> → set format to <strong style={{ color: '#e879f9' }}>JSON</strong> → set date range to <strong style={{ color: '#e879f9' }}>All time</strong></> },
+                      { step: '6', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Create export</strong> → wait for the notification → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Start export</strong> → download the ZIP → upload it here</> },
                     ].map(({ step, text }) => (
                       <div key={step} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
                         <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', background: 'rgba(217,70,239,0.2)', border: '1px solid rgba(217,70,239,0.35)', fontSize: 10, fontWeight: 700, color: '#e879f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{step}</span>
