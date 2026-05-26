@@ -1353,13 +1353,21 @@ const CreatorYourAI = () => {
                   {igShowHowTo ? 'Hide steps' : 'How to get the export?'}
                 </button>
                 {igShowHowTo && (
-                  <ol style={{ margin: '8px 0 0', paddingLeft: 16, fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.8 }}>
-                    <li>Open Instagram app → Profile → ☰ Menu</li>
-                    <li>Settings → Your Activity → Download your information</li>
-                    <li>Select <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Posts</strong> → choose <strong style={{ color: 'rgba(255,255,255,0.65)' }}>JSON</strong> format</li>
-                    <li>Request download → wait for email → download ZIP</li>
-                    <li>Upload the ZIP using the button above</li>
-                  </ol>
+                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {[
+                      { step: '1', text: <>Open Instagram → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>☰</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Accounts Center</strong></> },
+                      { step: '2', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Your information and permissions</strong></> },
+                      { step: '3', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Download your information</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export or transfer information</strong></> },
+                      { step: '4', text: <>Select your Instagram account → choose <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Some of your information</strong> → tick <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Posts</strong></> },
+                      { step: '5', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export to device</strong> → set format to <strong style={{ color: '#e879f9' }}>JSON</strong> → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Create export</strong></> },
+                      { step: '6', text: <>Wait for the notification → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Start export</strong> → download the ZIP → upload it here</> },
+                    ].map(({ step, text }) => (
+                      <div key={step} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                        <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', background: 'rgba(217,70,239,0.2)', border: '1px solid rgba(217,70,239,0.35)', fontSize: 10, fontWeight: 700, color: '#e879f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{step}</span>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>{text}</span>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </div>
