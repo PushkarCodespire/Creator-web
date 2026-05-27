@@ -13,7 +13,7 @@ import VoiceModeModal from './VoiceModeModal';
 
 const FREE_MESSAGE_LIMIT = 5;
 
-type VoiceProvider = 'chatterbox' | 'inworld' | 'elevenlabs';
+type VoiceProvider = 'inworld';
 
 type SuggestedCard =
   | { type: 'program'; id: string; name: string; price: number; link?: string; promoCode?: string; description?: string; duration?: string; level?: string }
@@ -179,10 +179,7 @@ export function ChatUI({ creatorId }: Props) {
   const [showVoiceUpgradeModal, setShowVoiceUpgradeModal] = useState(false);
   // Which voice engine the listener wants the AI reply spoken with.
   // Persisted per-user in localStorage so the choice sticks across sessions.
-  const [voiceProvider, setVoiceProvider] = useState<VoiceProvider>(() => {
-    const saved = typeof window !== 'undefined' ? localStorage.getItem('voiceProvider') : null;
-    return saved === 'elevenlabs' ? 'elevenlabs' : saved === 'inworld' ? 'inworld' : 'chatterbox';
-  });
+  const voiceProvider: VoiceProvider = 'inworld';
   const [_tokenGrant, setTokenGrant] = useState<number>(0);
   const [tokensPerMessage, setTokensPerMessage] = useState<number>(800);
 
@@ -486,47 +483,6 @@ export function ChatUI({ creatorId }: Props) {
           </button>
         </div>
         <div className={styles.headerRight}>
-          {/* Voice provider toggle — sits between the counter and Subscribe.
-              Choice is per-listener; falls back to the other provider if the
-              selected one fails or isn't cloned. */}
-          <div
-            role="group"
-            aria-label="Voice provider"
-            style={{
-              display: 'flex', background: 'rgba(255,255,255,0.06)',
-              borderRadius: 99, padding: 2, gap: 2,
-              border: '1px solid rgba(255,255,255,0.08)',
-            }}
-          >
-            {(['chatterbox', 'inworld', 'elevenlabs'] as VoiceProvider[]).map((p) => {
-              const active = voiceProvider === p;
-              const label = p === 'chatterbox' ? 'Chatterbox' : p === 'inworld' ? 'Inworld' : 'ElevenLabs';
-              const title = p === 'chatterbox' ? 'Chatterbox — free, open-source' : p === 'inworld' ? 'Inworld TTS-1.5 Mini' : 'ElevenLabs — premium quality';
-              return (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => {
-                    setVoiceProvider(p);
-                    try { localStorage.setItem('voiceProvider', p); } catch { /* ignore */ }
-                  }}
-                  aria-pressed={active}
-                  title={title}
-                  style={{
-                    fontSize: 10, fontWeight: 700, letterSpacing: 0.3,
-                    padding: '4px 10px', borderRadius: 99, cursor: 'pointer',
-                    border: 'none',
-                    background: active ? '#fff' : 'transparent',
-                    color: active ? '#111' : 'rgba(255,255,255,0.7)',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-
           {/* Token/Message counter */}
           {rateLimitStatus?.subscription?.plan === 'PREMIUM' ? (
             <span style={{

@@ -335,7 +335,7 @@ export const chatApi = {
   startConversation: (creatorId: string) =>
     api.post('/chat/start', { creatorId }),
 
-  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean, voiceProvider?: 'chatterbox' | 'inworld' | 'elevenlabs', userProfile?: string) =>
+  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean, voiceProvider?: 'inworld', userProfile?: string) =>
     api.post('/chat/message', { conversationId, content, media, voiceMode, userProfile, ...(voiceMode ? { voiceProvider } : {}) }),
 
   uploadChatMedia: (files: File[]) => {
@@ -458,12 +458,23 @@ export const instagramApi = {
   uploadExport: (file: File) => {
     const form = new FormData();
     form.append('export', file);
-    return api.post<{ success: true; message: string; imported: number; found: number }>(
+    return api.post<{
+      success: true;
+      message: string;
+      imported: number;
+      found: number;
+      breakdown: { post: number; reel: number; igtv: number; reply: number; bio: number };
+      username: string | null;
+    }>(
       '/instagram/upload-export',
       form,
       { headers: { 'Content-Type': 'multipart/form-data' } }
     );
-  }
+  },
+
+  /** Delete all INSTAGRAM_POST content for this creator (clear exported data) */
+  clearContent: () =>
+    api.delete<{ success: true; message: string; count: number }>('/instagram/content'),
 };
 
 // ===========================================

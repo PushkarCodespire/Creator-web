@@ -11,7 +11,7 @@ type Props = {
   creatorAvatar: string | null;
   onMessageSent?: () => void;
   onVoiceBlocked?: () => void;
-  voiceProvider?: 'chatterbox' | 'inworld' | 'elevenlabs';
+  voiceProvider?: 'inworld';
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

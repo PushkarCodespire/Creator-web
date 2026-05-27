@@ -112,6 +112,7 @@ const CreatorYourAI = () => {
   const [igDisconnecting, setIgDisconnecting] = useState(false);
   const [igConnecting, setIgConnecting] = useState(false);
   const [igExportUploading, setIgExportUploading] = useState(false);
+  const [igClearing, setIgClearing] = useState(false);
   const [igShowHowTo, setIgShowHowTo] = useState(false);
 
   // Auto-poll when any content is PROCESSING
@@ -276,12 +277,19 @@ const CreatorYourAI = () => {
     setIgExportUploading(true);
     try {
       const res = await instagramApi.uploadExport(file);
-      const { imported, found, message } = res.data;
+      const { imported, found, message, breakdown } = res.data;
       if (imported > 0) {
-        antMessage.success(message);
-        setTimeout(fetchContents, 2000);
+        const parts: string[] = [];
+        if (breakdown?.post  > 0) parts.push(`${breakdown.post} post${breakdown.post  !== 1 ? 's' : ''}`);
+        if (breakdown?.reel  > 0) parts.push(`${breakdown.reel} reel${breakdown.reel  !== 1 ? 's' : ''}`);
+        if (breakdown?.igtv  > 0) parts.push(`${breakdown.igtv} IGTV`);
+        if (breakdown?.reply > 0) parts.push(`${breakdown.reply} repl${breakdown.reply !== 1 ? 'ies' : 'y'}`);
+        if (breakdown?.bio   > 0) parts.push('bio');
+        antMessage.success(parts.length > 0 ? `Imported: ${parts.join(', ')}` : message, 4);
+        await fetchContents();
       } else if (found > 0) {
         antMessage.info(message);
+        await fetchContents();
       } else {
         antMessage.warning(message);
       }
@@ -290,6 +298,19 @@ const CreatorYourAI = () => {
       antMessage.error(msg || 'Upload failed. Make sure it\'s a valid Instagram data export ZIP.');
     } finally {
       setIgExportUploading(false);
+    }
+  };
+
+  const handleIgClearContent = async () => {
+    setIgClearing(true);
+    try {
+      const res = await instagramApi.clearContent();
+      antMessage.success(res.data.message);
+      await fetchContents();
+    } catch {
+      antMessage.error('Failed to clear Instagram data.');
+    } finally {
+      setIgClearing(false);
     }
   };
 
@@ -310,7 +331,7 @@ const CreatorYourAI = () => {
 
   const fetchContents = async () => {
     try {
-      const res = await contentApi.getAll();
+      const res = await contentApi.getAll({ limit: 200 });
       const items = res.data.data?.contents || res.data.data || [];
       setContents(Array.isArray(items) ? items : []);
       setYtPage(1);
@@ -1233,164 +1254,172 @@ const CreatorYourAI = () => {
       </div>
 
       {/* ── Knowledge Base: Instagram Posts ── */}
-      <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginTop: 20 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(217,70,239,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-              <Instagram size={18} style={{ color: '#e879f9' }} />
-            </div>
-            <div>
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Instagram Posts</h3>
-              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
-                {(() => {
-                  const n = contents.filter(c => c.type === 'INSTAGRAM_POST').length;
-                  return igConnected
-                    ? `${n} post${n !== 1 ? 's' : ''} imported · AI trained on captions`
-                    : 'Connect to pull captions into your knowledge base';
-                })()}
-              </p>
-            </div>
-          </div>
+      {(() => {
+        const igItems = contents.filter(c => c.type === 'INSTAGRAM_POST');
+        const hasExportData = !igConnected && igItems.length > 0;
 
-          {/* Action buttons */}
-          <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
-            {igConnected ? (
-              <>
-                <button
-                  type="button"
-                  onClick={handleIgSync}
-                  disabled={igSyncing}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igSyncing ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.14)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.35)', cursor: igSyncing ? 'not-allowed' : 'pointer', opacity: igSyncing ? 0.7 : 1 }}>
-                  <RefreshCw size={12} style={{ animation: igSyncing ? 'spin 1s linear infinite' : 'none' }} />
-                  {igSyncing ? 'Syncing…' : 'Sync Now'}
-                </button>
-                <button
-                  type="button"
-                  onClick={handleIgDisconnect}
-                  disabled={igDisconnecting}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', cursor: igDisconnecting ? 'not-allowed' : 'pointer', opacity: igDisconnecting ? 0.7 : 1 }}>
-                  <Link2Off size={12} />
-                  {igDisconnecting ? 'Disconnecting…' : 'Disconnect'}
-                </button>
-              </>
-            ) : (
-              <>
-                {/* OAuth connect — requires Meta app setup */}
-                <button
-                  type="button"
-                  onClick={handleIgConnect}
-                  disabled={igConnecting}
-                  style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 16px', borderRadius: 8, background: igConnecting ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.18)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.4)', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1 }}>
-                  <Instagram size={12} />
-                  {igConnecting ? 'Redirecting…' : 'Connect Instagram'}
-                </button>
+        return (
+          <div style={{ background: 'linear-gradient(135deg, #1a0f0f 0%, #2d1515 50%, #0a0505 100%)', borderRadius: 16, padding: 24, marginTop: 20 }}>
 
-                {/* Export upload — works immediately, no OAuth needed */}
-                <label style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igExportUploading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)', color: igExportUploading ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', cursor: igExportUploading ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
-                  <input type="file" accept=".zip" style={{ display: 'none' }} disabled={igExportUploading} onChange={handleIgExportUpload} />
-                  <RefreshCw size={12} style={{ animation: igExportUploading ? 'spin 1s linear infinite' : 'none' }} />
-                  {igExportUploading ? 'Uploading…' : 'Upload Export'}
-                </label>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Connected status strip */}
-        {igConnected && (
-          <>
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, background: igExpired ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.08)', border: igExpired ? '1px solid rgba(239,68,68,0.25)' : '1px solid rgba(16,185,129,0.2)' }}>
-              {igExpired
-                ? <AlertCircle size={15} style={{ color: '#ef4444', flexShrink: 0 }} />
-                : <CheckCircle2 size={15} style={{ color: '#34d399', flexShrink: 0 }} />}
-              <span style={{ fontSize: 12, color: igExpired ? '#fca5a5' : 'rgba(255,255,255,0.65)' }}>
-                {igExpired
-                  ? 'Access token expired — please reconnect your Instagram account.'
-                  : `Connected as Instagram user ${igUserId} · Posts are automatically imported`}
-              </span>
-              {igExpired && (
-                <button type="button" onClick={handleIgConnect} disabled={igConnecting} style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.15)', color: '#f87171', fontSize: 11, fontWeight: 600, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer' }}>
-                  Reconnect
-                </button>
-              )}
-            </div>
-          </>
-        )}
-
-        {/* Not connected — show both options */}
-        {!igConnected && (
-          <>
-            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
-            <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-
-              {/* Option A: OAuth */}
-              <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(217,70,239,0.06)', border: '1px solid rgba(217,70,239,0.18)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                  <Instagram size={14} style={{ color: '#e879f9' }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#e879f9' }}>Connect Account</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.07)', padding: '2px 7px', borderRadius: 99 }}>OAuth</span>
+            {/* ── Header row ── */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: 12 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(217,70,239,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <Instagram size={18} style={{ color: '#e879f9' }} />
                 </div>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
-                  One-click login. Posts sync automatically. Requires a Meta developer app setup.
-                </p>
+                <div>
+                  <h3 style={{ fontSize: 15, fontWeight: 700, color: '#fff', margin: 0 }}>Instagram Posts</h3>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', margin: 0 }}>
+                    {igConnected || hasExportData
+                      ? `${igItems.length} item${igItems.length !== 1 ? 's' : ''} imported · AI trained on captions`
+                      : 'Connect or upload export to pull captions into your knowledge base'}
+                  </p>
+                </div>
               </div>
 
-              {/* Option B: Export upload */}
-              <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
-                  <RefreshCw size={14} style={{ color: 'rgba(255,255,255,0.6)' }} />
-                  <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>Upload Export</span>
-                  <span style={{ fontSize: 10, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '2px 7px', borderRadius: 99 }}>Works now</span>
-                </div>
-                <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
-                  Download your data from Instagram. Select <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Posts</strong>, format <strong style={{ color: '#e879f9' }}>JSON</strong>, date range <strong style={{ color: '#e879f9' }}>All time</strong>. Upload the ZIP here.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setIgShowHowTo(v => !v)}
-                  style={{ marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
-                  {igShowHowTo ? 'Hide steps' : 'How to get the export?'}
-                </button>
-                {igShowHowTo && (
-                  <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {[
-                      { step: '1', text: <>Open Instagram → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>☰</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Accounts Center</strong></> },
-                      { step: '2', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Your information and permissions</strong></> },
-                      { step: '3', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Download your information</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export or transfer information</strong></> },
-                      { step: '4', text: <>Select your Instagram account → choose <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Some of your information</strong> → tick <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Posts</strong></> },
-                      { step: '5', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export to device</strong> → set format to <strong style={{ color: '#e879f9' }}>JSON</strong> → set date range to <strong style={{ color: '#e879f9' }}>All time</strong></> },
-                      { step: '6', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Create export</strong> → wait for the notification → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Start export</strong> → download the ZIP → upload it here</> },
-                    ].map(({ step, text }) => (
-                      <div key={step} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-                        <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', background: 'rgba(217,70,239,0.2)', border: '1px solid rgba(217,70,239,0.35)', fontSize: 10, fontWeight: 700, color: '#e879f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{step}</span>
-                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>{text}</span>
-                      </div>
-                    ))}
-                  </div>
+              {/* ── Action buttons — mutually exclusive states ── */}
+              <div style={{ display: 'flex', gap: 8, flexShrink: 0, flexWrap: 'wrap' }}>
+
+                {/* STATE 1: OAuth connected */}
+                {igConnected && (
+                  <>
+                    <button type="button" onClick={handleIgSync} disabled={igSyncing}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igSyncing ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.14)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.35)', cursor: igSyncing ? 'not-allowed' : 'pointer', opacity: igSyncing ? 0.7 : 1 }}>
+                      <RefreshCw size={12} style={{ animation: igSyncing ? 'spin 1s linear infinite' : 'none' }} />
+                      {igSyncing ? 'Syncing…' : 'Sync Now'}
+                    </button>
+                    <button type="button" onClick={handleIgDisconnect} disabled={igDisconnecting}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.05)', color: 'rgba(255,255,255,0.55)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', cursor: igDisconnecting ? 'not-allowed' : 'pointer', opacity: igDisconnecting ? 0.7 : 1 }}>
+                      <Link2Off size={12} />
+                      {igDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                    </button>
+                  </>
+                )}
+
+                {/* STATE 2: Export data uploaded, no OAuth */}
+                {hasExportData && (
+                  <>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igExportUploading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)', color: igExportUploading ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', cursor: igExportUploading ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
+                      <input type="file" accept=".zip" style={{ display: 'none' }} disabled={igExportUploading} onChange={handleIgExportUpload} />
+                      <RefreshCw size={12} style={{ animation: igExportUploading ? 'spin 1s linear infinite' : 'none' }} />
+                      {igExportUploading ? 'Uploading…' : 'Re-upload Export'}
+                    </label>
+                    <button type="button" onClick={handleIgClearContent} disabled={igClearing}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: 'rgba(255,255,255,0.03)', color: 'rgba(255,100,100,0.7)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,100,100,0.2)', cursor: igClearing ? 'not-allowed' : 'pointer', opacity: igClearing ? 0.7 : 1 }}>
+                      <Trash2 size={12} />
+                      {igClearing ? 'Clearing…' : 'Clear Data'}
+                    </button>
+                  </>
+                )}
+
+                {/* STATE 3: Nothing connected, no data — show both method buttons */}
+                {!igConnected && !hasExportData && (
+                  <>
+                    <button type="button" onClick={handleIgConnect} disabled={igConnecting}
+                      style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 16px', borderRadius: 8, background: igConnecting ? 'rgba(217,70,239,0.07)' : 'rgba(217,70,239,0.18)', color: '#e879f9', fontSize: 12, fontWeight: 600, border: '1px solid rgba(217,70,239,0.4)', cursor: igConnecting ? 'not-allowed' : 'pointer', opacity: igConnecting ? 0.7 : 1 }}>
+                      <Instagram size={12} />
+                      {igConnecting ? 'Redirecting…' : 'Connect Instagram'}
+                    </button>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '7px 14px', borderRadius: 8, background: igExportUploading ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.07)', color: igExportUploading ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.65)', fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.15)', cursor: igExportUploading ? 'not-allowed' : 'pointer', userSelect: 'none' }}>
+                      <input type="file" accept=".zip" style={{ display: 'none' }} disabled={igExportUploading} onChange={handleIgExportUpload} />
+                      <RefreshCw size={12} style={{ animation: igExportUploading ? 'spin 1s linear infinite' : 'none' }} />
+                      {igExportUploading ? 'Uploading…' : 'Upload Export'}
+                    </label>
+                  </>
                 )}
               </div>
             </div>
-          </>
-        )}
 
-        {/* Imported posts list */}
-        {igConnected && (() => {
-          const items = contents.filter(c => c.type === 'INSTAGRAM_POST');
-          if (items.length === 0) return (
-            <div style={{ marginTop: 12, textAlign: 'center', padding: '16px 0', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
-              No posts imported yet — click Sync Now to pull your latest posts.
-            </div>
-          );
-          return (
-            <>
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '12px 0' }} />
-              <div className="ya-scroll-dark" style={{ maxHeight: 200, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
-                {items.slice(0, 20).map(c => (
-                  <div key={c.id} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 12 }}>
-                    <div style={{ flexShrink: 0 }}>
-                      <Instagram size={14} style={{ color: '#e879f9' }} />
+            <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '16px 0 12px' }} />
+
+            {/* ── STATUS STRIP ── */}
+
+            {/* OAuth connected strip */}
+            {igConnected && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, marginBottom: 12, background: igExpired ? 'rgba(239,68,68,0.1)' : 'rgba(16,185,129,0.08)', border: igExpired ? '1px solid rgba(239,68,68,0.25)' : '1px solid rgba(16,185,129,0.2)' }}>
+                {igExpired
+                  ? <AlertCircle size={15} style={{ color: '#ef4444', flexShrink: 0 }} />
+                  : <CheckCircle2 size={15} style={{ color: '#34d399', flexShrink: 0 }} />}
+                <span style={{ fontSize: 12, color: igExpired ? '#fca5a5' : 'rgba(255,255,255,0.65)' }}>
+                  {igExpired
+                    ? 'Access token expired — please reconnect your Instagram account.'
+                    : `Connected as Instagram user ${igUserId} · Posts are automatically imported`}
+                </span>
+                {igExpired && (
+                  <button type="button" onClick={handleIgConnect} disabled={igConnecting} style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 6, background: 'rgba(239,68,68,0.15)', color: '#f87171', fontSize: 11, fontWeight: 600, border: '1px solid rgba(239,68,68,0.3)', cursor: 'pointer' }}>
+                    Reconnect
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* Export-uploaded strip */}
+            {hasExportData && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', borderRadius: 10, marginBottom: 12, background: 'rgba(16,185,129,0.08)', border: '1px solid rgba(16,185,129,0.2)' }}>
+                <CheckCircle2 size={15} style={{ color: '#34d399', flexShrink: 0 }} />
+                <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.65)' }}>
+                  Data imported via export · Re-upload anytime to add newer posts
+                </span>
+              </div>
+            )}
+
+            {/* ── ONBOARDING — only shown before any method is chosen ── */}
+            {!igConnected && !hasExportData && (
+              <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+
+                {/* Option A: OAuth */}
+                <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(217,70,239,0.06)', border: '1px solid rgba(217,70,239,0.18)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                    <Instagram size={14} style={{ color: '#e879f9' }} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#e879f9' }}>Connect Account</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.3)', background: 'rgba(255,255,255,0.07)', padding: '2px 7px', borderRadius: 99 }}>OAuth</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+                    One-click login. Posts sync automatically. Requires a Meta developer app setup.
+                  </p>
+                </div>
+
+                {/* Option B: Export upload */}
+                <div style={{ flex: 1, minWidth: 200, padding: '14px 16px', borderRadius: 12, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 7, marginBottom: 8 }}>
+                    <RefreshCw size={14} style={{ color: 'rgba(255,255,255,0.6)' }} />
+                    <span style={{ fontSize: 13, fontWeight: 700, color: 'rgba(255,255,255,0.75)' }}>Upload Export</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: '#10b981', background: 'rgba(16,185,129,0.12)', padding: '2px 7px', borderRadius: 99 }}>Works now</span>
+                  </div>
+                  <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', margin: 0, lineHeight: 1.6 }}>
+                    Download your data from Instagram. Select <strong style={{ color: 'rgba(255,255,255,0.65)' }}>Posts, Reels, Comments &amp; Profile info</strong>, format <strong style={{ color: '#e879f9' }}>JSON</strong>, date range <strong style={{ color: '#e879f9' }}>All time</strong>. Upload the ZIP here.
+                  </p>
+                  <button type="button" onClick={() => setIgShowHowTo(v => !v)}
+                    style={{ marginTop: 8, fontSize: 11, color: 'rgba(255,255,255,0.4)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    {igShowHowTo ? 'Hide steps' : 'How to get the export?'}
+                  </button>
+                  {igShowHowTo && (
+                    <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                      {[
+                        { step: '1', text: <>Open Instagram → tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>☰</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Accounts Center</strong></> },
+                        { step: '2', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Your information and permissions</strong></> },
+                        { step: '3', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Download your information</strong> → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export or transfer information</strong></> },
+                        { step: '4', text: <>Select your account → <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Some of your information</strong> → tick <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Posts, Reels, Comments, Profile information</strong></> },
+                        { step: '5', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Export to device</strong> → set format to <strong style={{ color: '#e879f9' }}>JSON</strong> → date range <strong style={{ color: '#e879f9' }}>All time</strong></> },
+                        { step: '6', text: <>Tap <strong style={{ color: 'rgba(255,255,255,0.7)' }}>Create export</strong> → wait for the email/notification → download the ZIP → upload it here</> },
+                      ].map(({ step, text }) => (
+                        <div key={step} style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+                          <span style={{ flexShrink: 0, width: 18, height: 18, borderRadius: '50%', background: 'rgba(217,70,239,0.2)', border: '1px solid rgba(217,70,239,0.35)', fontSize: 10, fontWeight: 700, color: '#e879f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{step}</span>
+                          <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.45)', lineHeight: 1.7 }}>{text}</span>
+                        </div>
+                      ))}
                     </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* ── CONTENT LIST — shown whenever there's data (either method) ── */}
+            {igItems.length > 0 && (
+              <div className="ya-scroll-dark" style={{ maxHeight: 220, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 8, paddingRight: 2 }}>
+                {igItems.slice(0, 30).map(c => (
+                  <div key={c.id} style={{ padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(255,255,255,0.04)', display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <Instagram size={14} style={{ color: '#e879f9', flexShrink: 0 }} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: 13, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.title || 'Instagram Post'}</div>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 2 }}>
@@ -1403,16 +1432,23 @@ const CreatorYourAI = () => {
                     </button>
                   </div>
                 ))}
-                {items.length > 20 && (
+                {igItems.length > 30 && (
                   <div style={{ textAlign: 'center', fontSize: 12, color: 'rgba(255,255,255,0.35)', paddingTop: 4 }}>
-                    Showing 20 of {items.length} posts
+                    Showing 30 of {igItems.length} items
                   </div>
                 )}
               </div>
-            </>
-          );
-        })()}
-      </div>
+            )}
+
+            {/* Empty state for connected but no posts yet */}
+            {igConnected && igItems.length === 0 && (
+              <div style={{ textAlign: 'center', padding: '16px 0', color: 'rgba(255,255,255,0.35)', fontSize: 13 }}>
+                No posts imported yet — click Sync Now to pull your latest posts.
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };
