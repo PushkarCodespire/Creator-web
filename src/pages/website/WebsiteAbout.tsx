@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   LayoutDashboard, Compass, Video, BookOpen, ShoppingBag, Mic,
-  Sparkles, Waves, Package, Phone, LifeBuoy,
+  Sparkles, Waves, Package, Phone, LifeBuoy, MessageSquare, TrendingUp,
 } from 'lucide-react';
 
 // ─── Data ──────────────────────────────────────────────────────────────────
@@ -40,13 +40,72 @@ const FEATURES = [
   },
 ];
 
-const URGENCY_BENEFITS = [
-  { icon: <Sparkles size={13} />,      title: 'Personalized setup',      sub: 'White-glove account onboarding' },
-  { icon: <Waves size={13} />,         title: 'AI voice training',        sub: 'Studio-grade voice modeling' },
-  { icon: <Package size={13} />,       title: 'Product integrations',     sub: 'Shopify, Amazon, affiliate stacks' },
-  { icon: <Phone size={13} />,         title: 'Booking systems',          sub: 'Calendar, payments, reminders' },
-  { icon: <LayoutDashboard size={13} />, title: 'Custom dashboard',       sub: 'Built around your business model' },
-  { icon: <LifeBuoy size={13} />,      title: '90-day support',           sub: 'A dedicated launch partner' },
+// ─── Founding Features (Figma node 1396-4156) ──────────────────────────────
+
+const FOUNDING_FEATURES = [
+  {
+    num: '01',
+    icon: <Mic size={16} />,
+    title: 'AI voice & knowledge training',
+    desc: 'Your tone, philosophy, and expertise — modeled precisely.',
+    value: '₹65,000+',
+    valueType: 'price',
+    preview: 'waveform',
+  },
+  {
+    num: '02',
+    icon: <MessageSquare size={16} />,
+    title: 'Personalized audience interaction',
+    desc: 'One-on-one responses, at scale, in your style.',
+    value: 'INCLUDED',
+    valueType: 'muted',
+    preview: 'chat',
+  },
+  {
+    num: '03',
+    icon: <Package size={16} />,
+    title: 'Programs, products & booking',
+    desc: 'Integrated delivery, scheduling, and revenue share.',
+    value: '₹75,000+',
+    valueType: 'price',
+    preview: 'calendar',
+  },
+  {
+    num: '04',
+    icon: <TrendingUp size={16} />,
+    title: 'Creator dashboard & analytics',
+    desc: 'Every booking, interaction, and metric in one place.',
+    value: '₹58,000+',
+    valueType: 'price',
+    preview: 'chart',
+  },
+  {
+    num: '05',
+    icon: <ShoppingBag size={16} />,
+    title: 'Monetization infrastructure',
+    desc: 'Booking systems, recurring revenue, product integrations.',
+    value: '₹46,000+',
+    valueType: 'price',
+    preview: 'bars',
+  },
+  {
+    num: '06',
+    icon: <LifeBuoy size={16} />,
+    title: 'Personalized setup & support',
+    desc: 'We configure it. You show up ready.',
+    value: '₹38,000+',
+    valueType: 'price',
+    preview: 'checklist',
+  },
+  {
+    num: '07',
+    icon: <Sparkles size={16} />,
+    title: 'Ongoing upgrades & feature access',
+    desc: 'Founding creators get every new release first automatically.',
+    value: 'FIRST ACCESS',
+    valueType: 'pill',
+    preview: 'version',
+  },
 ];
 
 const CREATOR_STORIES = [
@@ -101,9 +160,9 @@ const MAYA_STATS = [
 ];
 
 const HERO_AVATARS = [
-  '/website/figma/raghav.png',
-  '/website/figma/krishansh.png',
-  '/website/figma/ravya.png',
+  '/website/figma/raghavs.png',
+  '/website/figma/pratik.png',
+  '/website/figma/anjeni.png',
 ];
 
 // ─── Inline SVG helpers ─────────────────────────────────────────────────────
@@ -138,6 +197,208 @@ function ArrowRight() {
   );
 }
 
+// ─── Founding Feature Preview Widgets ──────────────────────────────────────
+
+function WaveformPreview() {
+  const bars = [32, 50, 72, 55, 80, 44, 65, 85, 54, 70, 28, 78, 50, 63, 30];
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 3, height: 56 }}>
+      {bars.map((h, i) => (
+        <div key={i} style={{
+          width: 12,
+          height: h * 0.7,
+          borderRadius: 100,
+          background: 'linear-gradient(to top, #e75d3a, #ff9a70)',
+          boxShadow: '0 2px 6px rgba(231,93,58,0.25)',
+          flexShrink: 0,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+function ChatPreview() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: '4px 0' }}>
+      <div style={{
+        alignSelf: 'flex-start',
+        background: '#fff',
+        border: '1px solid #e8e2db',
+        borderRadius: '10px 10px 10px 3px',
+        padding: '7px 13px',
+        fontSize: 12,
+        color: '#333',
+        fontWeight: 500,
+        boxShadow: '0 1px 4px rgba(0,0,0,0.07)',
+        whiteSpace: 'nowrap',
+      }}>Should I deload?</div>
+      <div style={{
+        alignSelf: 'flex-end',
+        background: 'linear-gradient(90deg, #e75d3a 0%, #d42e1e 100%)',
+        borderRadius: '10px 10px 3px 10px',
+        padding: '7px 13px',
+        fontSize: 12,
+        color: '#fff',
+        fontWeight: 600,
+        whiteSpace: 'nowrap',
+      }}>Drop 30% for 4 days.</div>
+    </div>
+  );
+}
+
+function CalendarGridPreview() {
+  const highlighted = new Set([4, 8, 11, 13]);
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(8, 1fr)', gap: 3, width: '100%' }}>
+      {Array.from({ length: 16 }).map((_, i) => (
+        <div key={i} style={{
+          paddingTop: '100%',
+          position: 'relative',
+          borderRadius: 5,
+          background: highlighted.has(i)
+            ? 'linear-gradient(135deg, #e75d3a, #ff8a5a)'
+            : 'transparent',
+          border: highlighted.has(i) ? 'none' : '1px solid #e4ddd6',
+          boxShadow: highlighted.has(i) ? '0 2px 6px rgba(231,93,58,0.2)' : 'none',
+        }} />
+      ))}
+    </div>
+  );
+}
+
+function AnalyticsChartPreview() {
+  return (
+    <svg viewBox="0 0 220 56" style={{ width: '100%', height: 56, display: 'block' }} aria-hidden>
+      <defs>
+        <linearGradient id="areaGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#e75d3a" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#e75d3a" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M0 48 C25 44, 50 38, 75 30 S120 20, 150 15 S185 10, 220 6"
+        fill="none"
+        stroke="#e75d3a"
+        strokeWidth="2.5"
+        strokeLinecap="round"
+      />
+      <path
+        d="M0 48 C25 44, 50 38, 75 30 S120 20, 150 15 S185 10, 220 6 L220 56 L0 56Z"
+        fill="url(#areaGrad)"
+      />
+      <circle cx="220" cy="6" r="3.5" fill="#e75d3a" />
+    </svg>
+  );
+}
+
+function RevenueBarsPreview() {
+  const bars = [55, 74, 46, 60, 42, 68, 52, 80, 62, 28];
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 4, height: 56 }}>
+      {bars.map((h, i) => (
+        <div key={i} style={{
+          flex: 1,
+          height: `${h}%`,
+          borderRadius: '4px 4px 0 0',
+          background: i === bars.length - 1
+            ? 'linear-gradient(to top, #e75d3a, #ff8a5a)'
+            : `rgba(231, 93, 58, ${0.35 + i * 0.065})`,
+        }} />
+      ))}
+    </div>
+  );
+}
+
+function SetupChecklistPreview() {
+  const items = [
+    { label: 'Account ready', done: true },
+    { label: 'Voice trained', done: true },
+    { label: 'Catalog · pending', done: false },
+  ];
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 9 }}>
+      {items.map(item => (
+        <div key={item.label} style={{ display: 'flex', alignItems: 'center', gap: 9 }}>
+          <div style={{
+            width: 17,
+            height: 17,
+            borderRadius: '50%',
+            background: item.done ? '#e75d3a' : 'transparent',
+            border: item.done ? 'none' : '1.5px solid #ccc',
+            flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            {item.done && (
+              <svg viewBox="0 0 10 10" width="8" height="8" aria-hidden>
+                <path d="M1.5 5.5l2.5 2.5 4.5-5" fill="none" stroke="#fff"
+                  strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            )}
+          </div>
+          <span style={{
+            fontSize: 12,
+            color: item.done ? '#333' : '#aaa',
+            fontWeight: item.done ? 600 : 400,
+          }}>{item.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function VersionUpgradePreview() {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, justifyContent: 'center' }}>
+      <div style={{
+        padding: '7px 16px',
+        borderRadius: 8,
+        border: '1px solid #ddd6ce',
+        fontSize: 13,
+        fontWeight: 600,
+        color: '#aaa',
+        background: '#fff',
+      }}>v2.4</div>
+      <span style={{ color: '#bbb', fontSize: 13, fontWeight: 500 }}>→</span>
+      <div style={{
+        padding: '7px 16px',
+        borderRadius: 8,
+        background: 'linear-gradient(135deg, #e75d3a 0%, #d42e1e 100%)',
+        fontSize: 13,
+        fontWeight: 700,
+        color: '#fff',
+        boxShadow: '0 3px 12px rgba(231,93,58,0.38)',
+      }}>v3.0</div>
+    </div>
+  );
+}
+
+function FeaturePreview({ type }: { type: string }) {
+  const wrapStyle: React.CSSProperties = {
+    width: 220,
+    background: '#fdf6f0',
+    border: '1px solid #f0e8e0',
+    borderRadius: 12,
+    padding: '14px 16px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  };
+  return (
+    <div style={wrapStyle}>
+      {type === 'waveform'  && <WaveformPreview />}
+      {type === 'chat'      && <ChatPreview />}
+      {type === 'calendar'  && <CalendarGridPreview />}
+      {type === 'chart'     && <AnalyticsChartPreview />}
+      {type === 'bars'      && <RevenueBarsPreview />}
+      {type === 'checklist' && <SetupChecklistPreview />}
+      {type === 'version'   && <VersionUpgradePreview />}
+    </div>
+  );
+}
+
 // ─── Component ──────────────────────────────────────────────────────────────
 
 export default function WebsiteAbout() {
@@ -156,7 +417,7 @@ export default function WebsiteAbout() {
         display: 'flex',
         alignItems: 'center',
       }}>
-        {/* ── Layer 0: hero photo fills the section ── */}
+        {/* Layer 0: hero photo */}
         <img
           aria-hidden
           src="/website/figma/abouthero.jpg"
@@ -172,7 +433,7 @@ export default function WebsiteAbout() {
           }}
         />
 
-        {/* ── Layer 1: left-side dark scrim (black → transparent) ── */}
+        {/* Layer 1: left-side dark scrim */}
         <img
           aria-hidden
           src="/website/figma/aboutusol.png"
@@ -182,24 +443,22 @@ export default function WebsiteAbout() {
             inset: 0,
             width: '100%',
             height: '100%',
-            objectFit: 'fill',          /* stretch to cover exactly */
+            objectFit: 'fill',
             display: 'block',
-            mixBlendMode: 'multiply',   /* black darkens; white reveals image */
+            mixBlendMode: 'multiply',
           }}
         />
 
-        {/* ── Layer 2: content ── */}
+        {/* Layer 2: content */}
         <div style={{
           position: 'relative',
           zIndex: 2,
           maxWidth: 1229,
           margin: '0 auto',
           width: '100%',
-          padding: '80px 48px 80px',
+          padding: '80px 48px',
         }}>
-          {/* Left column — text + CTA */}
           <div style={{ maxWidth: '40vw' }}>
-
             <h1 style={{
               fontSize: 52,
               fontWeight: 700,
@@ -211,7 +470,6 @@ export default function WebsiteAbout() {
               Turn Your Audience Into An{' '}
               <span style={{ color: '#e75d3a' }}>Interactive Ecosystem</span>
             </h1>
-
             <p style={{
               fontSize: 16,
               color: 'rgba(255,255,255,0.65)',
@@ -222,8 +480,6 @@ export default function WebsiteAbout() {
               Build deeper audience relationships by personalized chats, calls,
               programs &amp; more generating revenue on daily basis.
             </p>
-
-            {/* CTA — ghost/dark button as per Figma */}
             <Link
               to="/create-your-ai"
               style={{
@@ -245,8 +501,6 @@ export default function WebsiteAbout() {
               Apply As A Creator
               <ArrowRight />
             </Link>
-
-            {/* Social proof */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 18 }}>
               <div style={{ display: 'flex' }}>
                 {HERO_AVATARS.map((src, i) => (
@@ -264,11 +518,7 @@ export default function WebsiteAbout() {
                       zIndex: HERO_AVATARS.length - i,
                     }}
                   >
-                    <img
-                      src={src}
-                      alt=""
-                      style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                    />
+                    <img src={src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   </div>
                 ))}
               </div>
@@ -282,12 +532,8 @@ export default function WebsiteAbout() {
 
       {/* ═══════════════════════════════════════════════════════
           INVITE-ONLY BANNER
-          Background: pure black. White ✦ star + bold title + subtitle.
           ═══════════════════════════════════════════════════════ */}
-      <section style={{
-        background: '#000000',
-        padding: '44px 24px',
-      }}>
+      <section style={{ background: '#000000', padding: '44px 24px' }}>
         <div style={{
           maxWidth: 1229,
           margin: '0 auto',
@@ -297,7 +543,6 @@ export default function WebsiteAbout() {
           gap: 10,
           textAlign: 'center',
         }}>
-          {/* ✦ star + heading on the same line */}
           <h2 style={{
             display: 'flex',
             alignItems: 'center',
@@ -308,20 +553,16 @@ export default function WebsiteAbout() {
             color: '#ffffff',
             lineHeight: '44px',
             margin: 0,
-            fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif',
           }}>
-            {/* Four-pointed star ✦ */}
             <span style={{ fontSize: 20, lineHeight: 1, color: '#ffffff' }}>✦</span>
             Invite Only Early Access
           </h2>
-
           <p style={{
             fontSize: 18,
             fontWeight: 400,
             color: 'rgba(255,255,255,0.65)',
             lineHeight: '36px',
             margin: 0,
-            fontFamily: '"Inter", system-ui, sans-serif',
           }}>
             Onboarding a limited number of creators through private access and referrals.
           </p>
@@ -333,7 +574,6 @@ export default function WebsiteAbout() {
           ═══════════════════════════════════════════════════════ */}
       <section style={{ padding: '96px 24px 104px', background: '#fbf7f4' }}>
         <div style={{ maxWidth: 1229, margin: '0 auto' }}>
-
           <h2 style={{
             fontSize: 40,
             fontWeight: 700,
@@ -346,7 +586,7 @@ export default function WebsiteAbout() {
             After joining CreatorPal, here's what you'll get
           </h2>
 
-          {/* Wide "Second Mind" card — two-column: text left, image right */}
+          {/* Wide "Second Mind" card */}
           <div style={{
             background: '#111',
             borderRadius: 20,
@@ -356,20 +596,15 @@ export default function WebsiteAbout() {
             display: 'flex',
             alignItems: 'stretch',
           }}>
-            {/* Accent glow — sits behind both columns */}
             <div style={{
               position: 'absolute',
-              top: -60,
-              right: -40,
-              width: 520,
-              height: 420,
+              top: -60, right: -40,
+              width: 520, height: 420,
               borderRadius: '50%',
               background: 'radial-gradient(circle, rgba(231,93,58,0.28) 0%, transparent 60%)',
               pointerEvents: 'none',
               zIndex: 0,
             }} />
-
-            {/* Left: icon + title + body */}
             <div style={{
               flex: '0 0 42%',
               padding: '48px 40px 48px 48px',
@@ -379,10 +614,8 @@ export default function WebsiteAbout() {
               flexDirection: 'column',
               justifyContent: 'center',
             }}>
-              {/* Power / always-on icon */}
               <div style={{
-                width: 36,
-                height: 36,
+                width: 36, height: 36,
                 borderRadius: 8,
                 background: 'rgba(255,255,255,0.07)',
                 border: '1px solid rgba(255,255,255,0.1)',
@@ -397,7 +630,6 @@ export default function WebsiteAbout() {
                   <path d="M6.34 5.34A6 6 0 1 0 13.66 5.34" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="1.8" strokeLinecap="round" />
                 </svg>
               </div>
-
               <h3 style={{
                 fontSize: 30,
                 fontWeight: 700,
@@ -406,48 +638,29 @@ export default function WebsiteAbout() {
                 letterSpacing: '-0.6px',
                 lineHeight: '33px',
               }}>Your Second Mind.</h3>
-
-              <p style={{
-                fontSize: 14.5,
-                color: 'rgba(244,239,231,0.65)',
-                lineHeight: '21.75px',
-                margin: 0,
-              }}>
+              <p style={{ fontSize: 14.5, color: 'rgba(244,239,231,0.65)', lineHeight: '21.75px', margin: 0 }}>
                 A scalable creator presence available for your audience 24/7. Trained on your content,
                 philosophy, and history — so you can finally clock out.
               </p>
             </div>
-
-            {/* Right: always-on AI label + image */}
             <div style={{
               flex: '0 0 58%',
               position: 'relative',
               zIndex: 1,
               display: 'flex',
               flexDirection: 'column',
-              padding: '0px 0px 0',
               borderLeft: '1px solid rgba(255,255,255,0.05)',
             }}>
               <img
                 src="/website/figma/secondmind.png"
                 alt=""
-                style={{
-                  display: 'block',
-                  width: '100%',
-                  height: 'auto',
-                  borderRadius: '10px 10px 0 0',
-                  marginTop: 'auto',
-                }}
+                style={{ display: 'block', width: '100%', height: 'auto', borderRadius: '10px 10px 0 0', marginTop: 'auto' }}
               />
             </div>
           </div>
 
           {/* 3-column feature cards */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 16,
-          }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
             {FEATURES.map((f) => (
               <div key={f.title} style={{
                 background: '#fff',
@@ -456,8 +669,7 @@ export default function WebsiteAbout() {
                 padding: '28px 28px 32px',
               }}>
                 <div style={{
-                  width: 38,
-                  height: 38,
+                  width: 38, height: 38,
                   borderRadius: 10,
                   background: '#f0ede9',
                   display: 'flex',
@@ -468,19 +680,8 @@ export default function WebsiteAbout() {
                 }}>
                   {f.icon}
                 </div>
-                <h3 style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: '#111',
-                  margin: '0 0 8px',
-                  letterSpacing: '-0.01em',
-                }}>{f.title}</h3>
-                <p style={{
-                  fontSize: 13.5,
-                  color: '#666',
-                  lineHeight: 1.65,
-                  margin: 0,
-                }}>{f.desc}</p>
+                <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111', margin: '0 0 8px', letterSpacing: '-0.01em' }}>{f.title}</h3>
+                <p style={{ fontSize: 13.5, color: '#666', lineHeight: 1.65, margin: 0 }}>{f.desc}</p>
               </div>
             ))}
           </div>
@@ -488,217 +689,220 @@ export default function WebsiteAbout() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          FOUNDING CREATOR / URGENCY
+          FOUNDING CREATOR VALUE TABLE
+          Figma: node 1396-4156 — "Background+Border+Shadow"
           ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding: '96px 24px 104px', background: '#fbf7f4' }}>
-        <div style={{
-          maxWidth: 1229,
-          margin: '0 auto',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          gap: 48,
-          alignItems: 'stretch',
-        }}>
+      <section style={{ padding: '0 24px 96px', background: '#fbf7f4' }}>
+        <div style={{ maxWidth: 1229, margin: '0 auto' }}>
 
-          {/* Left — heading + progress bar + ghost CTA */}
+          {/* Outer card */}
           <div style={{
-            background: '#fff',
+            background: '#ffffff',
+            border: '1px solid #e8e1d8',
             borderRadius: 20,
-            padding: '36px 36px 40px',
-            border: '1px solid #e2d8ce',
+            boxShadow: '0 4px 32px rgba(0,0,0,0.06)',
+            overflow: 'hidden',
           }}>
-            <h2 style={{
-              fontSize: 38,
-              fontWeight: 700,
-              color: '#111',
-              margin: '0 0 16px',
-              lineHeight: 1.22,
-              letterSpacing: '-0.02em',
-            }}>
-              Infact if you join before 30th June, 2026 , you get
-            </h2>
 
-            <p style={{
-              fontSize: 15,
-              color: '#666',
-              lineHeight: 1.75,
-              margin: '0 0 36px',
+            {/* ── Header ── */}
+            <div style={{
+              padding: '18px 40px',
+              borderBottom: '1px solid #ede8e2',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}>
-              Founding-creator access to CreatorPal — permanent revenue share, white-glove
-              onboarding, and direct line to our product team.
-            </p>
-
-            {/* Progress bar block */}
-            <div style={{ marginBottom: 40 }}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'baseline',
-                marginBottom: 10,
+              <span style={{
+                fontSize: 11,
+                fontWeight: 500,
+                color: '#b0a89e',
+                letterSpacing: '0.04em',
               }}>
-                <span style={{
-                  fontSize: 9,
+                CP-2026 · prepared for new founding creator
+              </span>
+              <span style={{
+                fontSize: 11,
+                color: '#c8c0b6',
+                letterSpacing: '0.04em',
+              }}>
+                Founding tier — limited spots
+              </span>
+            </div>
+
+            {/* ── Feature rows ── */}
+            {FOUNDING_FEATURES.map((f, i) => (
+              <div
+                key={f.num}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0,
+                  padding: '28px 40px',
+                  borderBottom: i < FOUNDING_FEATURES.length - 1 ? '1px solid #ede8e2' : 'none',
+                  minHeight: 120,
+                }}
+              >
+                {/* ── Number ── */}
+                <div style={{
+                  width: 64,
+                  flexShrink: 0,
+                  fontSize: 44,
                   fontWeight: 700,
-                  color: '#bbb',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.18em',
-                }}>Founding Cohort</span>
-                <div>
-                  <span style={{
+                  color: '#cec6bc',
+                  lineHeight: 1,
+                  letterSpacing: '-0.03em',
+                  fontFamily: '-apple-system, "SF Pro Display", "Inter", system-ui, sans-serif',
+                }}>
+                  {f.num}
+                </div>
+
+                {/* ── Icon box ── */}
+                <div style={{
+                  width: 52,
+                  height: 52,
+                  borderRadius: 12,
+                  background: '#f5f0eb',
+                  border: '1px solid #ede7e0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#7a6e65',
+                  flexShrink: 0,
+                  marginRight: 24,
+                }}>
+                  {f.icon}
+                </div>
+
+                {/* ── Title + description ── */}
+                <div style={{ flex: 1, minWidth: 0, paddingRight: 32 }}>
+                  <h3 style={{
                     fontSize: 22,
                     fontWeight: 700,
                     color: '#111',
+                    margin: '0 0 6px',
                     letterSpacing: '-0.02em',
-                  }}>67</span>
-                  <span style={{ fontSize: 13, color: '#999', marginLeft: 6 }}>/ 100 spots filled</span>
+                    lineHeight: 1.2,
+                  }}>
+                    {f.title}
+                  </h3>
+                  <p style={{
+                    fontSize: 14,
+                    color: '#888',
+                    margin: 0,
+                    lineHeight: 1.55,
+                  }}>
+                    {f.desc}
+                  </p>
+                </div>
+
+                {/* ── Preview widget ── */}
+                <FeaturePreview type={f.preview} />
+
+                {/* ── Price / value ── */}
+                <div style={{ width: 160, flexShrink: 0, textAlign: 'right', paddingLeft: 24 }}>
+                  {f.valueType === 'price' && (
+                    <span style={{
+                      fontSize: 22,
+                      fontWeight: 700,
+                      color: '#111',
+                      letterSpacing: '-0.02em',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {f.value}
+                    </span>
+                  )}
+                  {f.valueType === 'muted' && (
+                    <span style={{
+                      fontSize: 13,
+                      fontWeight: 700,
+                      color: '#b0a89e',
+                      textTransform: 'uppercase' as const,
+                      letterSpacing: '0.1em',
+                    }}>
+                      {f.value}
+                    </span>
+                  )}
+                  {f.valueType === 'pill' && (
+                    <span style={{
+                      display: 'inline-block',
+                      padding: '6px 14px',
+                      borderRadius: 8,
+                      border: '1.5px solid #e75d3a',
+                      background: 'rgba(231,93,58,0.06)',
+                      fontSize: 11,
+                      fontWeight: 700,
+                      color: '#e75d3a',
+                      textTransform: 'uppercase' as const,
+                      letterSpacing: '0.08em',
+                      whiteSpace: 'nowrap' as const,
+                    }}>
+                      {f.value}
+                    </span>
+                  )}
                 </div>
               </div>
+            ))}
 
-              {/* Bar */}
-              <div style={{
-                height: 5,
-                borderRadius: 100,
-                background: '#e2dbd3',
-                overflow: 'hidden',
-                marginBottom: 8,
-              }}>
-                <div style={{
-                  width: '67%',
-                  height: '100%',
-                  borderRadius: 100,
-                  background: 'linear-gradient(90deg, #e75d3a 0%, #ff3e48 100%)',
-                }} />
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 9, fontWeight: 600, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.15em' }}>33 Remaining</span>
-                <span style={{ fontSize: 9, fontWeight: 600, color: '#bbb', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Reviewed Weekly</span>
-              </div>
-            </div>
-
-            {/* Outline / ghost CTA */}
-            <Link
-              to="/create-your-ai"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '13px 28px',
-                borderRadius: 10,
-                background: '#fff',
-                border: '1.5px solid #111',
-                color: '#111',
-                fontSize: 15,
-                fontWeight: 600,
-                textDecoration: 'none',
-              }}
-            >
-              Apply Now
-              <ArrowRight />
-            </Link>
-          </div>
-
-          {/* Right — dark "What's Included" card */}
-          <div style={{
-            background: '#111',
-            borderRadius: 20,
-            padding: '28px 28px 32px',
-          }}>
-            {/* Card header */}
+            {/* ── Total value footer ── */}
             <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 20,
+              padding: '36px 40px',
+              borderTop: '1px solid #ede8e2',
+              display: 'grid',
+              gridTemplateColumns: '1fr auto',
+              alignItems: 'end',
+              gap: 32,
             }}>
-              <span style={{
-                fontSize: 9,
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.35)',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-              }}>What's Included</span>
-              <span style={{
-                fontSize: 10,
-                fontWeight: 700,
-                color: '#fff',
-                background: '#e75d3a',
-                borderRadius: 100,
-                padding: '4px 12px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.06em',
-              }}>Founding Tier</span>
-            </div>
-
-            {/* Feature rows */}
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              {URGENCY_BENEFITS.map((b, i) => (
-                <div key={b.title} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 12,
-                  padding: '13px 0',
-                  borderBottom: i < URGENCY_BENEFITS.length - 1
-                    ? '1px solid rgba(255,255,255,0.06)'
-                    : 'none',
+              <div>
+                <div style={{
+                  fontSize: 10,
+                  fontWeight: 700,
+                  color: '#e75d3a',
+                  textTransform: 'uppercase' as const,
+                  letterSpacing: '0.15em',
+                  marginBottom: 10,
                 }}>
-                  {/* Icon chip */}
-                  <div style={{
-                    width: 30,
-                    height: 30,
-                    borderRadius: 7,
-                    background: 'rgba(255,255,255,0.06)',
-                    border: '1px solid rgba(255,255,255,0.09)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    color: 'rgba(255,255,255,0.4)',
-                    flexShrink: 0,
-                  }}>
-                    {b.icon}
-                  </div>
-
-                  {/* Text */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: '#fff', lineHeight: 1.3 }}>
-                      {b.title}
-                    </div>
-                    <div style={{ fontSize: 11.5, color: 'rgba(255,255,255,0.35)', marginTop: 2 }}>
-                      {b.sub}
-                    </div>
-                  </div>
-
-                  {/* Green checkmark */}
-                  <div style={{
-                    width: 20,
-                    height: 20,
-                    borderRadius: '50%',
-                    background: 'rgba(52,199,89,0.14)',
-                    border: '1px solid rgba(52,199,89,0.28)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    flexShrink: 0,
-                  }}>
-                    <svg viewBox="0 0 12 12" width="9" height="9" aria-hidden>
-                      <path d="M2 6.5l2.5 2.5 5.5-5.5" fill="none" stroke="#34c759"
-                        strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </div>
+                  Total Estimated Value
                 </div>
-              ))}
+                <p style={{
+                  fontSize: 16,
+                  color: '#444',
+                  lineHeight: 1.65,
+                  margin: 0,
+                  maxWidth: 460,
+                }}>
+                  Founding creators receive this as a working system built around them — not a feature list.
+                </p>
+              </div>
+              <div style={{
+                fontSize: 68,
+                fontWeight: 700,
+                color: '#111',
+                letterSpacing: '-0.04em',
+                lineHeight: 1,
+                whiteSpace: 'nowrap' as const,
+              }}>
+                ₹2,82,000 +
+              </div>
             </div>
-          </div>
 
+          </div>
         </div>
       </section>
+
+      {/* ═══════════════════════════════════════════════════════
+          FOUNDING CREATOR / URGENCY — commented out, replaced above
+          ═══════════════════════════════════════════════════════ */}
+      {false && (
+        <section style={{ padding: '96px 24px 104px', background: '#fbf7f4' }}>
+          {/* Section replaced by Figma node 1396-4156 value table above */}
+        </section>
+      )}
 
       {/* ═══════════════════════════════════════════════════════
           CREATOR STORIES
           ═══════════════════════════════════════════════════════ */}
       <section style={{ padding: '96px 24px 104px', background: '#fbf7f4' }}>
         <div style={{ maxWidth: 1229, margin: '0 auto' }}>
-
           <h2 style={{
             fontSize: 40,
             fontWeight: 700,
@@ -707,12 +911,9 @@ export default function WebsiteAbout() {
             margin: '0 0 8px',
             letterSpacing: '-0.02em',
           }}>Creator stories</h2>
-          <p style={{
-            fontSize: 16,
-            color: '#888',
-            textAlign: 'center',
-            margin: '0 0 56px',
-          }}>The people doing the work.</p>
+          <p style={{ fontSize: 16, color: '#888', textAlign: 'center', margin: '0 0 56px' }}>
+            The people doing the work.
+          </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 20 }}>
             {CREATOR_STORIES.map((c) => (
@@ -722,7 +923,6 @@ export default function WebsiteAbout() {
                 position: 'relative',
                 minHeight: 400,
               }}>
-                {/* Full-bleed gradient background */}
                 <img
                   src={c.gradient}
                   alt=""
@@ -736,16 +936,12 @@ export default function WebsiteAbout() {
                     display: 'block',
                   }}
                 />
-
-                {/* Bottom dark gradient for text legibility */}
                 <div style={{
                   position: 'absolute',
                   inset: 0,
                   background: 'linear-gradient(to bottom, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.62) 70%, rgba(0,0,0,0.78) 100%)',
                   pointerEvents: 'none',
                 }} />
-
-                {/* Card content — flex column, pushes quote+meta to bottom */}
                 <div style={{
                   position: 'relative',
                   zIndex: 1,
@@ -754,10 +950,7 @@ export default function WebsiteAbout() {
                   flexDirection: 'column',
                   padding: '20px 22px 22px',
                 }}>
-
-                  {/* Top bar: category badge + location */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    {/* Category badge */}
                     <div style={{
                       display: 'inline-flex',
                       alignItems: 'center',
@@ -769,41 +962,14 @@ export default function WebsiteAbout() {
                       padding: '5px 12px',
                     }}>
                       <div style={{ width: 6, height: 6, borderRadius: '50%', background: '#e75d3a', flexShrink: 0 }} />
-                      <span style={{
-                        fontSize: 10,
-                        fontWeight: 700,
-                        color: '#fff',
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.08em',
-                      }}>{c.category}</span>
+                      <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{c.category}</span>
                     </div>
-
-                    {/* Location */}
-                    <span style={{
-                      fontSize: 10,
-                      fontWeight: 600,
-                      color: 'rgba(255,255,255,0.5)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.1em',
-                    }}>{c.location}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>{c.location}</span>
                   </div>
-
-                  {/* Spacer — pushes quote section to lower half */}
                   <div style={{ flex: 1 }} />
-
-                  {/* Quote */}
-                  <blockquote style={{
-                    fontSize: 18,
-                    fontWeight: 700,
-                    color: '#fff',
-                    lineHeight: 1.45,
-                    margin: '0 0 18px',
-                    fontStyle: 'normal',
-                  }}>
+                  <blockquote style={{ fontSize: 18, fontWeight: 700, color: '#fff', lineHeight: 1.45, margin: '0 0 18px', fontStyle: 'normal' }}>
                     &ldquo;{c.quote}&rdquo;
                   </blockquote>
-
-                  {/* Metric pill */}
                   <div style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -819,31 +985,18 @@ export default function WebsiteAbout() {
                     <span style={{ fontSize: 13, fontWeight: 700, color: '#fff' }}>{c.metric}</span>
                     <span style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>{c.metricSub}</span>
                   </div>
-
-                  {/* Divider */}
                   <div style={{ height: 1, background: 'rgba(255,255,255,0.18)', marginBottom: 16 }} />
-
-                  {/* Creator info */}
                   <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                     <img
                       src={c.img}
                       alt={c.name}
-                      style={{
-                        width: 38,
-                        height: 38,
-                        borderRadius: '50%',
-                        objectFit: 'cover',
-                        display: 'block',
-                        flexShrink: 0,
-                        border: '2px solid rgba(255,255,255,0.25)',
-                      }}
+                      style={{ width: 38, height: 38, borderRadius: '50%', objectFit: 'cover', display: 'block', flexShrink: 0, border: '2px solid rgba(255,255,255,0.25)' }}
                     />
                     <div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>{c.name}</div>
                       <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', marginTop: 2 }}>{c.bio}</div>
                     </div>
                   </div>
-
                 </div>
               </div>
             ))}
@@ -852,377 +1005,70 @@ export default function WebsiteAbout() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          APPLY AS CREATOR
+          APPLY AS CREATOR — commented out
+          (replaced by direct /create-your-ai flow)
           ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding: '96px 24px 112px', background: '#fbf7f4' }}>
-        <div style={{ maxWidth: 1229, margin: '0 auto' }}>
-
-          {/* Heading block — centered text, no width constraint needed */}
-          <h2 style={{
-            fontSize: 36,
-            fontWeight: 700,
-            color: '#333333',
-            textAlign: 'center',
-            margin: '0 0 8px',
-            lineHeight: '44px',
-            fontFamily: '-apple-system, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif',
-          }}>
-            Apply as a{' '}
-            {/* "creator" uses the exact Figma gradient */}
-            <span style={{
-              background: 'linear-gradient(90deg, #ff8a4c 0%, #ff5a3c 57.692%, #ff3e48 100%)',
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-            }}>creator</span>
-          </h2>
-          <p style={{
-            fontSize: 16,
-            color: '#666',
-            textAlign: 'center',
-            margin: '0 0 48px',
-            lineHeight: 1.6,
-          }}>
-            Six minutes. Hand-reviewed. Built for you.
-          </p>
-
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 20,
-            alignItems: 'stretch',
-          }}>
-
-            {/* ── Left — multi-step category selector ── */}
-            <div style={{
-              background: '#fff',
-              borderRadius: 20,
-              padding: '24px 24px 28px',
-              border: '1px solid #e6dfd7',
-              display: 'flex',
-              flexDirection: 'column',
-            }}>
-
-              {/* Step progress bar */}
-              <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
-                {[1, 2, 3].map((s) => (
-                  <div key={s} style={{
-                    flex: 1,
-                    height: 3,
-                    borderRadius: 100,
-                    background: s === 1
-                      ? 'linear-gradient(90deg, #e75d3a, #ff3e48)'
-                      : '#e6dfd7',
-                  }} />
-                ))}
-              </div>
-
-              {/* Header row */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: 14,
-              }}>
-                <span style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: '#aaa',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.18em',
-                }}>Creator Category</span>
-                <span style={{ fontSize: 12, color: '#aaa' }}>~ 6 min left</span>
-              </div>
-
-              {/* Heading */}
-              <h3 style={{
-                fontSize: 22,
-                fontWeight: 700,
-                color: '#111',
-                margin: '0 0 6px',
-                letterSpacing: '-0.02em',
-                lineHeight: 1.25,
-              }}>What kind of creator are you?</h3>
-              <p style={{ fontSize: 13, color: '#999', margin: '0 0 20px', lineHeight: 1.5 }}>
-                Pick the closest category. You can change this later.
-              </p>
-
-              {/* 2-column category grid — flex-grow fills remaining left-card space */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 8,
-                flex: 1,
-                alignContent: 'start',
-              }}>
-                {CATEGORIES.map((cat) => {
-                  const active = selectedCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 10,
-                        padding: '12px 14px',
-                        borderRadius: 12,
-                        border: `1px solid ${active ? 'transparent' : '#ede8e3'}`,
-                        background: active ? '#111' : '#f7f5f2',
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                        transition: 'background 0.15s, border-color 0.15s',
-                      }}
-                    >
-                      {/* Icon — ✦ star */}
-                      <span style={{
-                        fontSize: 12,
-                        color: active ? '#e75d3a' : '#bbb',
-                        lineHeight: 1,
-                        flexShrink: 0,
-                      }}>✦</span>
-                      <div>
-                        <div style={{
-                          fontSize: 13,
-                          fontWeight: 600,
-                          color: active ? '#fff' : '#222',
-                          lineHeight: 1.25,
-                        }}>{cat.label}</div>
-                        <div style={{
-                          fontSize: 11,
-                          color: active ? 'rgba(255,255,255,0.45)' : '#aaa',
-                          marginTop: 2,
-                        }}>{cat.sub}</div>
-                      </div>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Footer nav */}
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginTop: 24,
-              }}>
-                <button style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: 6,
-                  padding: '8px 0',
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: 14,
-                  color: '#666',
-                  cursor: 'pointer',
-                }}>
-                  ← Back
-                </button>
-                <Link
-                  to="/create-your-ai"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 6,
-                    padding: '11px 22px',
-                    borderRadius: 10,
-                    background: '#111',
-                    color: '#fff',
-                    fontSize: 14,
-                    fontWeight: 600,
-                    textDecoration: 'none',
-                  }}
-                >
-                  Continue →
-                </Link>
-              </div>
-            </div>
-
-            {/* ── Right — live page preview (gradient2.png bg) ── */}
-            <div style={{
-              borderRadius: 20,
-              overflow: 'hidden',
-              position: 'relative',
-              display: 'flex',
-              flexDirection: 'column',
-            }}>
-              {/* Full-bleed gradient2 background */}
-              <img
-                src="/website/figma/gradient2.png"
-                alt=""
-                aria-hidden
-                style={{
-                  position: 'absolute',
-                  inset: 0,
-                  width: '100%',
-                  height: '100%',
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
-
-              {/* Content layer */}
-              <div style={{
-                position: 'relative',
-                zIndex: 1,
-                padding: '22px',
-                display: 'flex',
-                flexDirection: 'column',
-                flex: 1,
-              }}>
-                {/* Label */}
-                <p style={{
-                  fontSize: 9,
-                  fontWeight: 700,
-                  color: 'rgba(255,255,255,0.3)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.2em',
-                  margin: '0 0 14px',
-                }}>Live Preview · Your CreatorPal Page</p>
-
-                {/* Frosted-glass profile card */}
-                <div style={{
-                  background: 'rgba(8,4,2,0.52)',
-                  backdropFilter: 'blur(18px)',
-                  WebkitBackdropFilter: 'blur(18px)',
-                  borderRadius: 16,
-                  padding: '22px 20px 18px',
-                  border: '1px solid rgba(255,255,255,0.07)',
-                  flex: 1,
-                  display: 'flex',
-                  flexDirection: 'column',
-                }}>
-
-                  {/* CSS sphere avatar */}
-                  <div style={{
-                    width: 68,
-                    height: 68,
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle at 36% 30%, #ff8a5a 0%, #cc2e18 48%, #7a0808 100%)',
-                    boxShadow: '0 8px 28px rgba(180,40,10,0.6)',
-                    marginBottom: 14,
-                    flexShrink: 0,
-                  }} />
-
-                  {/* Name */}
-                  <div style={{
-                    fontSize: 26,
-                    fontWeight: 700,
-                    color: '#fff',
-                    lineHeight: 1.15,
-                    letterSpacing: '-0.02em',
-                    marginBottom: 4,
-                  }}>Maya Okonjo</div>
-
-                  {/* Handle */}
-                  <div style={{
-                    fontSize: 12,
-                    color: 'rgba(255,255,255,0.38)',
-                    marginBottom: 12,
-                  }}>Health &amp; Movement · @mayaokonjo</div>
-
-                  {/* Bio */}
-                  <p style={{
-                    fontSize: 13,
-                    color: 'rgba(255,255,255,0.6)',
-                    lineHeight: 1.6,
-                    margin: '0 0 12px',
-                  }}>
-                    &ldquo;I help women build strength they can feel in 12 weeks — not 12 months.&rdquo;
-                  </p>
-
-                  {/* Tags */}
-                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                    {['Strength', 'Mobility', 'Recovery'].map((tag) => (
-                      <span key={tag} style={{
-                        fontSize: 11,
-                        fontWeight: 500,
-                        color: 'rgba(255,255,255,0.48)',
-                        background: 'rgba(255,255,255,0.07)',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: 100,
-                        padding: '3px 10px',
-                      }}>{tag}</span>
-                    ))}
-                  </div>
-
-                  {/* Stats — 3 individual bordered boxes */}
-                  <div style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 6,
-                    marginBottom: 12,
-                  }}>
-                    {MAYA_STATS.map((s) => (
-                      <div key={s.label} style={{
-                        background: 'rgba(255,255,255,0.05)',
-                        border: '1px solid rgba(255,255,255,0.08)',
-                        borderRadius: 10,
-                        padding: '10px 6px',
-                        textAlign: 'center',
+      {false && (
+        <section style={{ padding: '96px 24px 112px', background: '#fbf7f4' }}>
+          <div style={{ maxWidth: 1229, margin: '0 auto' }}>
+            <h2 style={{ fontSize: 36, fontWeight: 700, color: '#333', textAlign: 'center', margin: '0 0 8px' }}>
+              Apply as a{' '}
+              <span style={{ background: 'linear-gradient(90deg, #ff8a4c 0%, #ff5a3c 57%, #ff3e48 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>creator</span>
+            </h2>
+            <p style={{ fontSize: 16, color: '#666', textAlign: 'center', margin: '0 0 48px' }}>Six minutes. Hand-reviewed. Built for you.</p>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
+              <div style={{ background: '#fff', borderRadius: 20, padding: '24px', border: '1px solid #e6dfd7' }}>
+                <div style={{ display: 'flex', gap: 6, marginBottom: 20 }}>
+                  {[1, 2, 3].map((s) => (
+                    <div key={s} style={{ flex: 1, height: 3, borderRadius: 100, background: s === 1 ? 'linear-gradient(90deg, #e75d3a, #ff3e48)' : '#e6dfd7' }} />
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+                  {CATEGORIES.map((cat) => {
+                    const active = selectedCategory === cat.id;
+                    return (
+                      <button key={cat.id} onClick={() => setSelectedCategory(cat.id)} style={{
+                        display: 'flex', alignItems: 'center', gap: 10, padding: '12px 14px',
+                        borderRadius: 12, border: `1px solid ${active ? 'transparent' : '#ede8e3'}`,
+                        background: active ? '#111' : '#f7f5f2', cursor: 'pointer', textAlign: 'left',
                       }}>
-                        <div style={{
-                          fontSize: 8,
-                          color: 'rgba(255,255,255,0.28)',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.12em',
-                          marginBottom: 4,
-                        }}>{s.label}</div>
-                        <div style={{
-                          fontSize: 17,
-                          fontWeight: 700,
-                          color: '#fff',
-                          letterSpacing: '-0.01em',
-                        }}>{s.value}</div>
-                      </div>
-                    ))}
+                        <span style={{ fontSize: 12, color: active ? '#e75d3a' : '#bbb' }}>✦</span>
+                        <div>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: active ? '#fff' : '#222' }}>{cat.label}</div>
+                          <div style={{ fontSize: 11, color: active ? 'rgba(255,255,255,0.45)' : '#aaa', marginTop: 2 }}>{cat.sub}</div>
+                        </div>
+                      </button>
+                    );
+                  })}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: 20 }}>
+                  <Link to="/create-your-ai" style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '11px 22px', borderRadius: 10, background: '#111', color: '#fff', fontSize: 14, fontWeight: 600, textDecoration: 'none' }}>
+                    Continue →
+                  </Link>
+                </div>
+              </div>
+              <div style={{ borderRadius: 20, overflow: 'hidden', position: 'relative', minHeight: 300, background: '#1a0f0a' }}>
+                <img src="/website/figma/gradient2.png" alt="" aria-hidden style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover' }} />
+                <div style={{ position: 'relative', zIndex: 1, padding: 22 }}>
+                  <p style={{ fontSize: 9, fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '0.2em', margin: '0 0 14px' }}>Live Preview · Your CreatorPal Page</p>
+                  <div style={{ background: 'rgba(8,4,2,0.52)', backdropFilter: 'blur(18px)', borderRadius: 16, padding: '22px 20px 18px', border: '1px solid rgba(255,255,255,0.07)' }}>
+                    <div style={{ width: 56, height: 56, borderRadius: '50%', background: 'radial-gradient(circle at 36% 30%, #ff8a5a, #cc2e18, #7a0808)', marginBottom: 12 }} />
+                    <div style={{ fontSize: 24, fontWeight: 700, color: '#fff', marginBottom: 4 }}>Maya Okonjo</div>
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.38)', marginBottom: 12 }}>Health &amp; Movement · @mayaokonjo</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button style={{ flex: 1, padding: '10px 0', borderRadius: 10, background: 'linear-gradient(90deg, #e75d3a, #d42e1e)', color: '#fff', fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer' }}>Chat with Maya</button>
+                      <button style={{ flex: 1, padding: '10px 0', borderRadius: 10, background: 'rgba(255,255,255,0.06)', color: 'rgba(255,255,255,0.65)', fontSize: 12, border: '1px solid rgba(255,255,255,0.1)', cursor: 'pointer' }}>Book a call</button>
+                    </div>
                   </div>
-
-                  {/* CTA buttons */}
-                  <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
-                    <button style={{
-                      flex: 1,
-                      padding: '11px 0',
-                      borderRadius: 10,
-                      background: 'linear-gradient(90deg, #e75d3a 0%, #d42e1e 100%)',
-                      color: '#fff',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}>Chat with Maya</button>
-                    <button style={{
-                      flex: 1,
-                      padding: '11px 0',
-                      borderRadius: 10,
-                      background: 'rgba(255,255,255,0.06)',
-                      color: 'rgba(255,255,255,0.65)',
-                      fontSize: 13,
-                      fontWeight: 600,
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      cursor: 'pointer',
-                    }}>Book a call</button>
-                  </div>
-
-                  {/* Footer */}
-                  <div style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: 'auto',
-                  }}>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}>Step 1 of 6 · live updating</span>
-                    <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.18)' }}>creatorpal.co/maya</span>
-                  </div>
-
                 </div>
               </div>
             </div>
+          </div>
+        </section>
+      )}
 
-          </div>{/* end grid */}
-        </div>{/* end maxWidth wrapper */}
-      </section>
+      {/* ── unused helper refs (suppress lint) ── */}
+      {false && <>{CheckIcon}{DiamondIcon}</>}
 
     </div>
   );
