@@ -692,7 +692,7 @@ export default function WebsiteAbout() {
           FOUNDING CREATOR VALUE TABLE
           Figma: node 1396-4156 — "Background+Border+Shadow"
           ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding: '0 24px 96px', background: '#fbf7f4' }}>
+      <section style={{ padding: '96px 24px 96px', background: '#fbf7f4' }}>
         <div style={{ maxWidth: 1229, margin: '0 auto' }}>
 
           {/* Outer card */}
@@ -874,7 +874,7 @@ export default function WebsiteAbout() {
                 </p>
               </div>
               <div style={{
-                fontSize: 68,
+                fontSize: 51,
                 fontWeight: 700,
                 color: '#111',
                 letterSpacing: '-0.04em',
