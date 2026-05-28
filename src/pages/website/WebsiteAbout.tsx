@@ -570,9 +570,9 @@ export default function WebsiteAbout() {
       </section>
 
       {/* ═══════════════════════════════════════════════════════
-          FEATURES
+          FEATURES — commented out
           ═══════════════════════════════════════════════════════ */}
-      <section style={{ padding: '96px 24px 104px', background: '#fbf7f4' }}>
+      {false && <section style={{ padding: '96px 24px 104px', background: '#fbf7f4' }}>
         <div style={{ maxWidth: 1229, margin: '0 auto' }}>
           <h2 style={{
             fontSize: 40,
@@ -686,7 +686,7 @@ export default function WebsiteAbout() {
             ))}
           </div>
         </div>
-      </section>
+      </section>}
 
       {/* ═══════════════════════════════════════════════════════
           FOUNDING CREATOR VALUE TABLE
