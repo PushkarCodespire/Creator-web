@@ -8,7 +8,7 @@ const INSTAGRAM_ICON = "/website/figma/60ed9a79cead92b94beb4b78ba089afdebe7970a.
 const QUICK_LINKS = [
   { label: "Home", to: "/" },
   { label: "Find Expert", to: "/find-expert" },
-  { label: "Create Your AI", to: "/create-your-ai" },
+  { label: "Apply as a creator", to: "/become-creator" },
   { label: "Pricing", to: "/pricing" },
 ];
 
@@ -45,11 +45,9 @@ export function WebsiteFooter() {
   return (
     <footer className={styles.footer}>
       <div className={styles.footerTopRow}>
-        {/* Create your AI CTA hidden — not ready for public users yet
-        <Link to="/create-your-ai" className={styles.footerCtaPrimary}>
-          Create your AI
+        <Link to="/become-creator" className={styles.footerCtaPrimary}>
+          Apply as a creator
         </Link>
-        */}
         <Link to="/find-expert" className={styles.footerCtaOutline}>
           Browse Experts
         </Link>

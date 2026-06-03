@@ -335,8 +335,8 @@ export const chatApi = {
   startConversation: (creatorId: string) =>
     api.post('/chat/start', { creatorId }),
 
-  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean, voiceProvider?: 'inworld', userProfile?: string) =>
-    api.post('/chat/message', { conversationId, content, media, voiceMode, userProfile, ...(voiceMode ? { voiceProvider } : {}) }),
+  sendMessage: (conversationId: string, content: string, media?: Record<string, unknown>[], voiceMode?: boolean, voiceProvider?: 'inworld', userProfile?: string, language?: string) =>
+    api.post('/chat/message', { conversationId, content, media, voiceMode, userProfile, ...(voiceMode ? { voiceProvider, language } : {}) }),
 
   uploadChatMedia: (files: File[]) => {
     const formData = new FormData();

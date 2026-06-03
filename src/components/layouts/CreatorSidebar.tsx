@@ -7,6 +7,8 @@ import { getImageUrl } from '../../services/api';
 interface Props {
   expanded: boolean;
   onToggle: () => void;
+  isMobile?: boolean;
+  onClose?: () => void;
 }
 
 const NAV_ITEMS = [
@@ -36,32 +38,37 @@ function NavIcon({ type, size = 20 }: { type: string; size?: number }) {
   }
 }
 
-export default function CreatorSidebar({ expanded, onToggle }: Props) {
+export default function CreatorSidebar({ expanded, onToggle, isMobile, onClose }: Props) {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
   const { user } = useSelector((state: RootState) => state.auth);
   const profileImg = user?.creator?.profileImage || user?.avatar;
-  const width = expanded ? 200 : 70;
+  const width = isMobile ? 260 : (expanded ? 200 : 70);
 
   const isActive = (path: string) => {
     if (path === '/creator-dashboard') return location.pathname === path;
     return location.pathname.startsWith(path);
   };
 
-  return (
+  const handleNavigate = (path: string) => {
+    navigate(path);
+    onClose?.();
+  };
+
+  const sidebarEl = (
     <aside style={{
       width,
-      height: 'calc(100vh - 24px)',
+      height: isMobile ? '100vh' : 'calc(100vh - 24px)',
       position: 'fixed',
-      top: 12,
-      left: 12,
+      top: isMobile ? 0 : 12,
+      left: isMobile ? 0 : 12,
       background: '#111111',
-      borderRadius: 20,
+      borderRadius: isMobile ? 0 : 20,
       display: 'flex',
       flexDirection: 'column',
       padding: '16px 0 16px',
-      zIndex: 40,
+      zIndex: isMobile ? 200 : 40, /* must be above backdrop (199) on mobile */
       transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
       overflow: 'hidden',
       boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
@@ -77,27 +84,40 @@ export default function CreatorSidebar({ expanded, onToggle }: Props) {
       }}>
         <div
           style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', minWidth: 0 }}
-          onClick={() => navigate('/creator-dashboard')}
+          onClick={() => handleNavigate('/creator-dashboard')}
         >
           <img src="/website/figma/cplogo.png" alt="CP" style={{ height: 20, width: 'auto', flexShrink: 0 }} />
           {expanded && <span style={{ color: '#fff', fontSize: 15, fontWeight: 700, whiteSpace: 'nowrap' }}>CreatorPal</span>}
         </div>
-        <button
-          type="button"
-          onClick={onToggle}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexShrink: 0 }}
-          aria-label={expanded ? 'Collapse' : 'Expand'}
-        >
-          <img
-            src="/website/figma/arrows.png"
-            alt=""
-            style={{
-              height: 12, width: 'auto', opacity: 0.5,
-              transition: 'transform 0.25s ease',
-              transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
-            }}
-          />
-        </button>
+        {isMobile ? (
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', color: 'rgba(255,255,255,0.5)', flexShrink: 0 }}
+            aria-label="Close menu"
+          >
+            <svg viewBox="0 0 20 20" width={20} height={20} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
+              <path d="M5 5l10 10M15 5L5 15" />
+            </svg>
+          </button>
+        ) : (
+          <button
+            type="button"
+            onClick={onToggle}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 4, display: 'flex', flexShrink: 0 }}
+            aria-label={expanded ? 'Collapse' : 'Expand'}
+          >
+            <img
+              src="/website/figma/arrows.png"
+              alt=""
+              style={{
+                height: 12, width: 'auto', opacity: 0.5,
+                transition: 'transform 0.25s ease',
+                transform: expanded ? 'rotate(180deg)' : 'rotate(0deg)',
+              }}
+            />
+          </button>
+        )}
       </div>
 
       {/* Nav items */}
@@ -108,7 +128,7 @@ export default function CreatorSidebar({ expanded, onToggle }: Props) {
             <button
               key={item.path}
               type="button"
-              onClick={() => navigate(item.path)}
+              onClick={() => handleNavigate(item.path)}
               title={!expanded ? item.label : undefined}
               style={{
                 width: '100%',
@@ -139,7 +159,7 @@ export default function CreatorSidebar({ expanded, onToggle }: Props) {
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, padding: expanded ? '0 10px' : '0 14px' }}>
         <button
           type="button"
-          onClick={() => navigate('/creator-dashboard/settings')}
+          onClick={() => handleNavigate('/creator-dashboard/settings')}
           title={!expanded ? 'Settings' : undefined}
           style={{
             width: '100%', height: 44, borderRadius: 10,
@@ -205,4 +225,22 @@ export default function CreatorSidebar({ expanded, onToggle }: Props) {
       </div>
     </aside>
   );
+
+  if (isMobile) {
+    return (
+      <>
+        {/* Backdrop */}
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)',
+            zIndex: 199, backdropFilter: 'blur(4px)',
+          }}
+        />
+        {sidebarEl}
+      </>
+    );
+  }
+
+  return sidebarEl;
 }

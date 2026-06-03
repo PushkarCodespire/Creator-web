@@ -373,7 +373,7 @@ export default function WebsiteProfile() {
             )}
           </div>
 
-          <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+          <div className={styles.actionButtons}>
             <Link to={`/website-chat/${creatorId}`} className={styles.chatBtn}>
               <MessageIcon /> Chat Now
             </Link>
@@ -525,7 +525,7 @@ export default function WebsiteProfile() {
                 {programs.filter(p => p.category === '__product__').length > 0 && (
                   <div className={styles.sectionCard}>
                     <h3 className={styles.sectionTitle}>Products</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className={styles.productsGrid}>
                       {programs.filter(p => p.category === '__product__').map((p: { id: string; name: string; price?: number; description?: string; category?: string }) => {
                         let d: Record<string, string> = {};
                         try { d = JSON.parse(p.description || '{}'); } catch { d = { desc: p.description || '' }; }
@@ -553,7 +553,7 @@ export default function WebsiteProfile() {
                 {programs.filter(p => p.category !== '__product__').length > 0 && (
                   <div className={styles.sectionCard}>
                     <h3 className={styles.sectionTitle}>Fitness Programs</h3>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className={styles.productsGrid}>
                       {programs.filter(p => p.category !== '__product__').map((p: { id: string; name: string; price?: number; description?: string; category?: string }) => {
                         let d: Record<string, string> = {};
                         try { d = JSON.parse(p.description || '{}'); } catch { d = { desc: p.description || '' }; }

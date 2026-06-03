@@ -4,7 +4,12 @@ import { Bell, X, Home } from 'lucide-react';
 import { searchApi, notificationApi } from '../../services/api';
 import { useDashboardFilter } from './DashboardFilterContext';
 
-export default function CreatorHeader() {
+interface CreatorHeaderProps {
+  isMobile?: boolean;
+  onMenuOpen?: () => void;
+}
+
+export default function CreatorHeader({ isMobile, onMenuOpen }: CreatorHeaderProps) {
   const navigate = useNavigate();
   const { period: activeFilter, setPeriod: setActiveFilter } = useDashboardFilter();
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,8 +77,27 @@ export default function CreatorHeader() {
   };
 
   return (
-    <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 16, padding: '16px 0' }}>
-      {/* Search */}
+    <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: '16px 0' }}>
+      {/* Hamburger (mobile only) */}
+      {isMobile && (
+        <button
+          type="button"
+          onClick={onMenuOpen}
+          style={{
+            width: 40, height: 40, borderRadius: 10, background: '#111',
+            border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', flexShrink: 0, color: '#fff',
+          }}
+          aria-label="Open menu"
+        >
+          <svg viewBox="0 0 20 20" width={18} height={18} fill="none" stroke="currentColor" strokeWidth={1.8} strokeLinecap="round">
+            <path d="M3 5h14M3 10h14M3 15h14" />
+          </svg>
+        </button>
+      )}
+
+      {/* Search — hidden on mobile, visible on desktop */}
+      {!isMobile && (
       <div ref={searchRef} style={{ position: 'relative', flex: 1, maxWidth: 400 }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 10, padding: '10px 16px',
@@ -125,10 +149,12 @@ export default function CreatorHeader() {
           </div>
         )}
       </div>
+      )} {/* end !isMobile search */}
 
       {/* Right side */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-        {/* Home button */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 8 : 12 }}>
+        {/* Home button — hidden on mobile (accessible via sidebar) */}
+        {!isMobile && (
         <button type="button" onClick={() => navigate('/')} title="Go to Home" style={{
           width: 40, height: 40, borderRadius: 10, background: '#fff', border: '1px solid #ede8e3',
           display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', cursor: 'pointer', transition: 'all 0.15s ease',
@@ -138,12 +164,13 @@ export default function CreatorHeader() {
         >
           <Home size={18} />
         </button>
+        )} {/* end !isMobile home button */}
 
         {/* Time filters */}
         <div style={{ display: 'flex', background: '#fff', border: '1px solid #ede8e3', borderRadius: 10, padding: 3, gap: 2 }}>
-          {['7D', '30D', '90D'].map((f) => (
+          {(isMobile ? ['7D', '30D'] : ['7D', '30D', '90D']).map((f) => (
             <button key={f} type="button" onClick={() => setActiveFilter(f)}
-              style={{ padding: '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: activeFilter === f ? '#ff3e48' : 'transparent', color: activeFilter === f ? '#fff' : '#6b7280', transition: 'all 0.15s ease' }}
+              style={{ padding: isMobile ? '6px 10px' : '6px 14px', borderRadius: 8, fontSize: 12, fontWeight: 600, border: 'none', cursor: 'pointer', background: activeFilter === f ? '#ff3e48' : 'transparent', color: activeFilter === f ? '#fff' : '#6b7280', transition: 'all 0.15s ease' }}
             >{f}</button>
           ))}
         </div>

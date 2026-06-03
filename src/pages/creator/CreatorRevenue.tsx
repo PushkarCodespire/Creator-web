@@ -1,17 +1,23 @@
 import { useState, useEffect } from 'react';
 import { TrendingUp, DollarSign, CreditCard } from 'lucide-react';
 import { payoutApi, creatorApi } from '../../services/api';
+import { Grid } from 'antd';
 
-const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 28,
-};
+const { useBreakpoint } = Grid;
 
 const FALLBACK_TRANSACTIONS: { name: string; type: string; date: string; amount: string; status: string; positive: boolean }[] = [];
 
 const CreatorRevenue = () => {
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 16 : 28,
+  };
+
   const [period, setPeriod] = useState('MONTHLY');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [earnings, setEarnings] = useState<Record<string, any> | null>(null);
@@ -66,14 +72,15 @@ const CreatorRevenue = () => {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Revenue Overview</h1>
+          <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: '#111827', margin: 0 }}>Revenue Overview</h1>
           <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 4 }}>Track your earnings and transaction history</p>
         </div>
-        <div style={{ display: 'flex', background: '#fff', border: '1px solid #ede8e3', borderRadius: 10, padding: 3 }}>
+        <div style={{ display: 'flex', background: '#fff', border: '1px solid #ede8e3', borderRadius: 10, padding: 3, width: isMobile ? '100%' : 'auto' }}>
           {['WEEKLY', 'MONTHLY', 'YEARLY'].map((p) => (
             <button key={p} type="button" onClick={() => setPeriod(p)} style={{
+              flex: isMobile ? 1 : undefined,
               padding: '7px 16px', borderRadius: 8, fontSize: 11, fontWeight: 600, border: 'none', cursor: 'pointer',
               background: period === p ? '#111827' : 'transparent',
               color: period === p ? '#fff' : '#6b7280',
@@ -84,13 +91,13 @@ const CreatorRevenue = () => {
       </div>
 
       {/* 2 Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 12 : 16, marginBottom: 24 }}>
         <div style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Total Revenue</span>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}><CreditCard size={18} /></div>
           </div>
-          <div style={{ fontSize: 36, fontWeight: 700, color: '#111827', lineHeight: 1, marginBottom: 12 }}>{formatCurrency(totalRevenue)}</div>
+          <div style={{ fontSize: isMobile ? 28 : 36, fontWeight: 700, color: '#111827', lineHeight: 1, marginBottom: 12 }}>{formatCurrency(totalRevenue)}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <TrendingUp size={14} style={{ color: '#10b981' }} />
             <span style={{ fontSize: 13, color: '#10b981', fontWeight: 500 }}>Lifetime earnings</span>
@@ -102,7 +109,7 @@ const CreatorRevenue = () => {
             <span style={{ fontSize: 11, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Available Balance</span>
             <div style={{ width: 36, height: 36, borderRadius: 10, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}><DollarSign size={18} /></div>
           </div>
-          <div style={{ fontSize: 36, fontWeight: 700, color: '#111827', lineHeight: 1, marginBottom: 12 }}>{formatCurrency(availableBalance)}</div>
+          <div style={{ fontSize: isMobile ? 28 : 36, fontWeight: 700, color: '#111827', lineHeight: 1, marginBottom: 12 }}>{formatCurrency(availableBalance)}</div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
             <TrendingUp size={14} style={{ color: '#10b981' }} />
             <span style={{ fontSize: 13, color: '#10b981', fontWeight: 500 }}>Ready to withdraw</span>

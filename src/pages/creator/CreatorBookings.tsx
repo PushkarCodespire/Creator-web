@@ -1,14 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Calendar, Clock, DollarSign, Plus, ChevronLeft, ChevronRight, Sparkles, X, Trash2 } from 'lucide-react';
 import { bookingApi, creatorApi } from '../../services/api';
-import { message as antMessage, Select } from 'antd';
+import { message as antMessage, Select, Grid } from 'antd';
 
-const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 24,
-};
+const { useBreakpoint } = Grid;
 
 const SLOT_TYPES = ['consultation', 'coaching', 'review'];
 
@@ -37,6 +32,16 @@ const MONTH_NAMES = ['January','February','March','April','May','June','July','A
 const DAY_LABELS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 const CreatorBookings = () => {
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 14 : 24,
+  };
+
   const [acceptingBookings, setAcceptingBookings] = useState(true);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [slots, setSlots] = useState<any[]>([]);
@@ -226,9 +231,9 @@ const CreatorBookings = () => {
   return (
     <div>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 20, flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Calendar & Bookings</h1>
+          <h1 style={{ fontSize: isMobile ? 20 : 26, fontWeight: 700, color: '#111827', margin: 0 }}>Calendar & Bookings</h1>
           <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 4 }}>Click any date to set your availability</p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -247,7 +252,7 @@ const CreatorBookings = () => {
       </div>
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: 12, marginBottom: 20 }}>
         {[
           { icon: <Calendar size={18} />, label: 'Total Slots', value: String(stats.totalSlots), color: '#ff3e48', bg: '#fff5f5' },
           { icon: <Clock size={18} />, label: 'Confirmed', value: String(stats.totalBookings), color: '#ff3e48', bg: '#fff5f5' },
@@ -264,7 +269,7 @@ const CreatorBookings = () => {
       </div>
 
       {/* Calendar + Sidebar */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 16, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 340px', gap: 16, marginBottom: 20 }}>
 
         {/* Full Month Calendar */}
         <div style={card}>
@@ -397,7 +402,7 @@ const CreatorBookings = () => {
           <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Booking Requests</h3>
           {requests.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#ff3e48', padding: '2px 10px', borderRadius: 6 }}>{requests.length} NEW</span>}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
           {requests.length === 0 && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 14 }}>No pending requests</div>
           )}
@@ -442,7 +447,7 @@ const CreatorBookings = () => {
           <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Confirmed Bookings</h3>
           {confirmedBookings.length > 0 && <span style={{ fontSize: 10, fontWeight: 700, color: '#fff', background: '#10b981', padding: '2px 10px', borderRadius: 6 }}>{confirmedBookings.length}</span>}
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
           {confirmedBookings.length === 0 && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '32px 0', color: '#9ca3af', fontSize: 14 }}>No confirmed bookings yet</div>
           )}
@@ -524,38 +529,43 @@ const CreatorBookings = () => {
             <div style={{ padding: '20px 28px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                 {timeSlots.map((ts, idx) => (
-                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                    {/* Time */}
-                    <div style={{ flex: 1 }}>
-                      <Select
-                        value={ts.startTime}
-                        onChange={(val) => updateTimeSlot(idx, 'startTime', val)}
-                        style={{ width: '100%' }}
-                        listHeight={200}
-                        popupMatchSelectWidth={false}
-                        options={TIME_OPTIONS.map(t => {
-                          const isPast = modalDate === getTodayDateStr() && t <= getNowTimeStr();
-                          return { value: t, label: t, disabled: isPast };
-                        })}
-                      />
+                  <div key={idx} style={{ background: '#fafaf8', borderRadius: 12, padding: '12px', border: '1px solid #ede8e3' }}>
+                    {/* Row 1: Time + Remove */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                      <div style={{ flex: 1 }}>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Time</label>
+                        <Select
+                          value={ts.startTime}
+                          onChange={(val) => updateTimeSlot(idx, 'startTime', val)}
+                          style={{ width: '100%' }}
+                          listHeight={200}
+                          popupMatchSelectWidth={false}
+                          options={TIME_OPTIONS.map(t => {
+                            const isPast = modalDate === getTodayDateStr() && t <= getNowTimeStr();
+                            return { value: t, label: t, disabled: isPast };
+                          })}
+                        />
+                      </div>
+                      <button type="button" onClick={() => removeTimeSlotRow(idx)} disabled={timeSlots.length <= 1}
+                        style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: timeSlots.length <= 1 ? 'transparent' : '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: timeSlots.length <= 1 ? 'default' : 'pointer', color: '#ef4444', opacity: timeSlots.length <= 1 ? 0.2 : 1, flexShrink: 0, alignSelf: 'flex-end', marginBottom: 1 }}>
+                        <Trash2 size={14} />
+                      </button>
                     </div>
-                    {/* Type */}
-                    <div style={{ width: 120 }}>
-                      <select value={ts.type} onChange={(e) => updateTimeSlot(idx, 'type', e.target.value)}
-                        style={{ width: '100%', padding: '10px 8px', borderRadius: 10, border: '1px solid #ede8e3', fontSize: 13, outline: 'none', fontFamily: 'inherit', cursor: 'pointer', background: '#fafaf8', color: '#374151' }}>
-                        {SLOT_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
-                      </select>
+                    {/* Row 2: Type + Price */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Type</label>
+                        <select value={ts.type} onChange={(e) => updateTimeSlot(idx, 'type', e.target.value)}
+                          style={{ width: '100%', padding: '9px 8px', borderRadius: 8, border: '1px solid #ede8e3', fontSize: 13, outline: 'none', fontFamily: 'inherit', cursor: 'pointer', background: '#fff', color: '#374151' }}>
+                          {SLOT_TYPES.map(t => <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'block', marginBottom: 4 }}>Price (₹)</label>
+                        <input type="number" value={ts.price} onChange={(e) => updateTimeSlot(idx, 'price', e.target.value)} placeholder="Free"
+                          style={{ width: '100%', padding: '9px 10px', borderRadius: 8, border: '1px solid #ede8e3', fontSize: 13, outline: 'none', fontFamily: 'inherit', background: '#fff', boxSizing: 'border-box' }} />
+                      </div>
                     </div>
-                    {/* Price */}
-                    <div style={{ width: 80 }}>
-                      <input type="number" value={ts.price} onChange={(e) => updateTimeSlot(idx, 'price', e.target.value)} placeholder="Free"
-                        style={{ width: '100%', padding: '10px 10px', borderRadius: 10, border: '1px solid #ede8e3', fontSize: 14, outline: 'none', fontFamily: 'inherit', background: '#fafaf8', textAlign: 'center' }} />
-                    </div>
-                    {/* Remove */}
-                    <button type="button" onClick={() => removeTimeSlotRow(idx)} disabled={timeSlots.length <= 1}
-                      style={{ width: 32, height: 32, borderRadius: 8, border: 'none', background: timeSlots.length <= 1 ? 'transparent' : '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: timeSlots.length <= 1 ? 'default' : 'pointer', color: '#ff3e48', opacity: timeSlots.length <= 1 ? 0.2 : 1, flexShrink: 0 }}>
-                      <Trash2 size={14} />
-                    </button>
                   </div>
                 ))}
               </div>

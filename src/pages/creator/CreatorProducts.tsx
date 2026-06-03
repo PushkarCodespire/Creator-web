@@ -1,13 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Plus, Pencil, Trash2, X, Package, Dumbbell, ExternalLink, Tag } from 'lucide-react';
 import { programApi, linkPreviewApi } from '../../services/api';
+import { Grid } from 'antd';
 
-const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 24,
-};
+const { useBreakpoint } = Grid;
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ede8e3',
@@ -33,6 +29,16 @@ const emptyProductForm = { name: '', description: '', price: '', link: '', promo
 const emptyProgramForm = { name: '', description: '', price: '', duration: '', level: '', category: '', link: '', promoCode: '' };
 
 const CreatorProducts = () => {
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 14 : 24,
+  };
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [items, setItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -191,18 +197,21 @@ const CreatorProducts = () => {
 
       {/* ========== PRODUCTS SECTION ========== */}
       <div style={{ marginBottom: 32 }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3e48' }}><Package size={18} /></div>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Products</h2>
-              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Affiliate products, supplements, equipment</p>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#fff5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#ff3e48', flexShrink: 0 }}><Package size={18} /></div>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Products</h2>
+                {!isMobile && <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Affiliate products, supplements, equipment</p>}
+              </div>
             </div>
+            <button type="button" onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm(emptyProductForm); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <Plus size={14} /> Add Product
+            </button>
           </div>
-          <button type="button" onClick={() => { setShowProductForm(true); setEditingProductId(null); setProductForm(emptyProductForm); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-            <Plus size={14} /> Add Product
-          </button>
+          {isMobile && <p style={{ fontSize: 12, color: '#9ca3af', margin: '4px 0 0 46px' }}>Affiliate products, supplements, equipment</p>}
         </div>
 
         {/* Product Form */}
@@ -212,7 +221,7 @@ const CreatorProducts = () => {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: 0 }}>{editingProductId ? 'Edit Product' : 'New Product'}</h3>
               <button type="button" onClick={() => { setShowProductForm(false); setEditingProductId(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={18} /></button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Product Name *</label>
                 <input type="text" value={productForm.name} onChange={(e) => setProductForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. Whey Protein Isolate" style={inputStyle} />
@@ -222,7 +231,7 @@ const CreatorProducts = () => {
                 <input type="number" value={productForm.price} onChange={(e) => setProductForm(f => ({ ...f, price: e.target.value }))} placeholder="999" min="0" style={inputStyle} />
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Product Link (URL)</label>
                 <div style={{ display: 'flex', gap: 8 }}>
@@ -256,7 +265,7 @@ const CreatorProducts = () => {
         )}
 
         {/* Product Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
           {products.length === 0 && !showProductForm && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '36px 0', color: '#9ca3af', fontSize: 13, ...card }}>
               No products yet. Add your first product!
@@ -297,18 +306,21 @@ const CreatorProducts = () => {
 
       {/* ========== PROGRAMS SECTION ========== */}
       <div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981' }}><Dumbbell size={18} /></div>
-            <div>
-              <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Fitness Programs</h2>
-              <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Your training programs and courses</p>
+        <div style={{ marginBottom: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+              <div style={{ width: 36, height: 36, borderRadius: 10, background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#10b981', flexShrink: 0 }}><Dumbbell size={18} /></div>
+              <div style={{ minWidth: 0 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Fitness Programs</h2>
+                {!isMobile && <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Your training programs and courses</p>}
+              </div>
             </div>
+            <button type="button" onClick={() => { setShowProgramForm(true); setEditingProgramId(null); setProgramForm(emptyProgramForm); }}
+              style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 }}>
+              <Plus size={14} /> Add Program
+            </button>
           </div>
-          <button type="button" onClick={() => { setShowProgramForm(true); setEditingProgramId(null); setProgramForm(emptyProgramForm); }}
-            style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '8px 16px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer' }}>
-            <Plus size={14} /> Add Program
-          </button>
+          {isMobile && <p style={{ fontSize: 12, color: '#9ca3af', margin: '4px 0 0 46px' }}>Your training programs and courses</p>}
         </div>
 
         {/* Program Form */}
@@ -318,7 +330,7 @@ const CreatorProducts = () => {
               <h3 style={{ fontSize: 15, fontWeight: 700, color: '#111827', margin: 0 }}>{editingProgramId ? 'Edit Program' : 'New Program'}</h3>
               <button type="button" onClick={() => { setShowProgramForm(false); setEditingProgramId(null); }} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#9ca3af' }}><X size={18} /></button>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Program Name *</label>
                 <input type="text" value={programForm.name} onChange={(e) => setProgramForm(f => ({ ...f, name: e.target.value }))} placeholder="e.g. 12-Week Fat Loss Challenge" style={inputStyle} />
@@ -338,7 +350,7 @@ const CreatorProducts = () => {
                 </button>
               </div>
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
               <div>
                 <label style={labelStyle}>Duration</label>
                 <input type="text" value={programForm.duration} onChange={(e) => setProgramForm(f => ({ ...f, duration: e.target.value }))} placeholder="e.g. 12 Weeks" style={inputStyle} />
@@ -376,7 +388,7 @@ const CreatorProducts = () => {
         )}
 
         {/* Program Cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 14 }}>
           {programs.length === 0 && !showProgramForm && (
             <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '36px 0', color: '#9ca3af', fontSize: 13, ...card }}>
               No programs yet. Create your first fitness program!

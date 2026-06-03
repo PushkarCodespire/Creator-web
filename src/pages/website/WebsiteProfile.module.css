@@ -619,15 +619,155 @@
   font-size: 14px;
 }
 
-/* ---- RESPONSIVE ---- */
+/* ---- ACTION BUTTONS (Chat + Follow) ---- */
+.actionButtons {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ---- PRODUCTS GRID ---- */
+.productsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET (641 – 900px)
+   ============================================================ */
+@media (max-width: 900px) {
+  .heroSection { max-width: 100%; }
+  .tabsWrap   { max-width: 100%; }
+  .tabContent { max-width: 100%; }
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE (≤ 640px)
+   ============================================================ */
 @media (max-width: 640px) {
-  .coverWrap { height: 180px; }
-  .avatarWrap { width: 90px; height: 90px; margin-top: -45px; }
-  .avatarInitial { font-size: 32px; }
-  .name { font-size: 22px; }
-  .profileHeader { flex-direction: column; gap: 12px; }
-  .chatBtn { width: 100%; justify-content: center; }
-  .statsRow { gap: 16px; }
-  .reviewSummary { flex-direction: column; text-align: center; }
-  .tab { padding: 10px 16px; font-size: 13px; }
+  /* Cover */
+  .coverWrap { height: 160px; }
+
+  /* Hero section horizontal padding */
+  .heroSection { padding: 0 16px; }
+
+  /* Avatar */
+  .avatarWrap {
+    width: 84px;
+    height: 84px;
+    margin-top: -42px;
+    border-width: 3px;
+  }
+  .avatarInitial { font-size: 30px; }
+  .onlineDot { width: 13px; height: 13px; }
+
+  /* Profile header: avatar top-left, then info, then buttons all stacked */
+  .profileHeader {
+    flex-direction: column;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .profileInfo { padding-top: 4px; width: 100%; }
+
+  /* Name */
+  .name { font-size: 20px; }
+  .tagline { font-size: 13px; }
+  .bio { font-size: 13px; margin-top: 12px; max-width: 100%; }
+
+  /* Buttons: full width, stacked */
+  .actionButtons {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  .chatBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+    font-size: 14px;
+  }
+  .followBtn {
+    width: 100%;
+    justify-content: center;
+    padding: 11px 20px;
+    font-size: 14px;
+  }
+
+  /* Stats: centred, smaller gap */
+  .statsRow {
+    gap: 0;
+    justify-content: space-between;
+    padding: 12px 0;
+    margin-top: 16px;
+  }
+  .stat { flex: 1; align-items: center; }
+  .statValue { font-size: 16px; }
+  .statLabel { font-size: 10px; }
+
+  /* Social icons */
+  .socialRow { margin-top: 12px; gap: 8px; }
+  .socialLink { width: 34px; height: 34px; border-radius: 8px; }
+
+  /* Tabs: scrollable, don't wrap */
+  .tabsWrap { padding: 0 16px; margin-top: 16px; }
+  .tabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: 0;
+    flex-wrap: nowrap;
+  }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tab {
+    white-space: nowrap;
+    padding: 10px 14px;
+    font-size: 12px;
+    flex-shrink: 0;
+  }
+
+  /* Tab content */
+  .tabContent { padding: 16px 16px 32px; }
+
+  /* Section cards */
+  .sectionCard { padding: 16px; border-radius: 12px; }
+  .sectionTitle { font-size: 14px; margin-bottom: 12px; }
+
+  /* Products: single column */
+  .productsGrid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Welcome message */
+  .welcomeMsg { font-size: 13px; padding: 12px 14px; }
+
+  /* Topic tags */
+  .topicTag { font-size: 12px; padding: 5px 11px; }
+
+  /* Perf grid */
+  .perfGrid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .perfItem { padding: 12px 8px; }
+  .perfValue { font-size: 18px; }
+  .perfLabel { font-size: 10px; }
+
+  /* Content list */
+  .contentItem { padding: 10px 12px; }
+  .contentTitle { font-size: 12px; }
+  .contentType { font-size: 10px; }
+
+  /* FAQ */
+  .faqQuestion { padding: 14px 16px; font-size: 13px; }
+  .faqAnswer { padding: 0 16px 14px; font-size: 12px; }
+
+  /* Reviews */
+  .reviewSummary {
+    flex-direction: column;
+    text-align: center;
+    gap: 16px;
+    padding: 16px;
+  }
+  .reviewBigNum { font-size: 36px; }
+  .reviewCard { padding: 14px 16px; }
+  .reviewComment { font-size: 12px; }
 }

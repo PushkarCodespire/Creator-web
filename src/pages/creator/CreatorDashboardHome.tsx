@@ -1,22 +1,27 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { Grid } from 'antd';
 import { RootState } from '../../store';
 import { creatorApi, payoutApi, reviewApi } from '../../services/api';
 import { useDashboardFilter } from '../../components/layouts/DashboardFilterContext';
 import { MessageSquare, DollarSign, Plus, Bot, Share2, Star, Users, Pencil, HelpCircle, Zap, Clock, ThumbsUp, X } from 'lucide-react';
 
-const cardStyle: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 24,
-};
+const { useBreakpoint } = Grid;
 
 const CreatorDashboardHome = () => {
   const navigate = useNavigate();
   const { user } = useSelector((state: RootState) => state.auth);
   const { days } = useDashboardFilter();
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const cardStyle: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 16 : 24,
+  };
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [data, setData] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -154,7 +159,7 @@ const CreatorDashboardHome = () => {
       </div>
 
       {/* Stat Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: isMobile ? 12 : 16, marginBottom: 24 }}>
         {[
           {
             icon: <MessageSquare size={18} />, label: 'Questions Answered', value: formatNum(totalAiAnswers),
@@ -190,7 +195,7 @@ const CreatorDashboardHome = () => {
       {/* Quick Actions */}
       <div style={{ ...cardStyle, marginBottom: 24 }}>
         <h3 style={{ fontSize: 16, fontWeight: 700, color: '#111827', margin: '0 0 16px' }}>Quick Actions</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
           {[
             { icon: <Plus size={20} />, label: 'Add Program', desc: 'Create and publish a new fitness program', path: '/creator-dashboard/products', color: '#ff3e48' },
             { icon: <DollarSign size={20} />, label: 'Change Pricing', desc: 'Update prices on your programs', path: '/creator-dashboard/settings', color: '#10b981' },
@@ -210,7 +215,7 @@ const CreatorDashboardHome = () => {
       </div>
 
       {/* Two Column Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 20, marginBottom: 24 }}>
 
         {/* Top Questions This Week */}
         <div style={cardStyle}>
@@ -383,7 +388,7 @@ const CreatorDashboardHome = () => {
             <p style={{ margin: 0 }}>No earnings yet. Once users start chatting with your AI, earnings will appear here.</p>
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12 }}>
             <div style={{ padding: 16, background: '#ecfdf5', borderRadius: 12, textAlign: 'center' }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: '#6b7280', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 6 }}>Available</div>
               <div style={{ fontSize: 22, fontWeight: 700, color: '#10b981' }}>₹{formatNum(availableBalance)}</div>

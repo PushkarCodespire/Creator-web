@@ -177,6 +177,7 @@ export function ChatUI({ creatorId }: Props) {
   const [tokenBalance, setTokenBalance] = useState<number>(0);
   const [voiceModalOpen, setVoiceModalOpen] = useState(false);
   const [showVoiceUpgradeModal, setShowVoiceUpgradeModal] = useState(false);
+  const [voiceLanguage, setVoiceLanguage] = useState<'en' | 'hi'>('en');
   // Which voice engine the listener wants the AI reply spoken with.
   // Persisted per-user in localStorage so the choice sticks across sessions.
   const voiceProvider: VoiceProvider = 'inworld';
@@ -482,7 +483,28 @@ export function ChatUI({ creatorId }: Props) {
             <BackIcon />
           </button>
         </div>
+
         <div className={styles.headerRight}>
+          {/* Language toggle */}
+          <div style={{ display: 'flex', alignItems: 'center', borderRadius: 99, overflow: 'hidden', border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)' }}>
+            {(['en', 'hi'] as const).map(lang => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setVoiceLanguage(lang)}
+                style={{
+                  padding: '5px 13px', border: 'none', cursor: 'pointer',
+                  fontSize: 11, fontWeight: 700, letterSpacing: '0.05em',
+                  background: voiceLanguage === lang ? 'rgba(255,255,255,0.18)' : 'transparent',
+                  color: voiceLanguage === lang ? '#fff' : 'rgba(255,255,255,0.4)',
+                  transition: 'all 0.15s',
+                }}
+              >
+                {lang === 'en' ? 'EN' : 'हिं'}
+              </button>
+            ))}
+          </div>
+
           {/* Token/Message counter */}
           {rateLimitStatus?.subscription?.plan === 'PREMIUM' ? (
             <span style={{
@@ -700,6 +722,7 @@ export function ChatUI({ creatorId }: Props) {
         creatorName={creatorName}
         creatorAvatar={creator?.profileImage || null}
         voiceProvider={voiceProvider}
+        language={voiceLanguage}
         onVoiceBlocked={() => setShowVoiceUpgradeModal(true)}
         onMessageSent={() => {
           // Refresh messages after voice message

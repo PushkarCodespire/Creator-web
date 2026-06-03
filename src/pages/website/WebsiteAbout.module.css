@@ -1,0 +1,388 @@
+/* ============================================================
+   ABOUT PAGE — WebsiteAbout.module.css
+   ============================================================ */
+
+/* ── Hero ── */
+.heroSection {
+  padding: 60px 64px 40px;
+  max-width: 1229px;
+  margin: 0 auto;
+}
+
+.heroGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 56px;
+  align-items: flex-start;
+}
+
+.heroLeft {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 32px 40px 32px 16px;
+}
+
+.heroImg {
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  object-position: top center;
+  display: block;
+  border-radius: 12px;
+}
+
+.chip {
+  position: absolute;
+}
+
+.heroTitle {
+  font-size: 52px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+  margin: 0 0 28px;
+}
+
+.heroAccent {
+  font-style: italic;
+  background: linear-gradient(90deg, #e75d3a 0%, #c42a14 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Logo strip ── */
+.logoStrip {
+  background: #fbf7f4;
+  display: flex;
+  align-items: center;
+  margin: 48px 0;
+}
+
+.logoStripLabel {
+  flex-shrink: 0;
+  padding: 22px 32px 22px 40px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #b8b0a8;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* ── Experience image ── */
+.expSection {
+  background: #fbf7f4;
+  padding: 48px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.expWrap {
+  width: 90vw;
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* ── Ecosystem / Orbit ── */
+.ecosystemSection {
+  padding: 120px 0 100px;
+  background: #fbf7f4;
+  overflow: hidden; /* clips the scaled orbit wrapper at tablet/mobile */
+}
+
+.ecosystemHeading {
+  font-size: 40px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.025em;
+  margin: 0 0 16px;
+  line-height: 1.15;
+}
+
+.ecosystemSub {
+  font-size: 15px;
+  color: #888;
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* The orbit image + absolute cards wrapper */
+.orbitWrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1021px;
+  margin: 0 auto;
+}
+
+/* Animated cards — always visible, scale with wrapper */
+.orbitCard {
+  position: absolute;
+  background: #fff;
+  border: 1px solid #ede8e3;
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.07);
+}
+
+/* Static feature grid — never shown (kept for potential future use) */
+.featureGrid {
+  display: none;
+}
+
+.featureCard {
+  background: #fff;
+  border: 1px solid #ede8e3;
+  border-radius: 16px;
+  padding: 18px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.featureIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #f5f0ea;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-bottom: 10px;
+}
+
+.featureTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.2;
+  margin: 0 0 6px;
+}
+
+.featureDesc {
+  font-size: 12px;
+  color: #999;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* ── CodeSpire section ── */
+.codespireSection {
+  padding: 0 64px 96px;
+  background: #fbf7f4;
+}
+
+.codespireGrid {
+  max-width: 1229px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.codespireLeft {
+  background: #f0ebe4;
+  border-radius: 20px;
+  padding: 56px 48px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.codespireTitle {
+  font-size: 52px;
+  font-weight: 700;
+  color: #111;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  margin: 0 0 28px;
+}
+
+.codespireDivider {
+  height: 1px;
+  background: #d8d0c8;
+  margin-bottom: 28px;
+}
+
+.codespireText {
+  font-size: 17px;
+  color: #777;
+  line-height: 1.72;
+  margin: 0;
+}
+
+.codespireRight {
+  background: #fff;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid #ede8e3;
+}
+
+.codespireImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ── Mission section ── */
+.missionSection {
+  background: #fbf7f4;
+  padding: 0 0 80px;
+  display: flex;
+  justify-content: center;
+}
+
+.missionInner {
+  width: 90vw;
+  border-radius: 24px;
+  background: linear-gradient(110deg, #0d0303 0%, #2a0806 35%, #7a1a0a 65%, #c84820 100%);
+  padding: 80px 48px;
+  text-align: center;
+}
+
+.missionTitle {
+  font-size: 44px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.03em;
+  margin: 0 0 18px;
+  line-height: 1.1;
+}
+
+.missionSub {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.72;
+  margin: 0 auto 36px;
+  max-width: 520px;
+}
+
+.missionCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 26px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  transition: background 0.15s;
+}
+.missionCta:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* ============================================================
+   RESPONSIVE — TABLET (≤ 900px)
+   ============================================================ */
+@media (max-width: 900px) {
+  .heroSection { padding: 48px 32px 40px; }
+  .heroGrid    { gap: 40px; }
+  .heroTitle   { font-size: 40px; }
+
+  /* Scale orbit to ~68% — fits a ~700px screen */
+  .orbitWrapper {
+    width: 1021px;
+    margin-left: calc((100vw - 1021px) / 2); /* centre the layout box */
+    transform: scale(0.68);
+    transform-origin: top center;
+    margin-bottom: -262px; /* 818 × (1 − 0.68) = 262 */
+  }
+
+  .codespireSection { padding: 0 32px 64px; }
+  .codespireTitle   { font-size: 38px; }
+  .codespireLeft    { padding: 40px 36px; }
+
+  .missionTitle { font-size: 36px; }
+  .missionInner { padding: 60px 36px; }
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE (≤ 640px)
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Hero: single column, photo on top */
+  .heroSection { padding: 28px 20px 32px; }
+  .heroGrid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .heroLeft {
+    padding: 20px 16px;
+    order: -1; /* photo always on top */
+  }
+  .heroTitle   { font-size: 28px; margin-bottom: 18px; }
+
+  /* Chip 1 — PEAKPALS Founder — top-right corner */
+  .heroLeft > *:nth-child(2) {
+    top: 6px !important;
+    right: -36px !important;
+    bottom: auto !important;
+    left: auto !important;
+    transform: scale(0.28);
+    transform-origin: top right;
+  }
+  /* Chip 2 — 1000+ Consults — bottom-right corner */
+  .heroLeft > *:nth-child(3) {
+    bottom: 60px !important;
+    right: -56px !important;
+    top: auto !important;
+    left: auto !important;
+    transform: scale(0.28);
+    transform-origin: bottom right;
+  }
+  /* Chip 3 — 8+ years — top-left corner */
+  .heroLeft > *:nth-child(4) {
+    top: 150px !important;
+    left: -16px !important;
+    bottom: auto !important;
+    right: auto !important;
+    transform: scale(0.28);
+    transform-origin: top left;
+  }
+
+  /* Logo strip */
+  .logoStrip       { margin: 40px 0; flex-direction: column; align-items: flex-start; }
+  .logoStripLabel  { padding: 16px 20px 8px; font-size: 10px; }
+
+  /* Experience image */
+  .expSection { padding: 24px 0; }
+  .expWrap    { width: 94vw; border-radius: 12px; }
+
+  /* Ecosystem heading */
+  .ecosystemSection { padding: 56px 0 20px; }
+  .ecosystemHeading { font-size: 26px; }
+  .ecosystemSub     { font-size: 13px; }
+
+  /* Scale orbit to ~37% — fits a ~375px screen */
+  .orbitWrapper {
+    width: 1021px;
+    margin-left: calc((100vw - 1021px) / 2); /* centre the layout box */
+    transform: scale(0.37);
+    transform-origin: top center;
+    margin-bottom: -516px; /* 818 × (1 − 0.37) = 515 */
+  }
+
+  /* CodeSpire: stack cards */
+  .codespireSection { padding: 0 20px 48px; }
+  .codespireGrid    { grid-template-columns: 1fr; }
+  .codespireLeft    { padding: 28px 24px; }
+  .codespireTitle   { font-size: 28px; margin-bottom: 18px; }
+  .codespireText    { font-size: 14px; }
+  .codespireRight   { min-height: 220px; }
+
+  /* Mission */
+  .missionSection { padding: 0 0 48px; }
+  .missionInner   { padding: 44px 24px; width: 92vw; border-radius: 18px; }
+  .missionTitle   { font-size: 26px; margin-bottom: 14px; }
+  .missionSub     { font-size: 13px; margin-bottom: 24px; }
+}

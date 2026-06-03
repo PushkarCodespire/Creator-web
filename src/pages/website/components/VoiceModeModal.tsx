@@ -12,6 +12,7 @@ type Props = {
   onMessageSent?: () => void;
   onVoiceBlocked?: () => void;
   voiceProvider?: 'inworld';
+  language?: 'en' | 'hi';
 };
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -33,7 +34,7 @@ function stripMarkdown(text: string): string {
     .trim();
 }
 
-export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent, onVoiceBlocked, voiceProvider }: Props) {
+export default function VoiceModeModal({ open, onClose, conversationId, creatorName, creatorAvatar, onMessageSent, onVoiceBlocked, voiceProvider, language = 'en' }: Props) {
   const [state, setState]                     = useState<ModalState>('idle');
   const [transcript, setTranscript]           = useState('');
   const [interimTranscript, setInterimTranscript] = useState('');
@@ -172,7 +173,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     const recognition = new SpeechRecognition();
     recognition.continuous     = true;
     recognition.interimResults = true;
-    recognition.lang           = 'en-US';
+    recognition.lang           = language === 'hi' ? 'hi-IN' : 'en-US';
 
     recognition.onresult = (event: { results: { [index: number]: { [index: number]: { transcript: string }; isFinal: boolean }; length: number }; resultIndex: number }) => {
       let final   = '';
@@ -241,7 +242,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
   // startListening intentionally references itself for retry — safe because
   // it only recurses once (networkRetryRef guard) and the ref is stable.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setStateSafe]);
+  }, [setStateSafe, language]);
 
   const stopAndSend = useCallback(async () => {
     // abort() instead of stop() — cancels immediately without queuing any
@@ -268,7 +269,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
     }
 
     try {
-      const res = await chatApi.sendMessage(conversationId, text, undefined, true, voiceProvider);
+      const res = await chatApi.sendMessage(conversationId, text, undefined, true, voiceProvider, undefined, language);
 
       if (res.data?.data?.voice?.blocked) {
         onClose();
@@ -299,7 +300,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
       setError(e?.response?.data?.error || 'Failed to send');
       setStateSafe('error');
     }
-  }, [transcript, interimTranscript, conversationId, playAudio, onMessageSent, setStateSafe, onClose, onVoiceBlocked, voiceProvider]);
+  }, [transcript, interimTranscript, conversationId, playAudio, onMessageSent, setStateSafe, onClose, onVoiceBlocked, voiceProvider, language]);
 
   const handleMicTap = useCallback(() => {
     if (state === 'idle' || state === 'error') {
@@ -447,7 +448,7 @@ export default function VoiceModeModal({ open, onClose, conversationId, creatorN
           <p style={{ color: '#fff', fontSize: 18, fontWeight: 400, lineHeight: 1.6 }}>
             {transcript}{interimTranscript && <span style={{ opacity: 0.5 }}>{interimTranscript}</span>}
             {!transcript && !interimTranscript && (
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>Say something…</span>
+              <span style={{ color: 'rgba(255,255,255,0.3)' }}>{language === 'hi' ? 'कुछ बोलें…' : 'Say something…'}</span>
             )}
           </p>
         )}

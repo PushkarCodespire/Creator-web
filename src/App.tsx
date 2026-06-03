@@ -50,6 +50,7 @@ const WebsiteCheckout = lazy(() => import('./pages/website/WebsiteCheckout'));
 const WebsiteProfile = lazy(() => import('./pages/website/WebsiteProfile'));
 const WebsiteUserProfile = lazy(() => import('./pages/website/WebsiteUserProfile'));
 const WebsiteAbout = lazy(() => import('./pages/website/WebsiteAbout'));
+const WebsiteBecomeCreator = lazy(() => import('./pages/website/WebsiteBecomeCreator'));
 
 // Sprint 5 pages
 const Trending = lazy(() => import('./pages/Trending'));
@@ -130,6 +131,7 @@ function App() {
           <Route path="/creator/:creatorId" element={<WebsiteProfile />} />
           <Route path="/user/profile" element={<WebsiteUserProfile />} />
           <Route path="/about" element={<WebsiteAbout />} />
+          <Route path="/become-creator" element={<WebsiteBecomeCreator />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />

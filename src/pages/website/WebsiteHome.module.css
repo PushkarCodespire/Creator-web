@@ -986,8 +986,105 @@
 }
 
 /* ============================================================
+   HAMBURGER / MOBILE NAV
+   ============================================================ */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  flex-shrink: 0;
+  width: 34px;
+}
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--ink);
+  border-radius: 2px;
+  transition: transform 0.25s ease, opacity 0.25s ease;
+  transform-origin: center;
+}
+
+/* Hamburger → X when menu open */
+.hamburgerOpen span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburgerOpen span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburgerOpen span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Mobile menu — slides in below the nav */
+.navMobileMenu {
+  position: fixed;
+  top: 62px;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 200;
+  background: var(--bg);
+  display: flex;
+  flex-direction: column;
+  padding: 8px 28px 40px;
+  overflow-y: auto;
+  animation: mobileMenuOpen 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.navMobileMenuClosing {
+  animation: mobileMenuClose 0.22s ease-in forwards;
+}
+
+@keyframes mobileMenuOpen {
+  from { opacity: 0; transform: translateY(-14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes mobileMenuClose {
+  from { opacity: 1; transform: translateY(0); }
+  to   { opacity: 0; transform: translateY(-10px); }
+}
+
+.navMobileLink {
+  font-family: var(--font-sf);
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+  padding: 15px 0;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  display: block;
+  background: none;
+  border-top: none;
+  border-left: none;
+  border-right: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+}
+.navMobileLink:last-child {
+  border-bottom: none;
+}
+.navMobileCta {
+  margin-top: 28px;
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--ink);
+  color: #fff;
+  font-family: var(--font-sf);
+  font-weight: 600;
+  font-size: 16px;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  cursor: pointer;
+}
+
+/* ============================================================
    RESPONSIVE
    ============================================================ */
+
+/* ── Tablet (641 – 960px) ── */
 @media (max-width: 960px) {
   .navInner {
     grid-template-columns: auto 1fr;
@@ -999,44 +1096,58 @@
     justify-self: start;
   }
   .navLinks {
-    font-size: 15px;
-    gap: 20px;
+    font-size: 14px;
+    gap: 16px;
+  }
+
+  .hero {
+    padding: 40px 24px 20px;
   }
   .heroTitle {
-    font-size: 48px;
+    font-size: 52px;
     line-height: 1.08;
   }
   .heroSub {
     font-size: 20px;
     line-height: 1.5;
   }
+
+  /* 2-column cards on tablet */
   .expertCards {
-    grid-template-columns: 1fr;
-    max-width: 440px;
-  }
-  .interact {
-    grid-template-columns: 1fr;
-    gap: 40px;
-  }
-  .interactCard {
-    max-width: 489px;
-    margin: 0 auto;
-  }
-  .footer {
-    padding: 28px 24px 20px;
-    margin-top: 64px;
-  }
-  .footerInner {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
     margin-top: 40px;
   }
-  .footerColumns {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 40px;
-    padding-bottom: 36px;
+
+  .media {
+    margin-top: 56px;
   }
-  .footerTagline {
-    font-size: 17px;
-    line-height: 28px;
+  .categories {
+    margin-top: 72px;
+  }
+
+  .interact {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    margin-top: 72px;
+  }
+  .interactCard {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: unset;
+    height: auto;
+  }
+
+  .newsletter {
+    margin-top: 72px;
+  }
+  .newsletterTitle {
+    font-size: 28px;
+    line-height: 36px;
+  }
+
+  .testimonials {
+    margin-top: 72px;
   }
   .testimonial {
     grid-template-columns: 1fr;
@@ -1057,24 +1168,87 @@
   .testimonialName {
     font-size: 36px;
   }
+
+  .bottomCta {
+    margin-top: 72px;
+  }
+
+  .sectionTitle {
+    font-size: 28px;
+    line-height: 34px;
+  }
   .categoryRow,
   .mediaRow {
     justify-content: center;
     gap: 32px;
   }
-  .newsletterTitle {
-    font-size: 28px;
-    line-height: 36px;
+
+  .footer {
+    padding: 28px 24px 20px;
+    margin-top: 64px;
   }
-  .sectionTitle {
-    font-size: 28px;
-    line-height: 34px;
+  .footerInner {
+    margin-top: 40px;
+  }
+  .footerColumns {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 40px;
+    padding-bottom: 36px;
+  }
+  .footerTagline {
+    font-size: 17px;
+    line-height: 28px;
   }
 }
 
+/* ── Mobile (≤ 640px) ── */
 @media (max-width: 640px) {
+  /* Nav: sticky, show hamburger, hide links */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 201;
+    background: var(--bg);
+    padding: 12px 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  }
+  .navLinks {
+    display: none;
+  }
+  .hamburger {
+    display: flex;
+  }
+  /* Switch to flex so logo can be perfectly centred */
+  .navInner {
+    display: flex;
+    align-items: center;
+    position: relative;
+  }
+  /* Re-show the invisible spacer div — it balances the hamburger on the right
+     so the logo ends up exactly in the middle */
+  .navInner > div:first-child {
+    display: block;
+    width: 34px;
+    flex-shrink: 0;
+  }
+  .logo {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    justify-self: unset;
+  }
+  .logoImg {
+    height: 34px;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 28px 20px 16px;
+  }
   .heroTitle {
-    font-size: 36px;
+    font-size: 34px;
+    line-height: 1.1;
+    margin-top: 8px;
   }
   .heroTitle br,
   .heroSub br {
@@ -1082,17 +1256,113 @@
   }
   .heroSub {
     font-size: 16px;
+    line-height: 1.55;
+    margin-top: 16px;
+  }
+  .heroCta {
+    margin-top: 20px;
+    font-size: 16px;
+    padding: 14px 28px;
+  }
+
+  /* Expert cards — 1 column */
+  .expertCards {
+    grid-template-columns: 1fr;
+    max-width: 400px;
+    margin: 32px auto 0;
+    padding: 0 20px;
+  }
+
+  /* Media logos */
+  .media {
+    margin-top: 48px;
+    padding: 0 20px;
+  }
+  .mediaRow {
+    gap: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .mediaLogo {
+    height: 22px;
+  }
+
+  /* Categories */
+  .categories {
+    margin-top: 52px;
+    padding: 0 20px;
+  }
+  .categoryRow {
+    gap: 10px;
+    justify-content: center;
+  }
+  .category {
+    font-size: 14px;
+    padding: 10px 20px;
+  }
+
+  /* Interact */
+  .interact {
+    margin-top: 52px;
+    padding: 0 20px;
+  }
+  .interactCard {
+    min-height: unset;
+    height: auto;
+    max-width: 100%;
+    aspect-ratio: unset;
+  }
+  /* On mobile, let the image flow naturally instead of filling an absolute container */
+  .interactCardPhoto {
+    position: relative;
+    inset: unset;
+    width: 100%;
+  }
+  .interactCardImg {
+    width: 100%;
+    height: auto;
+    display: block;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .interactHeading {
+    font-size: 24px;
+  }
+  .interactBody {
+    padding: 24px 20px;
+  }
+  .interactLabel {
+    margin-top: 16px;
+  }
+  .interactChat {
+    margin-top: 20px;
+  }
+
+  /* Newsletter */
+  .newsletter {
+    margin-top: 52px;
+    padding: 0 20px;
   }
   .sectionTitle,
   .newsletterTitle {
     font-size: 22px;
     line-height: 28px;
   }
-  .interactHeading {
-    font-size: 24px;
+  .newsletterSub {
+    font-size: 15px;
   }
-  .interactBody {
-    padding: 28px 24px;
+  .newsletterForm {
+    flex-direction: column;
+    gap: 12px;
+  }
+  .newsletterBtn {
+    width: 100%;
+  }
+
+  /* Testimonials */
+  .testimonials {
+    margin-top: 52px;
+    padding: 0 20px;
   }
   .testimonialName {
     font-size: 28px;
@@ -1100,18 +1370,26 @@
   .testimonialRole {
     font-size: 16px;
   }
+
+  /* Bottom CTA */
+  .bottomCta {
+    margin-top: 52px;
+  }
   .claimBtn {
-    font-size: 18px;
-    line-height: 24px;
+    font-size: 16px;
+    line-height: 22px;
     padding: 14px 20px;
-    min-height: 56px;
+    min-height: 52px;
   }
   .expires {
-    font-size: 18px;
+    font-size: 16px;
     line-height: 24px;
   }
+
+  /* Footer */
   .footer {
     padding: 24px 20px 20px;
+    margin-top: 52px;
   }
   .footerTopRow {
     flex-direction: column;
@@ -1130,22 +1408,5 @@
   .footerTagline {
     font-size: 16px;
     line-height: 26px;
-  }
-  .newsletterForm {
-    flex-direction: column;
-    gap: 12px;
-  }
-  .newsletterBtn {
-    width: 100%;
-  }
-  .nav {
-    padding: 16px 20px;
-  }
-  .navLinks {
-    gap: 16px;
-    font-size: 14px;
-  }
-  .logoImg {
-    height: 44px;
   }
 }

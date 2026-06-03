@@ -20,7 +20,17 @@ export function WebsiteNav() {
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const dispatch = useDispatch<AppDispatch>();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [menuClosing, setMenuClosing] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  const closeMenu = () => {
+    setMenuClosing(true);
+    setTimeout(() => {
+      setMenuOpen(false);
+      setMenuClosing(false);
+    }, 220);
+  };
 
   // Fetch user if authenticated but user data is missing (stale localStorage)
   const fetchedRef = useRef(false);
@@ -43,15 +53,34 @@ export function WebsiteNav() {
   }, [dropdownOpen]);
 
   return (
+    <>
     <header className={styles.nav}>
       <div className={styles.navInner}>
         <div />
         <Link to="/" className={styles.logo}>
           <img src={LOGO_SRC} alt="CreatorPal" className={styles.logoImg} />
         </Link>
+        {/* Hamburger — only visible on mobile via CSS; becomes × when open */}
+        <button
+          type="button"
+          className={`${styles.hamburger}${menuOpen ? ` ${styles.hamburgerOpen}` : ''}`}
+          onClick={() => menuOpen ? closeMenu() : setMenuOpen(true)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+        >
+          <span /><span /><span />
+        </button>
         <nav className={styles.navLinks}>
           <Link to="/about">About</Link>
           <Link to="/pricing">Pricing</Link>
+          <Link to="/become-creator" style={{
+            display: 'inline-flex', alignItems: 'center',
+            padding: '8px 16px', borderRadius: 8,
+            background: '#111', color: '#fff',
+            fontSize: 13, fontWeight: 600,
+            textDecoration: 'none', whiteSpace: 'nowrap',
+          }}>
+            Apply as a creator
+          </Link>
           {isAuthenticated ? (
             <div ref={dropdownRef} style={{ position: 'relative' }}>
               <button
@@ -176,5 +205,36 @@ export function WebsiteNav() {
         </nav>
       </div>
     </header>
+
+    {/* Mobile menu — slides in below sticky nav */}
+    {menuOpen && (
+      <div className={`${styles.navMobileMenu}${menuClosing ? ` ${styles.navMobileMenuClosing}` : ''}`}>
+        <Link to="/about"           className={styles.navMobileLink} onClick={closeMenu}>About</Link>
+        <Link to="/pricing"         className={styles.navMobileLink} onClick={closeMenu}>Pricing</Link>
+        <Link to="/become-creator"  className={styles.navMobileLink} onClick={closeMenu}>Apply as a creator</Link>
+        {isAuthenticated ? (
+          <>
+            <Link to="/user/profile" className={styles.navMobileLink} onClick={closeMenu}>Profile</Link>
+            {user?.role === 'CREATOR' && (
+              <Link to="/creator-dashboard" className={styles.navMobileLink} onClick={closeMenu}>Dashboard</Link>
+            )}
+            {user?.role === 'ADMIN' && (
+              <Link to="/admin/home-page" className={styles.navMobileLink} onClick={closeMenu}>Admin</Link>
+            )}
+            <button
+              type="button"
+              className={styles.navMobileLink}
+              onClick={() => { dispatch(logout()); closeMenu(); }}
+              style={{ color: '#ef4444' }}
+            >
+              Log out
+            </button>
+          </>
+        ) : (
+          <Link to="/login" className={styles.navMobileCta} onClick={closeMenu}>Sign in</Link>
+        )}
+      </div>
+    )}
+    </>
   );
 }

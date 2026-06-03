@@ -1,0 +1,226 @@
+/* ============================================================
+   BECOME CREATOR PAGE
+   ============================================================ */
+
+/* ── Hero ── */
+.heroSection {
+  position: relative;
+  min-height: 680px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 2;
+  max-width: 1229px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 80px 48px;
+}
+
+.heroInner {
+  max-width: 40vw;
+}
+
+.heroTitle {
+  font-size: 52px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.1;
+  margin: 0 0 18px;
+  letter-spacing: -0.025em;
+}
+
+.heroSubtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.75;
+  margin: 0 0 32px;
+  max-width: 30vw;
+}
+
+/* ── Invite banner ── */
+.inviteBanner {
+  background: #000;
+  padding: 44px 24px;
+}
+
+.inviteTitle {
+  font-size: 36px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 44px;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.inviteSub {
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 36px;
+  margin: 0;
+}
+
+/* ── Founding value table ── */
+.tableSection {
+  padding: 96px 24px;
+  background: #fbf7f4;
+}
+
+.tableRow {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 28px 40px;
+  min-height: 120px;
+}
+
+.tableNumber {
+  width: 64px;
+  flex-shrink: 0;
+  font-size: 44px;
+  font-weight: 700;
+  color: #cec6bc;
+  line-height: 1;
+  letter-spacing: -0.03em;
+}
+
+.tablePreview {
+  flex-shrink: 0;
+}
+
+.tablePrice {
+  width: 160px;
+  flex-shrink: 0;
+  text-align: right;
+  padding-left: 24px;
+}
+
+.tableTitleText {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.tableFooter {
+  padding: 36px 40px;
+  border-top: 1px solid #ede8e2;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: end;
+  gap: 32px;
+}
+
+.tableTotal {
+  font-size: 51px;
+  font-weight: 700;
+  color: #111;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ── Creator stories ── */
+.storiesSection {
+  padding: 96px 24px 104px;
+  background: #fbf7f4;
+}
+
+.storiesTitle {
+  font-size: 40px;
+  font-weight: 700;
+  color: #111;
+  text-align: center;
+  margin: 0 0 8px;
+  letter-spacing: -0.02em;
+}
+
+.storiesSub {
+  font-size: 16px;
+  color: #888;
+  text-align: center;
+  margin: 0 0 56px;
+}
+
+.storiesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.storyCard {
+  border-radius: 20px;
+  overflow: hidden;
+  position: relative;
+  min-height: 400px;
+}
+
+/* ============================================================
+   TABLET (≤ 900px)
+   ============================================================ */
+@media (max-width: 900px) {
+  .heroInner    { max-width: 60vw; }
+  .heroSubtitle { max-width: 55vw; }
+  .heroTitle    { font-size: 40px; }
+  .inviteTitle  { font-size: 28px; line-height: 36px; }
+  .inviteSub    { font-size: 15px; line-height: 28px; }
+  .storiesGrid  { grid-template-columns: repeat(2, 1fr); }
+  .tableRow     { padding: 24px 24px; }
+  .tableNumber  { width: 48px; font-size: 32px; }
+  .tableTotal   { font-size: 38px; }
+  .tableFooter  { padding: 28px 24px; }
+  .tableTitleText { font-size: 18px; }
+}
+
+/* ============================================================
+   MOBILE (≤ 640px)
+   ============================================================ */
+@media (max-width: 640px) {
+  /* Hero */
+  .heroSection  { min-height: 520px; }
+  .heroContent  { padding: 48px 20px; }
+  .heroInner    { max-width: 100%; }
+  .heroTitle    { font-size: 28px; margin-bottom: 14px; }
+  .heroSubtitle { font-size: 14px; max-width: 100%; margin-bottom: 24px; }
+
+  /* Invite banner */
+  .inviteBanner { padding: 32px 20px; }
+  .inviteTitle  { font-size: 22px; line-height: 30px; gap: 8px; flex-wrap: wrap; }
+  .inviteSub    { font-size: 14px; line-height: 24px; }
+
+  /* Founding table */
+  .tableSection { padding: 48px 16px; }
+  .tableRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 20px 20px;
+    min-height: unset;
+  }
+  .tableNumber  { width: auto; font-size: 28px; }
+  .tablePreview { display: none; } /* too complex for mobile */
+  .tablePrice   { width: auto; text-align: left; padding-left: 0; }
+  .tableTitleText { font-size: 16px; }
+  .tableFooter  {
+    grid-template-columns: 1fr;
+    padding: 20px 20px;
+    gap: 12px;
+  }
+  .tableTotal   { font-size: 32px; }
+
+  /* Creator stories */
+  .storiesSection { padding: 56px 16px 64px; }
+  .storiesTitle   { font-size: 28px; }
+  .storiesSub     { margin-bottom: 32px; }
+  .storiesGrid    { grid-template-columns: 1fr; }
+  .storyCard      { min-height: 340px; }
+}

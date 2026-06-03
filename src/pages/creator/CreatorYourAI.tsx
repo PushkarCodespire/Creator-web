@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
-import { message as antMessage } from 'antd';
+import { message as antMessage, Grid } from 'antd';
 import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
 import { creatorApi, contentApi, instagramApi } from '../../services/api';
@@ -8,12 +8,7 @@ import { Bot, Save, Youtube, FileText, HelpCircle, Trash2, RotateCcw, Eye, X, Ch
 import ReactMarkdown from 'react-markdown';
 import { VoiceCloneSection } from '../../components/VoiceCloneSection/VoiceCloneSection';
 
-const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 24,
-};
+const { useBreakpoint } = Grid;
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ede8e3',
@@ -40,6 +35,15 @@ export const SCENARIO_QUESTIONS = [
 const CreatorYourAI = () => {
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 16 : 24,
+  };
 
   // AI Config
   const [aiTone, setAiTone] = useState(user?.creator?.aiTone || '');
@@ -515,12 +519,12 @@ const CreatorYourAI = () => {
         @keyframes spin { to { transform: rotate(360deg); } }
       `}</style>
       {/* Header */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: 24, flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? 12 : 0 }}>
         <div>
-          <h1 style={{ fontSize: 26, fontWeight: 700, color: '#111827', margin: 0 }}>Your AI</h1>
+          <h1 style={{ fontSize: isMobile ? 22 : 26, fontWeight: 700, color: '#111827', margin: 0 }}>Your AI</h1>
           <p style={{ color: '#9ca3af', fontSize: 13, marginTop: 4 }}>Configure your AI personality and manage its knowledge base</p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
           {msg && <span style={{ fontSize: 13, fontWeight: 600, color: msg.includes('Failed') ? '#ef4444' : '#10b981' }}>{msg}</span>}
           {/* Fine-Tune button */}
           <div style={{ position: 'relative' }}>
@@ -662,7 +666,7 @@ const CreatorYourAI = () => {
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 12, marginBottom: 16 }}>
                 <div style={{ background: 'rgba(255,255,255,0.06)', borderRadius: 10, padding: '14px 12px', textAlign: 'center' }}>
                   <div style={{ fontSize: 22, fontWeight: 700 }}>{completedContents.length}</div>
                   <div style={{ fontSize: 10, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>Sources</div>
@@ -716,7 +720,7 @@ const CreatorYourAI = () => {
         </div>
 
         {/* 2×2 button group grid */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 18 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 12, marginBottom: 18 }}>
           {/* Energy Level */}
           <div style={{ padding: '14px 16px', borderRadius: 10, background: '#fdf6f0', border: '1px solid #e8d5c4' }}>
             <label style={{ ...labelStyle, marginBottom: 10, display: 'block' }}>Energy Level</label>
@@ -789,7 +793,7 @@ const CreatorYourAI = () => {
         {/* Signature Phrases — 3 horizontal inputs */}
         <div style={{ marginBottom: 16 }}>
           <label style={labelStyle}>Signature Phrases <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#b0b8c1' }}>— things you actually say (optional)</span></label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 8, marginTop: 6 }}>
             {signaturePhrases.map((phrase, i) => (
               <input key={i} type="text" value={phrase} onChange={(e) => {
                 const next = [...signaturePhrases];
@@ -893,7 +897,7 @@ const CreatorYourAI = () => {
                 style={{ padding: '5px 14px', borderRadius: 7, fontSize: 12, fontWeight: 600, border: '1px solid rgba(255,255,255,0.12)', background: 'rgba(255,255,255,0.06)', color: currentScenario === 0 ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.8)', cursor: currentScenario === 0 ? 'not-allowed' : 'pointer' }}>
                 ← Prev
               </button>
-              <div style={{ display: 'flex', gap: 5 }}>
+              <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', justifyContent: 'center' }}>
                 {SCENARIO_QUESTIONS.map((_, i) => {
                   const isActive = i === currentScenario;
                   const isDone = fewShotAnswers[i]?.trim().length > 0;

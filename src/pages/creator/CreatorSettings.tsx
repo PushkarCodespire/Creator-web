@@ -5,13 +5,9 @@ import { RootState } from '../../store';
 import { updateUser } from '../../store/slices/authSlice';
 import { creatorApi, contentApi } from '../../services/api';
 import { Share2, HelpCircle, Plus, Trash2, Eye, DollarSign, Save } from 'lucide-react';
+import { Grid } from 'antd';
 
-const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 28,
-};
+const { useBreakpoint } = Grid;
 
 const inputStyle: React.CSSProperties = {
   width: '100%', padding: '10px 14px', borderRadius: 8, border: '1px solid #ede8e3',
@@ -26,6 +22,15 @@ const CreatorSettings = () => {
   const _navigate = useNavigate();
   const dispatch = useDispatch();
   const user = useSelector((state: RootState) => state.auth.user);
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 16 : 28,
+  };
 
   const [profileLink, setProfileLink] = useState('');
   const [copied, setCopied] = useState(false);
@@ -140,7 +145,7 @@ const CreatorSettings = () => {
           </div>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr 1fr', gap: 14, marginBottom: 14 }}>
           <div>
             <label style={labelStyle}>Price Per 1000 Messages (₹)</label>
             <input type="number" value={pricePerMessage} onChange={(e) => setPricePerMessage(Number(e.target.value))} min={0} style={inputStyle} />
@@ -181,7 +186,7 @@ const CreatorSettings = () => {
             <p style={{ fontSize: 12, color: '#9ca3af', margin: 0 }}>Share your profile link with your audience</p>
           </div>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 10px 10px 18px', borderRadius: 12, border: '1px solid #ede8e3', background: '#fafaf8', marginBottom: 10 }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center', gap: 10, padding: '10px 10px 10px 18px', borderRadius: 12, border: '1px solid #ede8e3', background: '#fafaf8', marginBottom: 10 }}>
           <span style={{ flex: 1, fontSize: 14, color: '#374151', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{profileLink}</span>
           <button type="button" onClick={handleCopyLink} style={{ padding: '8px 20px', borderRadius: 8, background: '#111827', color: '#fff', fontSize: 13, fontWeight: 600, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap' }}>
             {copied ? 'Copied!' : 'Copy Link'}

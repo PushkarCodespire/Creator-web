@@ -2,19 +2,24 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Building2, Smartphone, Shield, Download, ChevronLeft, ChevronRight } from 'lucide-react';
 import { payoutApi } from '../../services/api';
+import { Grid } from 'antd';
 
-const card: React.CSSProperties = {
-  background: '#ffffff',
-  border: '1px solid #ede8e3',
-  borderRadius: 16,
-  padding: 24,
-};
+const { useBreakpoint } = Grid;
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const TRANSACTIONS: Record<string, any>[] = [];
 
 const CreatorPayouts = () => {
   const navigate = useNavigate();
+  const screens = useBreakpoint();
+  const isMobile = screens.md === false;
+
+  const card: React.CSSProperties = {
+    background: '#ffffff',
+    border: '1px solid #ede8e3',
+    borderRadius: 16,
+    padding: isMobile ? 16 : 24,
+  };
   const [amount, setAmount] = useState('2500');
   const [method, setMethod] = useState<'bank' | 'upi'>('bank');
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -79,7 +84,7 @@ const CreatorPayouts = () => {
       </div>
 
       {/* Balance + Creator Insight row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '3fr 2fr', gap: 16, marginBottom: 24 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '3fr 2fr', gap: 16, marginBottom: 24 }}>
         {/* Balance Card */}
         <div style={{ ...card, background: '#fafaf8', position: 'relative', overflow: 'hidden' }}>
           {/* Decorative circle */}
@@ -93,7 +98,7 @@ const CreatorPayouts = () => {
           </span>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 2, marginBottom: 20 }}>
             <span style={{ fontSize: 18, color: '#9ca3af' }}>₹</span>
-            <span style={{ fontSize: 52, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{Math.floor(earnings?.availableBalance || 0).toLocaleString()}</span>
+            <span style={{ fontSize: isMobile ? 36 : 52, fontWeight: 700, color: '#111827', lineHeight: 1 }}>{Math.floor(earnings?.availableBalance || 0).toLocaleString()}</span>
             <span style={{ fontSize: 22, fontWeight: 600, color: '#9ca3af' }}>.{((earnings?.availableBalance || 0) % 1 * 100).toFixed(0).padStart(2, '0')}</span>
           </div>
           <div style={{ display: 'flex', gap: 32 }}>
@@ -138,7 +143,7 @@ const CreatorPayouts = () => {
           <h3 style={{ fontSize: 18, fontWeight: 700, color: '#111827', margin: 0 }}>Withdraw Funds</h3>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24, marginBottom: 20 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? 16 : 24, marginBottom: 20 }}>
           {/* Amount */}
           <div>
             <div style={{ fontSize: 10, fontWeight: 700, color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Amount to Withdraw</div>
@@ -224,7 +229,7 @@ const CreatorPayouts = () => {
         </button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         {payouts.length === 0 && TRANSACTIONS.length === 0 && (
           <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '48px 0', color: '#9ca3af', fontSize: 14, ...card }}>No payout transactions yet</div>
         )}
@@ -237,7 +242,26 @@ const CreatorPayouts = () => {
           const method = isReal ? (tx.bankAccount?.bankName ? `🏦 ${tx.bankAccount.bankName}` : '🏦 Bank') : `${tx.icon} ${tx.method}`;
           const txnId = isReal ? `TXN-${(tx.id || '').slice(0, 6)}` : tx.txn;
 
-          return (
+          return isMobile ? (
+            /* Mobile: horizontal list-item layout */
+            <div key={i} style={{ ...card, display: 'flex', alignItems: 'center', gap: 12 }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: '#111827' }}>{method}</div>
+                <div style={{ fontSize: 11, color: '#9ca3af', marginTop: 1 }}>{date} · {txnId}</div>
+              </div>
+              <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                <div style={{ fontSize: 16, fontWeight: 700, color: '#111827' }}>{amt}</div>
+                <span style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 3, fontSize: 10, fontWeight: 700,
+                  padding: '2px 8px', borderRadius: 4, textTransform: 'uppercase',
+                  background: status === 'COMPLETED' ? '#ecfdf5' : status === 'PROCESSING' ? '#fffbeb' : '#fef2f2',
+                  color: statusColor, marginTop: 3,
+                }}>
+                  <span style={{ width: 4, height: 4, borderRadius: '50%', background: statusColor }} />{status}
+                </span>
+              </div>
+            </div>
+          ) : (
             <div key={i} style={card}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
                 <span style={{

@@ -1,0 +1,331 @@
+/* ============================================================
+   USER PROFILE PAGE
+   ============================================================ */
+
+.page {
+  min-height: 100vh;
+  background: #fbf7f4;
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 40px 24px 60px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* ---- PROFILE CARD ---- */
+.profileCard {
+  background: #fff;
+  border: 1px solid #ede8e3;
+  border-radius: 20px;
+  padding: 28px;
+}
+
+.profileRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #ff5b1f, #ff3e48);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 28px;
+  font-weight: 700;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.profileMeta {
+  flex: 1;
+  min-width: 0;
+}
+
+.profileName {
+  font-size: 22px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profileEmail {
+  font-size: 13px;
+  color: #6b7280;
+  margin: 4px 0 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.logoutBtn {
+  padding: 9px 20px;
+  border-radius: 10px;
+  border: 1px solid #fecaca;
+  background: #fff;
+  color: #ef4444;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.logoutBtn:hover { background: #fff5f5; }
+
+/* ---- CREATOR CTA ---- */
+.creatorCta {
+  background: linear-gradient(135deg, #1a1a1a 0%, #2d1f1a 60%, #ff3e48 100%);
+  border-radius: 20px;
+  padding: 28px;
+  color: #fff;
+}
+
+.creatorCtaTitle {
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 8px;
+}
+
+.creatorCtaText {
+  font-size: 14px;
+  opacity: 0.8;
+  line-height: 1.6;
+  margin: 0 0 20px;
+  max-width: 480px;
+}
+
+.creatorCtaBtn {
+  display: inline-block;
+  padding: 12px 28px;
+  border-radius: 12px;
+  background: #ff3e48;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(255, 62, 72, 0.3);
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+.creatorCtaBtn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(255, 62, 72, 0.4);
+}
+
+/* ---- SECTION CARD ---- */
+.sectionCard {
+  background: #fff;
+  border: 1px solid #ede8e3;
+  border-radius: 20px;
+  padding: 24px;
+}
+
+.sectionRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sectionIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: #fff5f5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ff3e48;
+  flex-shrink: 0;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.sectionSub {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 2px 0 0;
+}
+
+.sectionBtn {
+  padding: 8px 20px;
+  border-radius: 10px;
+  border: 1px solid #ede8e3;
+  background: #fff;
+  color: #111827;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+.sectionBtn:hover { background: #f9f9f7; }
+
+.fitnessTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.fitnessTag {
+  padding: 4px 12px;
+  border-radius: 99px;
+  background: #f3f4f6;
+  font-size: 12px;
+  color: #374151;
+  font-weight: 500;
+}
+
+/* ---- NOTIFICATIONS ---- */
+.notifTitle {
+  font-size: 17px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 16px;
+}
+
+.notifList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.notifItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.notifItemUnread {
+  background: #fff5f5;
+  border: 1px solid #fecaca;
+}
+
+.notifItemRead {
+  background: #fff;
+  border: 1px solid #f3f0ec;
+  cursor: default;
+}
+
+.notifIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.notifBody { flex: 1; min-width: 0; }
+
+.notifHeading {
+  font-size: 13px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notifMessage {
+  font-size: 12px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-top: 2px;
+  word-break: break-word;
+}
+
+.notifTime {
+  font-size: 11px;
+  color: #9ca3af;
+  margin-top: 5px;
+}
+
+.notifDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff3e48;
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.empty {
+  text-align: center;
+  padding: 32px 0;
+  color: #9ca3af;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+/* ============================================================
+   RESPONSIVE — MOBILE (≤ 640px)
+   ============================================================ */
+@media (max-width: 640px) {
+  .container {
+    padding: 20px 16px 48px;
+    gap: 14px;
+  }
+
+  /* Profile card: wrap avatar+name on top, logout below */
+  .profileCard { padding: 20px; }
+  .profileRow  { flex-wrap: wrap; gap: 14px; }
+  .profileMeta { min-width: 0; flex: 1; }
+  .profileName { font-size: 18px; white-space: normal; }
+  .logoutBtn   { margin-left: auto; }
+
+  /* Creator CTA */
+  .creatorCta       { padding: 20px; }
+  .creatorCtaTitle  { font-size: 17px; }
+  .creatorCtaText   { font-size: 13px; margin-bottom: 16px; }
+  .creatorCtaBtn    { width: 100%; text-align: center; padding: 12px; }
+
+  /* Section cards */
+  .sectionCard  { padding: 18px; }
+  .sectionRow   { gap: 10px; }
+  .sectionLeft  { gap: 10px; }
+  .sectionIcon  { width: 36px; height: 36px; border-radius: 10px; }
+  .sectionTitle { font-size: 14px; }
+
+  /* Notifications */
+  .notifTitle { font-size: 16px; }
+  .notifItem  { padding: 12px 14px; }
+  .notifHeading { font-size: 13px; }
+  .notifMessage { font-size: 12px; }
+}
